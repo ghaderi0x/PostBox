@@ -1,0 +1,14 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-raw-types: true
+
+linter:
+  rules:
+    - prefer_single_quotes
+    - avoid_catches_without_on_clauses
+    - unawaited_futures
+    - always_declare_return_types
+    - prefer_final_locals

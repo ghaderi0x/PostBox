@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- PostBox placeholder-quality original mark. Replace this file to rebrand. -->
+  <rect width="512" height="512" rx="112" fill="#F26B1D"/>
+  <path d="M112 200h288v176a24 24 0 0 1-24 24H136a24 24 0 0 1-24-24z" fill="#FFFFFF"/>
+  <path d="M112 200l144 96 144-96" fill="none" stroke="#F26B1D" stroke-width="28" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M256 64v120m0 0-44-44m44 44 44-44" fill="none" stroke="#FFFFFF" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

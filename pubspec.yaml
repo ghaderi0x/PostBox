@@ -1,0 +1,25 @@
+name: postbox
+description: PostBox - an open-source, local-first HTTP API client by Uniqueone.
+publish_to: none
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.7.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  flutter_bloc: ^9.1.0
+  intl: ^0.20.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  # Fonts (Vazirmatn, Inter, JetBrains Mono) are added in P1 once the font
+  # files are bundled. Do not declare them before the files exist.
