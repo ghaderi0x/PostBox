@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
-/// Semantic color tokens. Widgets read these, never raw colors.
+/// Semantic color tokens. Widgets read these through `context.colors`,
+/// never raw colors.
 @immutable
-class PostBoxColors extends ThemeExtension<PostBoxColors> {
+class PostBoxColors {
   const PostBoxColors({
     required this.surfaceBase,
     required this.surfaceRaised,
@@ -19,6 +20,13 @@ class PostBoxColors extends ThemeExtension<PostBoxColors> {
     required this.methodPut,
     required this.methodPatch,
     required this.methodDelete,
+    required this.synKey,
+    required this.synString,
+    required this.synNumber,
+    required this.synLiteral,
+    required this.synPunct,
+    required this.synVariable,
+    required this.synError,
   });
 
   final Color surfaceBase;
@@ -36,104 +44,70 @@ class PostBoxColors extends ThemeExtension<PostBoxColors> {
   final Color methodPut;
   final Color methodPatch;
   final Color methodDelete;
+  final Color synKey;
+  final Color synString;
+  final Color synNumber;
+  final Color synLiteral;
+  final Color synPunct;
+  final Color synVariable;
+  final Color synError;
 
-  static const PostBoxColors orangeLight = PostBoxColors(
-    surfaceBase: Color(0xFFFAF8F6),
-    surfaceRaised: Color(0xFFFFFFFF),
-    border: Color(0xFFE6E0DA),
-    textPrimary: Color(0xFF1F1B17),
-    textSecondary: Color(0xFF6B625A),
-    accent: Color(0xFFD9560B),
-    onAccent: Color(0xFFFFFFFF),
-    success: Color(0xFF1B7F4B),
-    warning: Color(0xFF9A6700),
-    danger: Color(0xFFC62828),
-    methodGet: Color(0xFF1B7F4B),
-    methodPost: Color(0xFFB45309),
-    methodPut: Color(0xFF1D5FBF),
-    methodPatch: Color(0xFF6D3FC4),
-    methodDelete: Color(0xFFC62828),
-  );
-
-  static const PostBoxColors orangeDark = PostBoxColors(
-    surfaceBase: Color(0xFF16130F),
-    surfaceRaised: Color(0xFF211D18),
-    border: Color(0xFF3A342D),
-    textPrimary: Color(0xFFF3EEE9),
-    textSecondary: Color(0xFFA89E94),
-    accent: Color(0xFFFF8A3D),
-    onAccent: Color(0xFF1A0E05),
-    success: Color(0xFF4CC38A),
-    warning: Color(0xFFE3B341),
-    danger: Color(0xFFFF6B6B),
-    methodGet: Color(0xFF4CC38A),
-    methodPost: Color(0xFFFFA94D),
-    methodPut: Color(0xFF6EA8FE),
-    methodPatch: Color(0xFFB794F6),
-    methodDelete: Color(0xFFFF6B6B),
-  );
-
-  @override
-  PostBoxColors copyWith({
-    Color? surfaceBase,
-    Color? surfaceRaised,
-    Color? border,
-    Color? textPrimary,
-    Color? textSecondary,
-    Color? accent,
-    Color? onAccent,
-    Color? success,
-    Color? warning,
-    Color? danger,
-    Color? methodGet,
-    Color? methodPost,
-    Color? methodPut,
-    Color? methodPatch,
-    Color? methodDelete,
-  }) {
-    return PostBoxColors(
-      surfaceBase: surfaceBase ?? this.surfaceBase,
-      surfaceRaised: surfaceRaised ?? this.surfaceRaised,
-      border: border ?? this.border,
-      textPrimary: textPrimary ?? this.textPrimary,
-      textSecondary: textSecondary ?? this.textSecondary,
-      accent: accent ?? this.accent,
-      onAccent: onAccent ?? this.onAccent,
-      success: success ?? this.success,
-      warning: warning ?? this.warning,
-      danger: danger ?? this.danger,
-      methodGet: methodGet ?? this.methodGet,
-      methodPost: methodPost ?? this.methodPost,
-      methodPut: methodPut ?? this.methodPut,
-      methodPatch: methodPatch ?? this.methodPatch,
-      methodDelete: methodDelete ?? this.methodDelete,
-    );
+  Color methodColor(String method) {
+    switch (method.toUpperCase()) {
+      case 'GET':
+        return methodGet;
+      case 'POST':
+        return methodPost;
+      case 'PUT':
+        return methodPut;
+      case 'PATCH':
+        return methodPatch;
+      case 'DELETE':
+        return methodDelete;
+      default:
+        return textSecondary;
+    }
   }
 
-  @override
-  PostBoxColors lerp(ThemeExtension<PostBoxColors>? other, double t) {
-    if (other is! PostBoxColors) return this;
-    Color l(Color a, Color b) => Color.lerp(a, b, t)!;
-    return PostBoxColors(
-      surfaceBase: l(surfaceBase, other.surfaceBase),
-      surfaceRaised: l(surfaceRaised, other.surfaceRaised),
-      border: l(border, other.border),
-      textPrimary: l(textPrimary, other.textPrimary),
-      textSecondary: l(textSecondary, other.textSecondary),
-      accent: l(accent, other.accent),
-      onAccent: l(onAccent, other.onAccent),
-      success: l(success, other.success),
-      warning: l(warning, other.warning),
-      danger: l(danger, other.danger),
-      methodGet: l(methodGet, other.methodGet),
-      methodPost: l(methodPost, other.methodPost),
-      methodPut: l(methodPut, other.methodPut),
-      methodPatch: l(methodPatch, other.methodPatch),
-      methodDelete: l(methodDelete, other.methodDelete),
-    );
+  Color statusColor(int status) {
+    if (status >= 200 && status < 300) return success;
+    if (status >= 300 && status < 400) return methodPut;
+    if (status >= 400 && status < 500) return warning;
+    return danger;
   }
 }
 
-extension PostBoxColorsContext on BuildContext {
-  PostBoxColors get colors => Theme.of(this).extension<PostBoxColors>()!;
+/// Theme extension carrying tokens and a few appearance metrics.
+@immutable
+class PostBoxTheme extends ThemeExtension<PostBoxTheme> {
+  const PostBoxTheme({
+    required this.colors,
+    required this.codeFontSize,
+    required this.reducedMotion,
+  });
+
+  final PostBoxColors colors;
+  final double codeFontSize;
+  final bool reducedMotion;
+
+  @override
+  PostBoxTheme copyWith({
+    PostBoxColors? colors,
+    double? codeFontSize,
+    bool? reducedMotion,
+  }) =>
+      PostBoxTheme(
+        colors: colors ?? this.colors,
+        codeFontSize: codeFontSize ?? this.codeFontSize,
+        reducedMotion: reducedMotion ?? this.reducedMotion,
+      );
+
+  @override
+  PostBoxTheme lerp(ThemeExtension<PostBoxTheme>? other, double t) =>
+      other is PostBoxTheme && t >= 0.5 ? other : this;
+}
+
+extension PostBoxContext on BuildContext {
+  PostBoxTheme get pb => Theme.of(this).extension<PostBoxTheme>()!;
+  PostBoxColors get colors => pb.colors;
 }

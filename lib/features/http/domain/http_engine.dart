@@ -55,9 +55,26 @@ class HttpResult {
   final Duration duration;
   final Uri finalUrl;
   final List<Uri> redirects;
+
+  String? header(String name) {
+    final lower = name.toLowerCase();
+    for (final e in headers.entries) {
+      if (e.key.toLowerCase() == lower) return e.value.join(', ');
+    }
+    return null;
+  }
+
+  String? get contentType => header('content-type');
 }
 
-enum HttpFailureKind { timeout, cancelled, tls, connection, protocol, tooManyRedirects }
+enum HttpFailureKind {
+  timeout,
+  cancelled,
+  tls,
+  connection,
+  protocol,
+  tooManyRedirects,
+}
 
 class HttpFailure implements Exception {
   const HttpFailure(this.kind, this.message);
@@ -80,8 +97,7 @@ class CancelToken {
     _listener?.call();
   }
 
-  // Called by engine implementations.
-  // ignore: use_setters_to_change_properties
+  /// Called by engine implementations.
   void onCancel(void Function() listener) {
     _listener = listener;
     if (_cancelled) listener();

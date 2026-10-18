@@ -4,6 +4,20 @@ import 'dart:typed_data';
 
 import '../domain/http_engine.dart';
 
+/// Applies timeout, TLS and proxy settings from [spec] to a new client.
+/// Shared by the request engine, SSE and WebSocket sessions.
+HttpClient createConfiguredClient(HttpRequestSpec spec) {
+  final client = HttpClient()..connectionTimeout = spec.timeout;
+  if (spec.allowInvalidCertificates) {
+    client.badCertificateCallback = (cert, host, port) => true;
+  }
+  final proxy = spec.proxy;
+  if (proxy != null && proxy.isNotEmpty) {
+    client.findProxy = (uri) => 'PROXY $proxy';
+  }
+  return client;
+}
+
 /// [HttpEngine] built on dart:io [HttpClient].
 ///
 /// Redirects are followed manually so the policy is explicit and sensitive
@@ -19,14 +33,7 @@ class IoHttpEngine implements HttpEngine {
 
   @override
   Future<HttpResult> send(HttpRequestSpec spec, {CancelToken? cancel}) async {
-    final client = HttpClient()..connectionTimeout = spec.timeout;
-    if (spec.allowInvalidCertificates) {
-      client.badCertificateCallback = (cert, host, port) => true;
-    }
-    final proxy = spec.proxy;
-    if (proxy != null) {
-      client.findProxy = (uri) => 'PROXY $proxy';
-    }
+    final client = createConfiguredClient(spec);
     cancel?.onCancel(() => client.close(force: true));
 
     final watch = Stopwatch()..start();

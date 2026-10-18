@@ -1,5 +1,8 @@
 name: CI
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -9,10 +12,14 @@ jobs:
         with:
           channel: stable
           cache: true
+      - name: Generate platform folders if they are not committed
+        run: |
+          if [ ! -d android ]; then ./tool/setup_platforms.sh; fi
       - run: flutter pub get
       - run: dart format --output=none --set-exit-if-changed .
       - run: flutter analyze
       - run: flutter test
+
   build-linux:
     needs: check
     runs-on: ubuntu-latest
@@ -20,8 +27,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with: { channel: stable, cache: true }
-      - run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libsecret-1-dev libjsoncpp-dev
+      - run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libsecret-1-dev
+      - run: flutter config --enable-linux-desktop
+      - run: flutter pub get
       - run: flutter build linux --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: postbox-linux
+          path: build/linux/x64/release/bundle
+
   build-windows:
     needs: check
     runs-on: windows-latest
@@ -29,7 +43,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with: { channel: stable, cache: true }
+      - run: flutter config --enable-windows-desktop
+      - run: flutter pub get
       - run: flutter build windows --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: postbox-windows
+          path: build/windows/x64/runner/Release
+
   build-android:
     needs: check
     runs-on: ubuntu-latest
@@ -39,4 +60,9 @@ jobs:
         with: { distribution: temurin, java-version: '17' }
       - uses: subosito/flutter-action@v2
         with: { channel: stable, cache: true }
-      - run: flutter build apk --debug
+      - run: flutter pub get
+      - run: flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: postbox-android-apk
+          path: build/app/outputs/flutter-apk/app-release.apk

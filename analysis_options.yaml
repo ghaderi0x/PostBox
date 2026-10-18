@@ -7,8 +7,7 @@ analyzer:
 
 linter:
   rules:
-    - prefer_single_quotes
-    - avoid_catches_without_on_clauses
-    - unawaited_futures
-    - always_declare_return_types
-    - prefer_final_locals
+    prefer_single_quotes: true
+    unawaited_futures: true
+    always_declare_return_types: true
+    prefer_final_locals: true

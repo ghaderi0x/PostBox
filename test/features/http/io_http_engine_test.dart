@@ -10,7 +10,11 @@ import 'package:postbox/features/http/domain/http_engine.dart';
 Future<HttpServer> _serve(FutureOr<void> Function(HttpRequest) handler) async {
   final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
   server.listen((req) async {
-    await handler(req);
+    try {
+      await handler(req);
+    } on Object {
+      // Clients that cancelled or timed out may already be gone.
+    }
   });
   return server;
 }
