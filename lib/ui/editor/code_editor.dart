@@ -393,7 +393,7 @@ class _CodeEditorState extends State<CodeEditor> {
     for (final l in lines) {
       if (l.length > longest) longest = l.length;
     }
-    final textWidth = _wrap ? avail : math.max(avail, math.min(longest * charW + 32, 200000));
+    final textWidth = _wrap ? avail : math.max(avail, math.min(longest * charW + 32, 200000.0));
 
     final heights = List<double>.filled(lines.length, lineH);
     if (_wrap && lines.length <= 3000) {
@@ -404,7 +404,7 @@ class _CodeEditorState extends State<CodeEditor> {
           text: TextSpan(text: l, style: style),
           textDirection: dir,
           strutStyle: strut,
-        )..layout(maxWidth: math.max(20, avail - 16));
+        )..layout(maxWidth: math.max(20.0, avail - 16));
         heights[i] = math.max(lineH, p.height);
         p.dispose();
       }
