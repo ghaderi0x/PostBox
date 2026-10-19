@@ -166,16 +166,23 @@ class StartupErrorApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final text = '${error.runtimeType}: $error';
+    // Platform errors can contain very long stack traces; keep the screen readable.
+    final shown = text.length > 700 ? '${text.substring(0, 700)}…' : text;
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: SelectableText(
-              'PostBox could not start.\n\n${error.runtimeType}: $error\n\n'
-              'Check that the app data folder is writable and try again.',
-              textAlign: TextAlign.center,
+        body: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: SelectableText(
+                'PostBox could not start.\n\n$shown\n\n'
+                'If this mentions NoSuchMethodError in a plugin, the release build was '
+                'probably shrunk by R8: see docs/RELEASE.md, section "Startup crash after '
+                'a release build".',
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
         ),

@@ -74,6 +74,15 @@ Install the release APK on a real device or emulator and test: launch, send a re
 
 Play listing text and the Data Safety summary are in `docs/PLAY_STORE.md`; the privacy policy is `docs/PRIVACY_POLICY.md` (publish it on a public URL).
 
+### Startup crash after a release build (R8)
+
+Symptom: the app opens to "PostBox could not start" with `NoSuchMethodError: no non-static method ... SharedPreferencesApiRegistrar.getAll(...)` (or a similar plugin class). Cause: R8 shrinking/optimizing the plugin's Kotlin coroutine code. Fix:
+
+1. Copy `android_overlay/proguard-rules.pro` to `android/app/proguard-rules.pro` (it keeps the plugin classes) and make sure `proguardFiles(...)` in `build.gradle.kts` lists it.
+2. Append `android_overlay/gradle.properties.append` to `android/gradle.properties` (turns off R8 full mode).
+3. To confirm R8 is the cause, temporarily set `isMinifyEnabled = false` and `isShrinkResources = false`, rebuild, and check that the app starts.
+4. Uninstall the old app from the phone first, then `flutter clean && flutter build apk --release`.
+
 ## Windows (build on Windows only)
 
 ```

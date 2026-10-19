@@ -65,6 +65,10 @@ Do not describe any platform as ready until it was built and tested.
 - App icons and fonts are missing; the logo is a simple original placeholder.
 - Test files contain a few lines that `dart format` will rewrite; run the formatter before committing.
 
+## Field reports
+
+- 2026-10-19: `flutter pub get` resolved cleanly (`app_links` 6.4.1, `flutter_secure_storage` 10.3.4). A release APK installed on an Android phone started and showed the startup error screen with `NoSuchMethodError ... SharedPreferencesApiRegistrar.getAll`. Likely cause: R8 shrinking in the release build. Mitigation added: keep rules + `android.enableR8.fullMode=false` (see `docs/RELEASE.md`). Not yet confirmed fixed.
+
 ## Deviations from the brief
 
 - sqlite3 instead of Drift (see `ARCHITECTURE.md`).
