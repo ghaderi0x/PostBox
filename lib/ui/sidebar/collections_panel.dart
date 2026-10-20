@@ -310,9 +310,14 @@ class _Row extends StatelessWidget {
     final c = context.colors;
     return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
       child: Container(
-        color: selected ? c.accent.withAlpha(30) : null,
-        padding: EdgeInsetsDirectional.fromSTEB(8 + depth * 14.0, 0, 0, 0),
+        margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+        decoration: BoxDecoration(
+          color: selected ? c.accent.withAlpha(30) : null,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        padding: EdgeInsetsDirectional.fromSTEB(4 + depth * 14.0, 0, 0, 0),
         constraints: const BoxConstraints(minHeight: 36),
         child: Row(
           children: <Widget>[

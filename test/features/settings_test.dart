@@ -48,6 +48,7 @@ void main() {
       historyMaxEntries: 50,
       omitSensitiveInHistory: false,
       confirmDestructive: false,
+      onboardingDone: true,
     );
     final back = AppSettings.fromJson(jsonDecode(jsonEncode(s.toJson())));
     expect(jsonEncode(back.toJson()), jsonEncode(s.toJson()));

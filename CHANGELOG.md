@@ -1,6 +1,12 @@
 # Changelog
 
-## 0.2.0 (unreleased)
+## 0.3.0 (unreleased)
+
+- New visual language: rounded soft cards, floating navigation bar, grouped Menu tab, gradient CTA, pill tabs
+- Welcome tour (language, theme, optional sample collection), re-openable from Settings and Menu
+- `docs/FEATURE_MATRIX.md`: comparison with the master TODO list
+
+## 0.2.0
 
 - HTTP engine with explicit redirect policy, proxy, TLS validation, size limits, cancellation
 - Request workspace, response inspector (pretty/raw/diff), custom code editor

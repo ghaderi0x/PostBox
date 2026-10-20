@@ -25,6 +25,7 @@ import '../editor/json_tools.dart';
 import '../editor/lines_view.dart';
 import '../editor/settings_code_editor.dart';
 import '../widgets/common.dart';
+import '../widgets/soft.dart';
 import 'stream_view.dart';
 
 enum _Kind { json, xml, html, text, image, binary }
@@ -210,21 +211,16 @@ class _ResultViewState extends State<_ResultView> with SingleTickerProviderState
             ],
           ),
         ),
-        TabBar(
+        PillTabBar(
           controller: _tabs,
-          isScrollable: true,
-          tabAlignment: TabAlignment.start,
-          dividerColor: c.border,
-          tabs: <Widget>[
-            Tab(text: context.t('resp.body')),
-            Tab(text: '${context.t('resp.headers')} (${fmt.integer(r.headers.length)})'),
-            Tab(text: context.t('resp.cookies')),
-            Tab(
-              text: o.assertions.isEmpty
-                  ? context.t('resp.tests')
-                  : '${context.t('resp.tests')} (${fmt.integer(passed)}/${fmt.integer(o.assertions.length)})',
-            ),
-            Tab(text: context.t('resp.request')),
+          labels: <String>[
+            context.t('resp.body'),
+            '${context.t('resp.headers')} (${fmt.integer(r.headers.length)})',
+            context.t('resp.cookies'),
+            o.assertions.isEmpty
+                ? context.t('resp.tests')
+                : '${context.t('resp.tests')} (${fmt.integer(passed)}/${fmt.integer(o.assertions.length)})',
+            context.t('resp.request'),
           ],
         ),
         Expanded(

@@ -64,6 +64,7 @@ class AppSettings {
     this.historyMaxEntries = 500,
     this.omitSensitiveInHistory = true,
     this.confirmDestructive = true,
+    this.onboardingDone = false,
   });
 
   final AppThemeMode themeMode;
@@ -104,6 +105,9 @@ class AppSettings {
   final bool omitSensitiveInHistory;
   final bool confirmDestructive;
 
+  /// False until the welcome tour was finished or skipped.
+  final bool onboardingDone;
+
   int get maxResponseBytes => maxResponseMb * 1024 * 1024;
   int get maxRequestBytes => maxRequestMb * 1024 * 1024;
 
@@ -139,6 +143,7 @@ class AppSettings {
     int? historyMaxEntries,
     bool? omitSensitiveInHistory,
     bool? confirmDestructive,
+    bool? onboardingDone,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
@@ -174,6 +179,7 @@ class AppSettings {
       omitSensitiveInHistory:
           omitSensitiveInHistory ?? this.omitSensitiveInHistory,
       confirmDestructive: confirmDestructive ?? this.confirmDestructive,
+      onboardingDone: onboardingDone ?? this.onboardingDone,
     );
   }
 
@@ -217,6 +223,7 @@ class AppSettings {
       'historyMaxEntries': historyMaxEntries,
       'omitSensitiveInHistory': omitSensitiveInHistory,
       'confirmDestructive': confirmDestructive,
+      'onboardingDone': onboardingDone,
     };
   }
 
@@ -282,6 +289,7 @@ class AppSettings {
       omitSensitiveInHistory:
           asBool(j['omitSensitiveInHistory'], d.omitSensitiveInHistory),
       confirmDestructive: asBool(j['confirmDestructive'], d.confirmDestructive),
+      onboardingDone: asBool(j['onboardingDone'], d.onboardingDone),
     );
   }
 

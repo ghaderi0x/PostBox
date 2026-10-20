@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/app_info.dart';
 import '../../core/design/presets.dart';
+import '../../core/design/shapes.dart';
 import '../../core/design/tokens.dart';
 import '../../core/design/typography.dart';
 import '../../core/util/app_log.dart';
@@ -72,7 +73,8 @@ class _Section extends StatelessWidget {
             decoration: BoxDecoration(
               color: c.surfaceRaised,
               border: Border.all(color: c.border),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(Radii.lg),
+              boxShadow: softShadow(context, strength: 0.6),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
             child: Column(children: children),
@@ -737,6 +739,15 @@ class _About extends StatelessWidget {
         title: Text(context.t('about.changelog')),
         trailing: const Icon(Icons.chevron_right),
         onTap: () => showTextDialog(context, title: context.t('about.changelog'), text: context.t('about.changelogBody')),
+      ),
+      ListTile(
+        contentPadding: EdgeInsets.zero,
+        title: Text(context.t('settings.tour')),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () async {
+          await context.read<SettingsCubit>().update((s) => s.copyWith(onboardingDone: false));
+          if (context.mounted) Navigator.of(context).popUntil((r) => r.isFirst);
+        },
       ),
       ListTile(
         contentPadding: EdgeInsets.zero,

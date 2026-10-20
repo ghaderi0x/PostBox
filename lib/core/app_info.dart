@@ -1,7 +1,7 @@
 /// Static application facts. Keep in sync with pubspec.yaml.
 const String appName = 'PostBox';
-const String appVersion = '0.2.0';
-const String appBuild = '2';
+const String appVersion = '0.3.0';
+const String appBuild = '3';
 const int settingsSchemaVersion = 1;
 const int postboxFormatVersion = 1;
 

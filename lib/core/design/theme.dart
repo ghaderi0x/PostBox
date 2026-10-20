@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../features/settings/domain/app_settings.dart';
 import 'presets.dart';
+import 'shapes.dart';
 import 'tokens.dart';
 
 const String kUiFont = 'Inter';
@@ -56,8 +57,9 @@ ThemeData buildTheme({
     fontFamilyFallback: fallback,
   );
 
+  final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.md));
   final outline = OutlineInputBorder(
-    borderRadius: BorderRadius.circular(6),
+    borderRadius: BorderRadius.circular(Radii.md),
     borderSide: BorderSide(color: c.border),
   );
 
@@ -93,6 +95,40 @@ ThemeData buildTheme({
       focusedErrorBorder:
           outline.copyWith(borderSide: BorderSide(color: c.danger, width: 1.5)),
       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        shape: shape,
+        minimumSize: const Size(0, 44),
+        padding: const EdgeInsets.symmetric(horizontal: 18),
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        shape: shape,
+        minimumSize: const Size(0, 44),
+        side: BorderSide(color: c.border),
+        foregroundColor: c.textPrimary,
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(style: TextButton.styleFrom(shape: shape)),
+    popupMenuTheme: PopupMenuThemeData(
+      color: c.surfaceRaised,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Radii.md),
+        side: BorderSide(color: c.border),
+      ),
+    ),
+    snackBarTheme: SnackBarThemeData(behavior: SnackBarBehavior.floating, shape: shape),
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: c.surfaceRaised,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(Radii.xl)),
+      ),
+    ),
+    chipTheme: ChipThemeData(
+      shape: StadiumBorder(side: BorderSide(color: c.border)),
+      side: BorderSide(color: c.border),
     ),
     dividerTheme: DividerThemeData(color: c.border, space: 1, thickness: 1),
     scrollbarTheme: ScrollbarThemeData(

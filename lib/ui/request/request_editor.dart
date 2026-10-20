@@ -13,6 +13,7 @@ import '../editor/highlighter.dart';
 import 'save_actions.dart';
 import '../widgets/common.dart';
 import '../widgets/key_value_editor.dart';
+import '../widgets/soft.dart';
 import 'auth_editor.dart';
 import 'body_editor.dart';
 import 'tests_editor.dart';
@@ -116,7 +117,7 @@ class _RequestEditorState extends State<RequestEditor> with SingleTickerProvider
               padding: const EdgeInsets.symmetric(horizontal: 10),
               decoration: BoxDecoration(
                 border: Border.all(color: c.border),
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(14),
               ),
               child: Row(mainAxisSize: MainAxisSize.min, children: <Widget>[
                 MethodBadge(r.method, width: 52),
@@ -128,7 +129,7 @@ class _RequestEditorState extends State<RequestEditor> with SingleTickerProvider
             height: 44,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             alignment: Alignment.center,
-            decoration: BoxDecoration(border: Border.all(color: c.border), borderRadius: BorderRadius.circular(6)),
+            decoration: BoxDecoration(border: Border.all(color: c.border), borderRadius: BorderRadius.circular(14)),
             child: Text(r.kind == RequestKind.sse ? 'SSE' : 'WS', style: context.methodBadge.copyWith(color: c.accent)),
           );
 
@@ -248,18 +249,15 @@ class _RequestEditorState extends State<RequestEditor> with SingleTickerProvider
               warning: true,
             ),
           ),
-        TabBar(
+        PillTabBar(
           controller: _tabs,
-          isScrollable: true,
-          tabAlignment: TabAlignment.start,
-          dividerColor: c.border,
-          tabs: <Widget>[
-            Tab(text: label('req.params', enabledParams)),
-            Tab(text: label('req.headers', enabledHeaders)),
-            Tab(text: context.t(isHttp ? 'req.body' : 'req.bodyNA')),
-            Tab(text: context.t('req.auth')),
-            Tab(text: label('req.tests', r.assertions.length + r.extractions.length)),
-            Tab(text: context.t('req.info')),
+          labels: <String>[
+            label('req.params', enabledParams),
+            label('req.headers', enabledHeaders),
+            context.t(isHttp ? 'req.body' : 'req.bodyNA'),
+            context.t('req.auth'),
+            label('req.tests', r.assertions.length + r.extractions.length),
+            context.t('req.info'),
           ],
         ),
         Expanded(

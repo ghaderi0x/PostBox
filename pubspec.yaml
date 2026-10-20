@@ -1,7 +1,7 @@
 name: postbox
 description: PostBox - an open-source, local-first HTTP API client by Uniqueone.
 publish_to: none
-version: 0.2.0+2
+version: 0.3.0+3
 
 environment:
   sdk: ^3.9.0

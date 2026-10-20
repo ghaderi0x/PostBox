@@ -69,6 +69,10 @@ Do not describe any platform as ready until it was built and tested.
 
 - 2026-10-19: `flutter pub get` resolved cleanly (`app_links` 6.4.1, `flutter_secure_storage` 10.3.4). A release APK installed on an Android phone started and showed the startup error screen with `NoSuchMethodError ... SharedPreferencesApiRegistrar.getAll`. Likely cause: R8 shrinking in the release build. Mitigation added: keep rules + `android.enableR8.fullMode=false` (see `docs/RELEASE.md`). Not yet confirmed fixed.
 
+## Version 0.3.0 (UI refresh)
+
+Added after the first device test: soft rounded cards, floating pill navigation with an expanding selected item (phone), a Menu tab with grouped icon rows, gradient primary button, pill tabs, welcome tour with optional sample collection, softer theme (rounded inputs, buttons, sheets, menus). All of it is **written, not yet run**; check it on your phone. See `FEATURE_MATRIX.md` for the comparison with your TODO list.
+
 ## Deviations from the brief
 
 - sqlite3 instead of Drift (see `ARCHITECTURE.md`).

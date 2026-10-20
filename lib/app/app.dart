@@ -16,6 +16,7 @@ import '../features/settings/domain/app_settings.dart';
 import '../features/workspace/application/workspace_cubit.dart';
 import '../l10n/strings.dart';
 import '../ui/app_shell.dart';
+import '../ui/onboarding/onboarding_page.dart';
 import 'services.dart';
 
 class PostBoxApp extends StatefulWidget {
@@ -148,9 +149,9 @@ class _PostBoxAppState extends State<PostBoxApp> {
                   child: child ?? const SizedBox.shrink(),
                 );
               },
-              home: _ready
-                  ? const AppShell()
-                  : const Scaffold(body: Center(child: CircularProgressIndicator())),
+              home: !_ready
+                  ? const Scaffold(body: Center(child: CircularProgressIndicator()))
+                  : (s.onboardingDone ? const AppShell() : const OnboardingPage()),
             );
           },
         ),

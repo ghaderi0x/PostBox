@@ -14,6 +14,7 @@ import '../features/workspace/application/workspace_cubit.dart';
 import '../l10n/strings.dart';
 import 'env/environments_page.dart';
 import 'import_export/import_export_page.dart';
+import 'menu/menu_page.dart';
 import 'palette/command_palette.dart';
 import 'request/request_editor.dart';
 import 'request/save_actions.dart';
@@ -23,6 +24,7 @@ import 'settings/settings_page.dart';
 import 'sidebar/sidebar.dart';
 import 'widgets/common.dart';
 import 'widgets/env_selector.dart';
+import 'widgets/soft.dart';
 import 'workspace/workspace_view.dart';
 import '../core/util/json_util.dart';
 
@@ -38,7 +40,7 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   double _sidebarWidth = 300;
-  int _mobilePage = 1; // 0 library, 1 request, 2 response
+  int _mobilePage = 1; // 0 library, 1 request, 2 response, 3 menu
 
   void _push(Widget page) =>
       Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
@@ -216,6 +218,8 @@ class _AppShellState extends State<AppShell> {
           body = Sidebar(onOpened: () => setState(() => _mobilePage = 1));
         case 2:
           body = tab == null ? const SizedBox.shrink() : ResponseInspector(tab: tab);
+        case 3:
+          body = const MenuPage();
         default:
           body = tab == null
               ? EmptyState(icon: Icons.tab, title: context.t('tabs.none'))
@@ -228,49 +232,43 @@ class _AppShellState extends State<AppShell> {
       }
       final name = tab == null || tab.draft.displayName.isEmpty ? context.t('tabs.untitled') : tab.draft.displayName;
       return Scaffold(
-        appBar: AppBar(
-          titleSpacing: 12,
-          title: InkWell(
-            onTap: () => _tabSheet(context),
-            child: Row(mainAxisSize: MainAxisSize.min, children: <Widget>[
-              Flexible(child: Text(_mobilePage == 0 ? appName : name, overflow: TextOverflow.ellipsis, style: context.pageTitle)),
-              if (s.tabs.length > 1) ...<Widget>[
-                const SizedBox(width: 4),
-                Text('(${s.tabs.length})', style: context.secondary),
-              ],
-              const Icon(Icons.arrow_drop_down),
-            ]),
-          ),
-          actions: <Widget>[
-            const EnvSelector(),
-            IconButton(tooltip: context.t('palette.title'), icon: const Icon(Icons.search), onPressed: _palette),
-            PopupMenuButton<String>(
-              onSelected: (v) {
-                switch (v) {
-                  case 'ie':
-                    _push(const ImportExportPage());
-                  case 'settings':
-                    _push(const SettingsPage());
-                  case 'env':
-                    _push(const EnvironmentsPage());
-                }
-              },
-              itemBuilder: (ctx) => <PopupMenuEntry<String>>[
-                PopupMenuItem<String>(value: 'env', child: Text(ctx.t('env.title'))),
-                PopupMenuItem<String>(value: 'ie', child: Text(ctx.t('ie.title'))),
-                PopupMenuItem<String>(value: 'settings', child: Text(ctx.t('settings.title'))),
-              ],
-            ),
-          ],
-        ),
-        body: body,
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: _mobilePage,
-          onDestinationSelected: (i) => setState(() => _mobilePage = i),
-          destinations: <NavigationDestination>[
-            NavigationDestination(icon: const Icon(Icons.folder_outlined), selectedIcon: const Icon(Icons.folder), label: context.t('nav.library')),
-            NavigationDestination(icon: const Icon(Icons.edit_outlined), selectedIcon: const Icon(Icons.edit), label: context.t('nav.request')),
-            NavigationDestination(icon: const Icon(Icons.article_outlined), selectedIcon: const Icon(Icons.article), label: context.t('nav.response')),
+        appBar: _mobilePage == 3
+            ? null
+            : AppBar(
+                titleSpacing: 16,
+                title: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => _tabSheet(context),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: <Widget>[
+                    Flexible(
+                      child: Text(
+                        _mobilePage == 0 ? context.t('nav.library') : name,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.pageTitle.copyWith(fontSize: 22, fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    if (s.tabs.length > 1) ...<Widget>[
+                      const SizedBox(width: 4),
+                      Text('(${s.tabs.length})', style: context.secondary),
+                    ],
+                    const Icon(Icons.arrow_drop_down),
+                  ]),
+                ),
+                actions: <Widget>[
+                  const EnvSelector(),
+                  IconButton(tooltip: context.t('palette.title'), icon: const Icon(Icons.search), onPressed: _palette),
+                  const SizedBox(width: 4),
+                ],
+              ),
+        body: AccentGlow(child: SafeArea(top: _mobilePage == 3, bottom: false, child: body)),
+        bottomNavigationBar: FloatingNavBar(
+          index: _mobilePage,
+          onSelected: (i) => setState(() => _mobilePage = i),
+          items: <NavItem>[
+            NavItem(Icons.folder_outlined, Icons.folder, context.t('nav.library')),
+            NavItem(Icons.edit_outlined, Icons.edit, context.t('nav.request')),
+            NavItem(Icons.article_outlined, Icons.article, context.t('nav.response')),
+            NavItem(Icons.menu, Icons.menu_open, context.t('nav.menu')),
           ],
         ),
       );

@@ -19,6 +19,8 @@ flutter run -d linux          # or windows / an Android device
 
 Linux needs `libsecret-1-dev` to build and a keyring service at runtime. Fonts and icons are not bundled yet (`assets/fonts/README.md`).
 
+Feature coverage against the master TODO list: `docs/FEATURE_MATRIX.md`.
+
 ## Documentation
 
 `docs/` (English) and `docs/fa/` (فارسی): product spec, architecture, design system, security, testing, roadmap, status, editor, import/export, release, privacy policy, Play listing.

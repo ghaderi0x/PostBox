@@ -9,6 +9,7 @@ import 'package:postbox/l10n/strings.dart';
 import 'package:postbox/ui/editor/code_editor.dart';
 import 'package:postbox/ui/editor/code_editor_controller.dart';
 import 'package:postbox/ui/editor/highlighter.dart';
+import 'package:postbox/ui/widgets/soft.dart';
 
 Widget host(Widget child, {Locale locale = const Locale('en'), double width = 600, double height = 400}) {
   return MaterialApp(
@@ -124,6 +125,7 @@ void main() {
     testWidgets('desktop layout starts, creates a collection and opens settings', (tester) async {
       setSize(tester, 1280, 800);
       final services = AppServices.inMemory();
+      await services.settingsRepository.save(const AppSettings(onboardingDone: true));
       await tester.pumpWidget(PostBoxApp(services: services));
       await tester.pumpAndSettle();
       expect(find.text('PostBox'), findsWidgets);
@@ -146,6 +148,7 @@ void main() {
     testWidgets('sending to a closed port shows a connection error', (tester) async {
       setSize(tester, 1280, 800);
       final services = AppServices.inMemory();
+      await services.settingsRepository.save(const AppSettings(onboardingDone: true));
       await tester.pumpWidget(PostBoxApp(services: services));
       await tester.pumpAndSettle();
 
@@ -162,26 +165,63 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('phone layout has bottom navigation and switches pages', (tester) async {
+    testWidgets('phone layout has a floating navigation bar and switches pages', (tester) async {
+      setSize(tester, 400, 800);
+      final services = AppServices.inMemory();
+      await services.settingsRepository.save(const AppSettings(onboardingDone: true));
+      await tester.pumpWidget(PostBoxApp(services: services));
+      await tester.pumpAndSettle();
+      expect(find.byType(FloatingNavBar), findsOneWidget);
+      await tester.tap(find.byTooltip('Response'));
+      await tester.pumpAndSettle();
+      expect(find.text('No response yet'), findsOneWidget);
+      await tester.tap(find.byTooltip('Library'));
+      await tester.pumpAndSettle();
+      expect(find.text('No collections yet'), findsOneWidget);
+      await tester.tap(find.byTooltip('Menu'));
+      await tester.pumpAndSettle();
+      expect(find.text('Local-first API client'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('onboarding is shown once, can add samples and then opens the app', (tester) async {
       setSize(tester, 400, 800);
       final services = AppServices.inMemory();
       await tester.pumpWidget(PostBoxApp(services: services));
       await tester.pumpAndSettle();
-      expect(find.byType(NavigationBar), findsOneWidget);
-      expect(find.text('Library'), findsOneWidget);
-      await tester.tap(find.text('Response'));
+      expect(find.text('Test any API, right on your device'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Next'));
       await tester.pumpAndSettle();
-      expect(find.text('No response yet'), findsOneWidget);
-      await tester.tap(find.text('Library'));
+      expect(find.text('Built to stay out of your way'), findsOneWidget);
+      await tester.tap(find.byTooltip('Next'));
       await tester.pumpAndSettle();
-      expect(find.text('No collections yet'), findsOneWidget);
+      expect(find.text('Start with examples?'), findsOneWidget);
+
+      await tester.tap(find.text('Get started'));
+      await tester.pumpAndSettle();
+      expect(find.byType(FloatingNavBar), findsOneWidget);
+      expect(services.settingsRepository.load().onboardingDone, isTrue);
+      expect(services.collections.listCollections().single.name, 'PostBox samples');
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('skipping onboarding creates no samples', (tester) async {
+      setSize(tester, 400, 800);
+      final services = AppServices.inMemory();
+      await tester.pumpWidget(PostBoxApp(services: services));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Skip'));
+      await tester.pumpAndSettle();
+      expect(find.byType(FloatingNavBar), findsOneWidget);
+      expect(services.collections.listCollections(), isEmpty);
       expect(tester.takeException(), isNull);
     });
 
     testWidgets('Persian UI is right-to-left and translated', (tester) async {
       setSize(tester, 1280, 800);
       final services = AppServices.inMemory();
-      await services.settingsRepository.save(const AppSettings(language: AppLanguage.fa));
+      await services.settingsRepository.save(const AppSettings(language: AppLanguage.fa, onboardingDone: true));
       await tester.pumpWidget(PostBoxApp(services: services));
       await tester.pumpAndSettle();
       expect(find.text('ارسال'), findsWidgets);
@@ -193,11 +233,11 @@ void main() {
     testWidgets('phone layout in Persian with large text scale does not overflow', (tester) async {
       setSize(tester, 360, 740);
       final services = AppServices.inMemory();
-      await services.settingsRepository.save(const AppSettings(language: AppLanguage.fa, fontScale: 1.4));
+      await services.settingsRepository.save(const AppSettings(language: AppLanguage.fa, fontScale: 1.4, onboardingDone: true));
       await tester.pumpWidget(PostBoxApp(services: services));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
-      await tester.tap(find.text('کتابخانه'));
+      await tester.tap(find.byTooltip('کتابخانه'));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     });
