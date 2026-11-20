@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:postbox/core/app_info.dart';
 import 'package:postbox/core/model/key_value.dart';
 import 'package:postbox/features/http/domain/http_engine.dart';
 import 'package:postbox/features/settings/application/settings_cubit.dart';
@@ -12,7 +13,7 @@ void main() {
     const s = AppSettings();
     expect(s.themePreset, ThemePreset.orange);
     expect(s.allowInvalidCertificates, isFalse);
-    expect(s.persianDigits, isFalse);
+    expect(s.persianDigits, isTrue);
     expect(s.redirectPolicy, RedirectPolicy.always);
     expect(s.omitSensitiveInHistory, isTrue);
   });
@@ -70,7 +71,7 @@ void main() {
         <String, dynamic>{'key': 'A', 'value': 'b'},
       ],
     });
-    expect(s.themeMode, AppThemeMode.system);
+    expect(s.themeMode, AppThemeMode.dark);
     expect(s.fontScale, 1.6);
     expect(s.timeoutSeconds, 1);
     expect(s.maxRedirects, 30);
@@ -91,20 +92,31 @@ void main() {
   test('tryParse reports errors', () {
     expect(AppSettings.tryParse('{bad').error, 'invalid_json');
     expect(AppSettings.tryParse('[1]').error, 'not_object');
-    expect(AppSettings.tryParse('{"schemaVersion": 99}').error, 'newer_version');
+    expect(
+      AppSettings.tryParse('{"schemaVersion": 99}').error,
+      'newer_version',
+    );
     expect(AppSettings.tryParse('x' * 300000).error, 'too_large');
-    expect(AppSettings.tryParse('{"themePreset":"emerald"}').settings!.themePreset, ThemePreset.emerald);
+    expect(
+      AppSettings.tryParse('{"themePreset":"emerald"}').settings!.themePreset,
+      ThemePreset.emerald,
+    );
   });
 
   test('missing schemaVersion is migrated', () {
-    expect(AppSettings.migrate(<String, dynamic>{})['schemaVersion'], 1);
+    expect(
+      AppSettings.migrate(<String, dynamic>{})['schemaVersion'],
+      settingsSchemaVersion,
+    );
   });
 
   test('export redacts sensitive default headers', () {
-    const s = AppSettings(defaultHeaders: <KeyValue>[
-      KeyValue(key: 'Authorization', value: 'Bearer top-secret'),
-      KeyValue(key: 'Accept', value: 'text/plain'),
-    ]);
+    const s = AppSettings(
+      defaultHeaders: <KeyValue>[
+        KeyValue(key: 'Authorization', value: 'Bearer top-secret'),
+        KeyValue(key: 'Accept', value: 'text/plain'),
+      ],
+    );
     final text = s.toJsonString(redactSensitive: true);
     expect(text.contains('top-secret'), isFalse);
     expect(text.contains('text/plain'), isTrue);
@@ -120,7 +132,9 @@ void main() {
   test('cubit validates, persists and resets', () async {
     final repo = MemorySettingsRepository();
     final cubit = SettingsCubit(repo);
-    await cubit.update((s) => s.copyWith(timeoutSeconds: 9999, themePreset: ThemePreset.arctic));
+    await cubit.update(
+      (s) => s.copyWith(timeoutSeconds: 9999, themePreset: ThemePreset.arctic),
+    );
     expect(cubit.state.timeoutSeconds, 600);
     expect(repo.load().themePreset, ThemePreset.arctic);
     await cubit.update((s) => s.copyWith(accentOverride: 0xFFAA0000));
@@ -133,5 +147,51 @@ void main() {
     await cubit.resetToDefaults();
     expect(cubit.state.themePreset, ThemePreset.orange);
     await cubit.close();
+  });
+
+  group('migration to schema 2 (1.0.0)', () {
+    test('moves saved settings to the new defaults and re-asks the theme', () {
+      final out = AppSettings.migrate(<String, dynamic>{
+        'schemaVersion': 1,
+        'themeMode': 'light',
+        'persianDigits': false,
+        'onboardingDone': true,
+        'timeoutSeconds': 45,
+      });
+      expect(out['schemaVersion'], 2);
+      expect(out['themeMode'], 'dark');
+      expect(out['persianDigits'], true);
+      expect(out['onboardingDone'], false);
+      expect(out['timeoutSeconds'], 45, reason: 'other values are kept');
+    });
+
+    test('settings already at version 2 are left alone', () {
+      final out = AppSettings.migrate(<String, dynamic>{
+        'schemaVersion': 2,
+        'themeMode': 'light',
+        'persianDigits': false,
+        'onboardingDone': true,
+      });
+      expect(out['themeMode'], 'light');
+      expect(out['persianDigits'], false);
+      expect(out['onboardingDone'], true);
+    });
+
+    test('an empty map becomes the plain defaults', () {
+      final s = AppSettings.fromJson(<String, dynamic>{});
+      expect(s.themeMode, AppThemeMode.dark);
+      expect(s.persianDigits, isTrue);
+      expect(s.onboardingDone, isFalse);
+    });
+
+    test('a stored version 1 file loads as dark with Persian digits', () {
+      final r = AppSettings.tryParse(
+        '{"schemaVersion":1,"themeMode":"light","persianDigits":false,"onboardingDone":true}',
+      );
+      expect(r.error, isNull);
+      expect(r.settings!.themeMode, AppThemeMode.dark);
+      expect(r.settings!.persianDigits, isTrue);
+      expect(r.settings!.onboardingDone, isFalse);
+    });
   });
 }

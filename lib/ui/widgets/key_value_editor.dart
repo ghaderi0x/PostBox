@@ -9,10 +9,10 @@ import '../editor/highlighter.dart';
 
 class _Row {
   _Row(KeyValue kv)
-      : key = CodeEditorController(text: kv.key, language: CodeLanguage.text),
-        value = CodeEditorController(text: kv.value, language: CodeLanguage.text),
-        enabled = kv.enabled,
-        isFile = kv.isFile;
+    : key = CodeEditorController(text: kv.key, language: CodeLanguage.text),
+      value = CodeEditorController(text: kv.value, language: CodeLanguage.text),
+      enabled = kv.enabled,
+      isFile = kv.isFile;
 
   final CodeEditorController key;
   final CodeEditorController value;
@@ -20,7 +20,12 @@ class _Row {
   bool isFile;
 
   bool get blank => key.text.isEmpty && value.text.isEmpty;
-  KeyValue toKv() => KeyValue(key: key.text, value: value.text, enabled: enabled, isFile: isFile);
+  KeyValue toKv() => KeyValue(
+    key: key.text,
+    value: value.text,
+    enabled: enabled,
+    isFile: isFile,
+  );
 
   void dispose() {
     key.dispose();
@@ -38,6 +43,7 @@ class KeyValueEditor extends StatefulWidget {
     this.keyHint,
     this.valueHint,
     this.allowFile = false,
+    this.bulkSeparator,
   });
 
   final List<KeyValue> items;
@@ -48,12 +54,59 @@ class KeyValueEditor extends StatefulWidget {
   /// Shows a toggle that turns the value into a file path (multipart).
   final bool allowFile;
 
+  /// Offers a "Bulk edit" mode with one `key<sep>value` per line (lines
+  /// starting with `#` are disabled rows). Not available with [allowFile].
+  final String? bulkSeparator;
+
   @override
   State<KeyValueEditor> createState() => _KeyValueEditorState();
 }
 
 class _KeyValueEditorState extends State<KeyValueEditor> {
   late List<_Row> _rows;
+  bool _bulk = false;
+  final TextEditingController _bulkText = TextEditingController();
+
+  static const int _maxBulkLines = 2000;
+
+  String _toBulk(List<KeyValue> items, String sep) => items
+      .map((k) {
+        final line = sep == ':'
+            ? '${k.key}: ${k.value}'
+            : '${k.key}$sep${k.value}';
+        return k.enabled ? line : '# $line';
+      })
+      .join('\n');
+
+  List<KeyValue> _fromBulk(String text, String sep) {
+    final out = <KeyValue>[];
+    for (final raw in text.split('\n').take(_maxBulkLines)) {
+      var line = raw.trimRight();
+      if (line.trim().isEmpty) continue;
+      var enabled = true;
+      if (line.trimLeft().startsWith('#')) {
+        enabled = false;
+        line = line.trimLeft().substring(1).trimLeft();
+        if (line.isEmpty) continue;
+      }
+      final i = line.indexOf(sep);
+      final key = (i < 0 ? line : line.substring(0, i)).trim();
+      final value = i < 0 ? '' : line.substring(i + sep.length).trim();
+      if (key.isEmpty) continue;
+      out.add(KeyValue(key: key, value: value, enabled: enabled));
+    }
+    return out;
+  }
+
+  void _toggleBulk() {
+    final sep = widget.bulkSeparator!;
+    setState(() {
+      if (!_bulk) {
+        _bulkText.text = _toBulk(widget.items, sep);
+      }
+      _bulk = !_bulk;
+    });
+  }
 
   @override
   void initState() {
@@ -62,16 +115,19 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
   }
 
   List<_Row> _build(List<KeyValue> items) => <_Row>[
-        ...items.map(_Row.new),
-        _Row(const KeyValue()),
-      ];
+    ...items.map(_Row.new),
+    _Row(const KeyValue()),
+  ];
 
   bool _sameAs(List<KeyValue> items) {
     if (items.length != _rows.length - 1) return false;
     for (var i = 0; i < items.length; i++) {
       final r = _rows[i];
       final k = items[i];
-      if (r.key.text != k.key || r.value.text != k.value || r.enabled != k.enabled || r.isFile != k.isFile) {
+      if (r.key.text != k.key ||
+          r.value.text != k.value ||
+          r.enabled != k.enabled ||
+          r.isFile != k.isFile) {
         return false;
       }
     }
@@ -91,6 +147,7 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
 
   @override
   void dispose() {
+    _bulkText.dispose();
     for (final r in _rows) {
       r.dispose();
     }
@@ -112,11 +169,18 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
     _emit();
   }
 
-  Widget _field(BuildContext context, CodeEditorController c, String? hint, bool enabled) {
+  Widget _field(
+    BuildContext context,
+    CodeEditorController c,
+    String? hint,
+    bool enabled,
+  ) {
     return TextField(
       controller: c,
       style: context.mono.copyWith(
-        color: enabled ? context.colors.textPrimary : context.colors.textSecondary,
+        color: enabled
+            ? context.colors.textPrimary
+            : context.colors.textSecondary,
       ),
       decoration: InputDecoration(hintText: hint),
       onChanged: (_) => _emit(),
@@ -125,77 +189,154 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.colors;
-    return LayoutBuilder(builder: (context, cons) {
-      final narrow = cons.maxWidth < 460;
-      return ListView.separated(
-        padding: const EdgeInsets.all(10),
-        itemCount: _rows.length,
-        separatorBuilder: (_, __) => SizedBox(height: narrow ? 12 : 6),
-        itemBuilder: (ctx, i) {
-          final r = _rows[i];
-          final isLast = i == _rows.length - 1;
-          final keyField = _field(ctx, r.key, widget.keyHint ?? ctx.t('kv.key'), r.enabled);
-          final valueField = _field(
-            ctx,
-            r.value,
-            r.isFile ? ctx.t('kv.filePath') : (widget.valueHint ?? ctx.t('kv.value')),
-            r.enabled,
-          );
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              SizedBox(
-                width: 32,
-                child: isLast
-                    ? null
-                    : Checkbox(
-                        value: r.enabled,
-                        visualDensity: VisualDensity.compact,
-                        onChanged: (v) {
-                          r.enabled = v ?? true;
-                          _emit();
-                        },
+    final sep = widget.bulkSeparator;
+    if (sep == null || widget.allowFile) return _rowsView(context);
+    return Column(
+      children: <Widget>[
+        Align(
+          alignment: AlignmentDirectional.centerEnd,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(10, 4, 10, 0),
+            child: TextButton.icon(
+              onPressed: _toggleBulk,
+              icon: Icon(
+                _bulk ? Icons.table_rows_outlined : Icons.notes,
+                size: 16,
+              ),
+              label: Text(
+                _bulk ? context.t('kv.rowsMode') : context.t('kv.bulkMode'),
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          child: _bulk
+              ? Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        context.t('kv.bulkHint', <String>[sep]),
+                        style: context.secondary,
                       ),
-              ),
-              Expanded(
-                child: narrow
-                    ? Column(children: <Widget>[keyField, const SizedBox(height: 6), valueField])
-                    : Row(children: <Widget>[
-                        Expanded(flex: 2, child: keyField),
-                        const SizedBox(width: 6),
-                        Expanded(flex: 3, child: valueField),
-                      ]),
-              ),
-              if (widget.allowFile)
-                IconButton(
-                  tooltip: ctx.t('kv.toggleFile'),
-                  icon: Icon(
-                    r.isFile ? Icons.attach_file : Icons.text_fields,
-                    size: 18,
-                    color: r.isFile ? c.accent : c.textSecondary,
+                      const SizedBox(height: 6),
+                      Expanded(
+                        child: TextField(
+                          controller: _bulkText,
+                          expands: true,
+                          maxLines: null,
+                          minLines: null,
+                          textAlignVertical: TextAlignVertical.top,
+                          style: context.mono,
+                          decoration: const InputDecoration(
+                            alignLabelWithHint: true,
+                          ),
+                          onChanged: (t) => widget.onChanged(_fromBulk(t, sep)),
+                        ),
+                      ),
+                    ],
                   ),
-                  onPressed: isLast
+                )
+              : _rowsView(context),
+        ),
+      ],
+    );
+  }
+
+  Widget _rowsView(BuildContext context) {
+    final c = context.colors;
+    return LayoutBuilder(
+      builder: (context, cons) {
+        final narrow = cons.maxWidth < 460;
+        return ListView.separated(
+          padding: const EdgeInsets.all(10),
+          itemCount: _rows.length,
+          separatorBuilder: (_, _) => SizedBox(height: narrow ? 12 : 6),
+          itemBuilder: (ctx, i) {
+            final r = _rows[i];
+            final isLast = i == _rows.length - 1;
+            final keyField = _field(
+              ctx,
+              r.key,
+              widget.keyHint ?? ctx.t('kv.key'),
+              r.enabled,
+            );
+            final valueField = _field(
+              ctx,
+              r.value,
+              r.isFile
+                  ? ctx.t('kv.filePath')
+                  : (widget.valueHint ?? ctx.t('kv.value')),
+              r.enabled,
+            );
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                SizedBox(
+                  width: 32,
+                  child: isLast
                       ? null
-                      : () {
-                          r.isFile = !r.isFile;
-                          _emit();
-                        },
+                      : Checkbox(
+                          value: r.enabled,
+                          visualDensity: VisualDensity.compact,
+                          onChanged: (v) {
+                            r.enabled = v ?? true;
+                            _emit();
+                          },
+                        ),
                 ),
-              SizedBox(
-                width: 36,
-                child: isLast
-                    ? null
-                    : IconButton(
-                        tooltip: ctx.t('common.delete'),
-                        icon: Icon(Icons.close, size: 18, color: c.textSecondary),
-                        onPressed: () => _remove(i),
-                      ),
-              ),
-            ],
-          );
-        },
-      );
-    });
+                Expanded(
+                  child: narrow
+                      ? Column(
+                          children: <Widget>[
+                            keyField,
+                            const SizedBox(height: 6),
+                            valueField,
+                          ],
+                        )
+                      : Row(
+                          children: <Widget>[
+                            Expanded(flex: 2, child: keyField),
+                            const SizedBox(width: 6),
+                            Expanded(flex: 3, child: valueField),
+                          ],
+                        ),
+                ),
+                if (widget.allowFile)
+                  IconButton(
+                    tooltip: ctx.t('kv.toggleFile'),
+                    icon: Icon(
+                      r.isFile ? Icons.attach_file : Icons.text_fields,
+                      size: 18,
+                      color: r.isFile ? c.accent : c.textSecondary,
+                    ),
+                    onPressed: isLast
+                        ? null
+                        : () {
+                            r.isFile = !r.isFile;
+                            _emit();
+                          },
+                  ),
+                SizedBox(
+                  width: 36,
+                  child: isLast
+                      ? null
+                      : IconButton(
+                          tooltip: ctx.t('common.delete'),
+                          icon: Icon(
+                            Icons.close,
+                            size: 18,
+                            color: c.textSecondary,
+                          ),
+                          onPressed: () => _remove(i),
+                        ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 }

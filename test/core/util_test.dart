@@ -17,12 +17,17 @@ void main() {
       expect(Redactor.url('https://api.test/x'), 'https://api.test/x');
     });
 
-    test('freeText scrubs query strings, bearer tokens and key=value secrets', () {
-      final out = Redactor.freeText('GET https://x.test/a?token=abc Bearer abc.def password=hunter2');
-      expect(out.contains('abc'), isFalse);
-      expect(out.contains('hunter2'), isFalse);
-      expect(out.contains('https://x.test/a?••••'), isTrue);
-    });
+    test(
+      'freeText scrubs query strings, bearer tokens and key=value secrets',
+      () {
+        final out = Redactor.freeText(
+          'GET https://x.test/a?token=abc Bearer abc.def password=hunter2',
+        );
+        expect(out.contains('abc'), isFalse);
+        expect(out.contains('hunter2'), isFalse);
+        expect(out.contains('https://x.test/a?••••'), isTrue);
+      },
+    );
 
     test('sensitive header detection', () {
       expect(Redactor.isSensitiveHeader('Authorization'), isTrue);
@@ -51,8 +56,14 @@ void main() {
     });
 
     test('jalali date formatting', () {
-      expect(const Fmt(jalali: true).dateTime(DateTime(2026, 10, 17, 9, 5)), '1405/07/25 09:05');
-      expect(const Fmt().dateTime(DateTime(2026, 10, 17, 9, 5)), '2026/10/17 09:05');
+      expect(
+        const Fmt(jalali: true).dateTime(DateTime(2026, 10, 17, 9, 5)),
+        '1405/07/25 09:05',
+      );
+      expect(
+        const Fmt().dateTime(DateTime(2026, 10, 17, 9, 5)),
+        '2026/10/17 09:05',
+      );
     });
   });
 

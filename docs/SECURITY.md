@@ -37,3 +37,17 @@ Authorization Code with PKCE (S256), random `state` validated on return, loopbac
 ## Reporting vulnerabilities
 
 Please report privately to the maintainers (a contact address must be set in the repository's `SECURITY.md` when it is published). Do not open public issues for vulnerabilities.
+
+
+## 0.4.0 additions
+
+| Topic | Behaviour |
+|---|---|
+| Scripts | Sandboxed interpreter, no file/network/process access, secret variables read as `null`, step/time/size limits. Scripts from imported files are dropped and reported; they never run. |
+| Inherited secrets | Collection and folder auth tokens and secret variables are stored in the secret vault, not in database rows or default exports. |
+| Cookies | Stored in the local database in plain text (server-issued session ids). Shown masked in the cookie manager, never exported, deleted by Clear local data. A manual `Cookie` header is never forwarded across origins; the jar is evaluated per host on each redirect hop. Secure cookies are not sent over http (except localhost). No public-suffix list: a server could set a cookie for a registrable suffix such as `co.uk`. |
+| Client certificates | Files are referenced by path, never copied. The key password goes to secure storage. Bad files are reported as TLS failures. SSE and WebSocket sessions do not use encrypted client keys or the cookie jar. |
+| TLS | Validation stays on by default. A custom CA is added to the system roots. |
+| Drag-drop and share | Dropped or shared content is only offered to the import preview; nothing is imported or run without a click. Android reads at most 5 MB of text. |
+| Workspaces | Each workspace is a separate database file. Deleting one removes the file but **not** its entries in the system secure storage (they remain as orphaned entries until Clear local data). |
+| Test fixtures | `test/fixtures` holds a throw-away private key for local TLS tests; it protects nothing. |

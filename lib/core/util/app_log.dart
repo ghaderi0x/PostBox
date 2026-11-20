@@ -35,7 +35,9 @@ class AppLog {
   String export() {
     final b = StringBuffer();
     for (final e in _entries) {
-      b.writeln('${e.time.toIso8601String()} ${e.level.name.toUpperCase()} ${e.message}');
+      b.writeln(
+        '${e.time.toIso8601String()} ${e.level.name.toUpperCase()} ${e.message}',
+      );
     }
     return b.toString();
   }

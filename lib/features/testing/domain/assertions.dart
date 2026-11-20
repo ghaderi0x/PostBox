@@ -53,17 +53,21 @@ class Assertion {
       kind != AssertionKind.jsonPathExists;
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'id': id,
-        'kind': kind.name,
-        'target': target,
-        'expected': expected,
-      };
+    'id': id,
+    'kind': kind.name,
+    'target': target,
+    'expected': expected,
+  };
 
   factory Assertion.fromJson(Object? j) {
     final m = asMap(j);
     return Assertion(
       id: asString(m['id']).isEmpty ? newId() : asString(m['id']),
-      kind: enumByName(AssertionKind.values, m['kind'], AssertionKind.statusEquals),
+      kind: enumByName(
+        AssertionKind.values,
+        m['kind'],
+        AssertionKind.statusEquals,
+      ),
       target: asString(m['target']),
       expected: asString(m['expected']),
     );
@@ -96,37 +100,40 @@ class Extraction {
   final String expression;
 
   factory Extraction.blank() => Extraction(
-        id: newId(),
-        variable: '',
-        source: ExtractionSource.jsonPath,
-        expression: '',
-      );
+    id: newId(),
+    variable: '',
+    source: ExtractionSource.jsonPath,
+    expression: '',
+  );
 
   Extraction copyWith({
     String? variable,
     ExtractionSource? source,
     String? expression,
-  }) =>
-      Extraction(
-        id: id,
-        variable: variable ?? this.variable,
-        source: source ?? this.source,
-        expression: expression ?? this.expression,
-      );
+  }) => Extraction(
+    id: id,
+    variable: variable ?? this.variable,
+    source: source ?? this.source,
+    expression: expression ?? this.expression,
+  );
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'id': id,
-        'variable': variable,
-        'source': source.name,
-        'expression': expression,
-      };
+    'id': id,
+    'variable': variable,
+    'source': source.name,
+    'expression': expression,
+  };
 
   factory Extraction.fromJson(Object? j) {
     final m = asMap(j);
     return Extraction(
       id: asString(m['id']).isEmpty ? newId() : asString(m['id']),
       variable: asString(m['variable']),
-      source: enumByName(ExtractionSource.values, m['source'], ExtractionSource.jsonPath),
+      source: enumByName(
+        ExtractionSource.values,
+        m['source'],
+        ExtractionSource.jsonPath,
+      ),
       expression: asString(m['expression']),
     );
   }
@@ -159,38 +166,52 @@ List<AssertionResult> evaluateAssertions(
     switch (a.kind) {
       case AssertionKind.statusEquals:
         final want = int.tryParse(a.expected.trim());
-        out.add(AssertionResult(
-          a,
-          want != null && r.statusCode == want,
-          'status ${r.statusCode}, expected ${a.expected}',
-        ));
+        out.add(
+          AssertionResult(
+            a,
+            want != null && r.statusCode == want,
+            'status ${r.statusCode}, expected ${a.expected}',
+          ),
+        );
       case AssertionKind.statusIsSuccess:
-        out.add(AssertionResult(
-          a,
-          r.statusCode >= 200 && r.statusCode < 300,
-          'status ${r.statusCode}',
-        ));
+        out.add(
+          AssertionResult(
+            a,
+            r.statusCode >= 200 && r.statusCode < 300,
+            'status ${r.statusCode}',
+          ),
+        );
       case AssertionKind.headerEquals:
         final v = r.header(a.target);
-        out.add(AssertionResult(
-          a,
-          v != null && v == a.expected,
-          v == null ? 'header ${a.target} missing' : 'header ${a.target} differs',
-        ));
+        out.add(
+          AssertionResult(
+            a,
+            v != null && v == a.expected,
+            v == null
+                ? 'header ${a.target} missing'
+                : 'header ${a.target} differs',
+          ),
+        );
       case AssertionKind.headerContains:
         final v = r.header(a.target);
-        out.add(AssertionResult(
-          a,
-          v != null && v.contains(a.expected),
-          v == null ? 'header ${a.target} missing' : 'header ${a.target} lacks text',
-        ));
+        out.add(
+          AssertionResult(
+            a,
+            v != null && v.contains(a.expected),
+            v == null
+                ? 'header ${a.target} missing'
+                : 'header ${a.target} lacks text',
+          ),
+        );
       case AssertionKind.bodyContains:
         final text = utf8.decode(r.body, allowMalformed: true);
-        out.add(AssertionResult(
-          a,
-          text.contains(a.expected),
-          'body does not contain the text',
-        ));
+        out.add(
+          AssertionResult(
+            a,
+            text.contains(a.expected),
+            'body does not contain the text',
+          ),
+        );
       case AssertionKind.jsonPathEquals:
         final path = JsonPath.parse(a.target);
         if (path == null) {
@@ -203,11 +224,13 @@ List<AssertionResult> evaluateAssertions(
           break;
         }
         final (found, value) = path.evaluate(body);
-        out.add(AssertionResult(
-          a,
-          found && jsonValueToString(value) == a.expected,
-          found ? 'value differs' : 'path not found',
-        ));
+        out.add(
+          AssertionResult(
+            a,
+            found && jsonValueToString(value) == a.expected,
+            found ? 'value differs' : 'path not found',
+          ),
+        );
       case AssertionKind.jsonPathExists:
         final path = JsonPath.parse(a.target);
         final body = jsonBody();
@@ -215,11 +238,13 @@ List<AssertionResult> evaluateAssertions(
         out.add(AssertionResult(a, ok, ok ? 'found' : 'path not found'));
       case AssertionKind.durationLessThanMs:
         final limit = int.tryParse(a.expected.trim());
-        out.add(AssertionResult(
-          a,
-          limit != null && r.duration.inMilliseconds < limit,
-          '${r.duration.inMilliseconds} ms, limit ${a.expected} ms',
-        ));
+        out.add(
+          AssertionResult(
+            a,
+            limit != null && r.duration.inMilliseconds < limit,
+            '${r.duration.inMilliseconds} ms, limit ${a.expected} ms',
+          ),
+        );
     }
   }
   return out;

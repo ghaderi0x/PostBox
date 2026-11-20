@@ -13,7 +13,11 @@ Packages used at runtime (licences as published on pub.dev; verify with `flutter
 | sqlite3 (and the bundled SQLite, public domain) | MIT |
 | flutter_secure_storage | BSD-3-Clause |
 | app_links | Apache-2.0 / BSD (check package page) |
+| http2 | BSD-3-Clause (checked in the package repository) |
+| flutter_widget_from_html_core | MIT (checked in the package repository) |
+| flutter_launcher_icons, flutter_native_splash (dev only) | MIT (check the package pages) |
+| file_picker, desktop_drop | MIT (expected; check the package pages before release) |
 
-Fonts (not yet bundled; all SIL Open Font License 1.1, copyright lines must accompany the files): Inter, Vazirmatn, JetBrains Mono.
+Fonts (bundled in `assets/fonts`, all SIL Open Font License 1.1; the licence texts are next to the files): Inter 4.1 (`OFL-Inter.txt`), Vazirmatn (`OFL-Vazirmatn.txt`), JetBrains Mono 2.304 (`OFL-JetBrainsMono.txt`).
 
 Before a release, regenerate this list from the lockfile and confirm each licence.

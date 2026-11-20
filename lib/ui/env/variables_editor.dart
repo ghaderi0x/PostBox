@@ -7,7 +7,11 @@ import '../../l10n/strings.dart';
 
 /// Editable variable list with enabled, secret flag and masked secret values.
 class VariablesEditor extends StatefulWidget {
-  const VariablesEditor({super.key, required this.variables, required this.onChanged});
+  const VariablesEditor({
+    super.key,
+    required this.variables,
+    required this.onChanged,
+  });
 
   final List<Variable> variables;
   final ValueChanged<List<Variable>> onChanged;
@@ -18,8 +22,8 @@ class VariablesEditor extends StatefulWidget {
 
 class _VarRow {
   _VarRow(this.v)
-      : key = TextEditingController(text: v.key),
-        value = TextEditingController(text: v.value);
+    : key = TextEditingController(text: v.key),
+      value = TextEditingController(text: v.value);
   Variable v;
   final TextEditingController key;
   final TextEditingController value;
@@ -38,8 +42,12 @@ class _VariablesEditorState extends State<VariablesEditor> {
   @override
   void didUpdateWidget(VariablesEditor old) {
     super.didUpdateWidget(old);
-    final same = widget.variables.length == _rows.length &&
-        List<bool>.generate(_rows.length, (i) => _rows[i].v.id == widget.variables[i].id).every((e) => e);
+    final same =
+        widget.variables.length == _rows.length &&
+        List<bool>.generate(
+          _rows.length,
+          (i) => _rows[i].v.id == widget.variables[i].id,
+        ).every((e) => e);
     if (!same) {
       for (final r in _rows) {
         r.dispose();
@@ -76,11 +84,16 @@ class _VariablesEditorState extends State<VariablesEditor> {
       children: <Widget>[
         Expanded(
           child: _rows.isEmpty
-              ? Center(child: Text(context.t('env.noVars'), style: context.secondary))
+              ? Center(
+                  child: Text(
+                    context.t('env.noVars'),
+                    style: context.secondary,
+                  ),
+                )
               : ListView.separated(
                   padding: const EdgeInsets.all(10),
                   itemCount: _rows.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (ctx, i) {
                     final r = _rows[i];
                     return Wrap(
@@ -101,7 +114,9 @@ class _VariablesEditorState extends State<VariablesEditor> {
                           child: TextField(
                             controller: r.key,
                             style: ctx.mono,
-                            decoration: InputDecoration(hintText: ctx.t('env.name')),
+                            decoration: InputDecoration(
+                              hintText: ctx.t('env.name'),
+                            ),
                             onChanged: (_) => _emit(),
                           ),
                         ),
@@ -118,8 +133,15 @@ class _VariablesEditorState extends State<VariablesEditor> {
                               suffixIcon: r.v.secret
                                   ? IconButton(
                                       tooltip: ctx.t('auth.reveal'),
-                                      icon: Icon(r.reveal ? Icons.visibility_off : Icons.visibility, size: 18, color: c.textSecondary),
-                                      onPressed: () => setState(() => r.reveal = !r.reveal),
+                                      icon: Icon(
+                                        r.reveal
+                                            ? Icons.visibility_off
+                                            : Icons.visibility,
+                                        size: 18,
+                                        color: c.textSecondary,
+                                      ),
+                                      onPressed: () =>
+                                          setState(() => r.reveal = !r.reveal),
                                     )
                                   : null,
                             ),
@@ -129,7 +151,11 @@ class _VariablesEditorState extends State<VariablesEditor> {
                         FilterChip(
                           label: Text(ctx.t('env.secret')),
                           selected: r.v.secret,
-                          avatar: Icon(Icons.lock_outline, size: 14, color: r.v.secret ? c.accent : c.textSecondary),
+                          avatar: Icon(
+                            Icons.lock_outline,
+                            size: 14,
+                            color: r.v.secret ? c.accent : c.textSecondary,
+                          ),
                           visualDensity: VisualDensity.compact,
                           onSelected: (s) {
                             r.v = r.v.copyWith(secret: s);
@@ -138,7 +164,11 @@ class _VariablesEditorState extends State<VariablesEditor> {
                         ),
                         IconButton(
                           tooltip: ctx.t('common.delete'),
-                          icon: Icon(Icons.close, size: 18, color: c.textSecondary),
+                          icon: Icon(
+                            Icons.close,
+                            size: 18,
+                            color: c.textSecondary,
+                          ),
                           onPressed: () {
                             _rows.removeAt(i).dispose();
                             _emit();

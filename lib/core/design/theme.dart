@@ -8,6 +8,12 @@ import 'tokens.dart';
 const String kUiFont = 'Inter';
 const String kPersianFont = 'Vazirmatn';
 const String kMonoFont = 'JetBrainsMono';
+
+/// Contains only the ten ASCII digits, drawn with Persian shapes (derived
+/// from Vazirmatn). Placed first in the font list when Persian digits are on,
+/// so every number in normal UI text shows Persian digits while all other
+/// characters fall through to the UI font. Code and URLs keep Latin digits.
+const String kDigitsFont = 'PostBoxDigits';
 const List<String> kMonoFallback = <String>[
   kPersianFont,
   'Consolas',
@@ -26,8 +32,12 @@ ThemeData buildTheme({
     accentOverride: settings.accentOverride,
     surface: settings.surfaceStyle,
   );
-  final family = persianUi ? kPersianFont : kUiFont;
-  final fallback = persianUi ? <String>[kUiFont] : <String>[kPersianFont];
+  final baseFamily = persianUi ? kPersianFont : kUiFont;
+  final baseFallback = persianUi ? <String>[kUiFont] : <String>[kPersianFont];
+  final family = settings.persianDigits ? kDigitsFont : baseFamily;
+  final fallback = settings.persianDigits
+      ? <String>[baseFamily, ...baseFallback]
+      : baseFallback;
 
   final scheme = ColorScheme(
     brightness: brightness,
@@ -36,7 +46,9 @@ ThemeData buildTheme({
     secondary: c.accent,
     onSecondary: c.onAccent,
     error: c.danger,
-    onError: brightness == Brightness.dark ? const Color(0xFF1A0505) : const Color(0xFFFFFFFF),
+    onError: brightness == Brightness.dark
+        ? const Color(0xFF1A0505)
+        : const Color(0xFFFFFFFF),
     surface: c.surfaceBase,
     onSurface: c.textPrimary,
     onSurfaceVariant: c.textSecondary,
@@ -57,7 +69,9 @@ ThemeData buildTheme({
     fontFamilyFallback: fallback,
   );
 
-  final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.md));
+  final shape = RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(Radii.md),
+  );
   final outline = OutlineInputBorder(
     borderRadius: BorderRadius.circular(Radii.md),
     borderSide: BorderSide(color: c.border),
@@ -78,11 +92,13 @@ ThemeData buildTheme({
         : VisualDensity.standard,
     splashFactory: settings.reducedMotion ? NoSplash.splashFactory : null,
     pageTransitionsTheme: settings.reducedMotion
-        ? const PageTransitionsTheme(builders: <TargetPlatform, PageTransitionsBuilder>{
-            TargetPlatform.android: _NoTransitions(),
-            TargetPlatform.windows: _NoTransitions(),
-            TargetPlatform.linux: _NoTransitions(),
-          })
+        ? const PageTransitionsTheme(
+            builders: <TargetPlatform, PageTransitionsBuilder>{
+              TargetPlatform.android: _NoTransitions(),
+              TargetPlatform.windows: _NoTransitions(),
+              TargetPlatform.linux: _NoTransitions(),
+            },
+          )
         : null,
     inputDecorationTheme: InputDecorationTheme(
       isDense: true,
@@ -92,8 +108,9 @@ ThemeData buildTheme({
         borderSide: BorderSide(color: c.accent, width: 1.5),
       ),
       errorBorder: outline.copyWith(borderSide: BorderSide(color: c.danger)),
-      focusedErrorBorder:
-          outline.copyWith(borderSide: BorderSide(color: c.danger, width: 1.5)),
+      focusedErrorBorder: outline.copyWith(
+        borderSide: BorderSide(color: c.danger, width: 1.5),
+      ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
     ),
     filledButtonTheme: FilledButtonThemeData(
@@ -111,7 +128,9 @@ ThemeData buildTheme({
         foregroundColor: c.textPrimary,
       ),
     ),
-    textButtonTheme: TextButtonThemeData(style: TextButton.styleFrom(shape: shape)),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(shape: shape),
+    ),
     popupMenuTheme: PopupMenuThemeData(
       color: c.surfaceRaised,
       shape: RoundedRectangleBorder(
@@ -119,7 +138,10 @@ ThemeData buildTheme({
         side: BorderSide(color: c.border),
       ),
     ),
-    snackBarTheme: SnackBarThemeData(behavior: SnackBarBehavior.floating, shape: shape),
+    snackBarTheme: SnackBarThemeData(
+      behavior: SnackBarBehavior.floating,
+      shape: shape,
+    ),
     bottomSheetTheme: BottomSheetThemeData(
       backgroundColor: c.surfaceRaised,
       shape: const RoundedRectangleBorder(
@@ -169,6 +191,5 @@ class _NoTransitions extends PageTransitionsBuilder {
     Animation<double> animation,
     Animation<double> secondaryAnimation,
     Widget child,
-  ) =>
-      child;
+  ) => child;
 }

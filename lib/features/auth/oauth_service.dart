@@ -21,11 +21,16 @@ class OAuthException implements Exception {
   final String detail;
 
   @override
-  String toString() => 'OAuthException($code${detail.isEmpty ? '' : ': $detail'})';
+  String toString() =>
+      'OAuthException($code${detail.isEmpty ? '' : ': $detail'})';
 }
 
 class OAuthTokens {
-  const OAuthTokens({required this.accessToken, this.refreshToken, this.expiresAtMs = 0});
+  const OAuthTokens({
+    required this.accessToken,
+    this.refreshToken,
+    this.expiresAtMs = 0,
+  });
   final String accessToken;
   final String? refreshToken;
   final int expiresAtMs;
@@ -42,7 +47,10 @@ const String _unreserved =
 
 String _randomString(int length) {
   final rng = Random.secure();
-  return List<String>.generate(length, (_) => _unreserved[rng.nextInt(_unreserved.length)]).join();
+  return List<String>.generate(
+    length,
+    (_) => _unreserved[rng.nextInt(_unreserved.length)],
+  ).join();
 }
 
 PkcePair generatePkce() {
@@ -129,10 +137,13 @@ class OAuthService {
     required UrlLauncher launcher,
     RedirectReceiver? receiver,
     this.timeout = const Duration(minutes: 5),
-  })  : _engine = engine,
-        _launcher = launcher,
-        _receiver = receiver ??
-            (Platform.isAndroid ? const AppLinkRedirectReceiver() : const LoopbackRedirectReceiver());
+  }) : _engine = engine,
+       _launcher = launcher,
+       _receiver =
+           receiver ??
+           (Platform.isAndroid
+               ? const AppLinkRedirectReceiver()
+               : const LoopbackRedirectReceiver());
 
   final HttpEngine _engine;
   final UrlLauncher _launcher;
@@ -141,7 +152,8 @@ class OAuthService {
 
   static bool _isSecureEndpoint(Uri u) {
     if (u.scheme == 'https') return true;
-    return u.scheme == 'http' && (u.host == 'localhost' || u.host == '127.0.0.1');
+    return u.scheme == 'http' &&
+        (u.host == 'localhost' || u.host == '127.0.0.1');
   }
 
   Uri _endpoint(String raw, String code) {
@@ -152,7 +164,9 @@ class OAuthService {
   }
 
   Future<OAuthTokens> authorize(AuthConfig c) async {
-    if (c.clientId.trim().isEmpty) throw const OAuthException('missing_client_id');
+    if (c.clientId.trim().isEmpty) {
+      throw const OAuthException('missing_client_id');
+    }
     final authUrl = _endpoint(c.authUrl, 'invalid_auth_url');
     final tokenUrl = _endpoint(c.tokenUrl, 'invalid_token_url');
 
@@ -185,9 +199,11 @@ class OAuthService {
         throw const OAuthException('state_mismatch');
       }
       final code = callback.queryParameters['code'];
-      if (code == null || code.isEmpty) throw const OAuthException('missing_code');
+      if (code == null || code.isEmpty) {
+        throw const OAuthException('missing_code');
+      }
 
-      return _tokenRequest(tokenUrl, <String, String>{
+      return await _tokenRequest(tokenUrl, <String, String>{
         'grant_type': 'authorization_code',
         'code': code,
         'redirect_uri': session.redirectUri.toString(),
@@ -219,22 +235,27 @@ class OAuthService {
 
   Future<OAuthTokens> _tokenRequest(Uri url, Map<String, String> form) async {
     final body = form.entries
-        .map((e) => '${Uri.encodeQueryComponent(e.key)}=${Uri.encodeQueryComponent(e.value)}')
+        .map(
+          (e) =>
+              '${Uri.encodeQueryComponent(e.key)}=${Uri.encodeQueryComponent(e.value)}',
+        )
         .join('&');
     final HttpResult res;
     try {
-      res = await _engine.send(HttpRequestSpec(
-        method: 'POST',
-        url: url,
-        headers: const <String, String>{
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Accept': 'application/json',
-        },
-        body: Uint8List.fromList(utf8.encode(body)),
-        timeout: const Duration(seconds: 30),
-        redirectPolicy: RedirectPolicy.never,
-        maxResponseBytes: 1024 * 1024,
-      ));
+      res = await _engine.send(
+        HttpRequestSpec(
+          method: 'POST',
+          url: url,
+          headers: const <String, String>{
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json',
+          },
+          body: Uint8List.fromList(utf8.encode(body)),
+          timeout: const Duration(seconds: 30),
+          redirectPolicy: RedirectPolicy.never,
+          maxResponseBytes: 1024 * 1024,
+        ),
+      );
     } on HttpFailure catch (e) {
       throw OAuthException('token_request_failed', e.kind.name);
     }
@@ -245,7 +266,9 @@ class OAuthService {
     } on FormatException {
       json = <String, dynamic>{};
     }
-    if (res.statusCode < 200 || res.statusCode >= 300 || json['error'] != null) {
+    if (res.statusCode < 200 ||
+        res.statusCode >= 300 ||
+        json['error'] != null) {
       throw OAuthException('token_error', '${json['error'] ?? res.statusCode}');
     }
     final access = json['access_token'];
@@ -256,7 +279,9 @@ class OAuthService {
     final seconds = expiresIn is num ? expiresIn.toInt() : 0;
     return OAuthTokens(
       accessToken: access,
-      refreshToken: json['refresh_token'] is String ? json['refresh_token'] as String : null,
+      refreshToken: json['refresh_token'] is String
+          ? json['refresh_token'] as String
+          : null,
       expiresAtMs: seconds > 0
           ? DateTime.now().millisecondsSinceEpoch + seconds * 1000
           : 0,

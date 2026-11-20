@@ -33,21 +33,21 @@ void main() {
     base = 'http://127.0.0.1:${server.port}';
     server.listen((req) async {
       try {
-      seenAuth.add(req.headers.value('authorization'));
-      req.response.headers.contentType = ContentType.json;
-      final path = req.uri.path;
-      if (path == '/login') {
-        req.response.write(jsonEncode(<String, String>{'token': 'T1'}));
-      } else if (path == '/me/T1') {
-        req.response.write(jsonEncode(<String, String>{'user': 'ok'}));
-      } else if (path == '/slow') {
-        await Future<void>.delayed(const Duration(seconds: 2));
-      } else if (path.startsWith('/me/')) {
-        req.response.statusCode = 404;
-      } else {
-        req.response.write('{"token":"abc"}');
-      }
-      await req.response.close();
+        seenAuth.add(req.headers.value('authorization'));
+        req.response.headers.contentType = ContentType.json;
+        final path = req.uri.path;
+        if (path == '/login') {
+          req.response.write(jsonEncode(<String, String>{'token': 'T1'}));
+        } else if (path == '/me/T1') {
+          req.response.write(jsonEncode(<String, String>{'user': 'ok'}));
+        } else if (path == '/slow') {
+          await Future<void>.delayed(const Duration(seconds: 2));
+        } else if (path.startsWith('/me/')) {
+          req.response.statusCode = 404;
+        } else {
+          req.response.write('{"token":"abc"}');
+        }
+        await req.response.close();
       } on Object {
         // The client may have disconnected (cancelled requests); ignore.
       }
@@ -85,10 +85,20 @@ void main() {
         url: '$base/anything?x=1',
         assertions: <Assertion>[
           Assertion(id: 'a', kind: AssertionKind.statusEquals, expected: '200'),
-          Assertion(id: 'b', kind: AssertionKind.jsonPathEquals, target: r'$.token', expected: 'abc'),
+          Assertion(
+            id: 'b',
+            kind: AssertionKind.jsonPathEquals,
+            target: r'$.token',
+            expected: 'abc',
+          ),
         ],
         extractions: <Extraction>[
-          Extraction(id: 'e', variable: 'tok', source: ExtractionSource.jsonPath, expression: r'$.token'),
+          Extraction(
+            id: 'e',
+            variable: 'tok',
+            source: ExtractionSource.jsonPath,
+            expression: r'$.token',
+          ),
         ],
       ),
     );
@@ -106,34 +116,46 @@ void main() {
     expect(history.state.entries.single.requestJson, isNull);
   });
 
-  test('extraction goes into the active environment when there is one', () async {
-    final env = await envs.create('Dev');
-    await envs.setActive(env.id);
-    ws.newTab(
-      model: RequestModel(
-        id: 'r1',
-        url: '$base/login',
-        extractions: <Extraction>[
-          Extraction(id: 'e', variable: 'tok', source: ExtractionSource.jsonPath, expression: r'$.token'),
-        ],
-      ),
-    );
-    await ws.send('r1');
-    expect(envs.state.active!.variables.single.value, 'T1');
-    expect(envs.state.globals, isEmpty);
-  });
+  test(
+    'extraction goes into the active environment when there is one',
+    () async {
+      final env = await envs.create('Dev');
+      await envs.setActive(env.id);
+      ws.newTab(
+        model: RequestModel(
+          id: 'r1',
+          url: '$base/login',
+          extractions: <Extraction>[
+            Extraction(
+              id: 'e',
+              variable: 'tok',
+              source: ExtractionSource.jsonPath,
+              expression: r'$.token',
+            ),
+          ],
+        ),
+      );
+      await ws.send('r1');
+      expect(envs.state.active!.variables.single.value, 'T1');
+      expect(envs.state.globals, isEmpty);
+    },
+  );
 
   test('variables from environment are used when sending', () async {
     final env = await envs.create('Dev');
     await envs.setActive(env.id);
     await envs.setExtracted(<String, String>{'path': 'me/T1'});
-    ws.newTab(model: RequestModel(id: 'r1', url: '$base/{{path}}'));
+    ws.newTab(
+      model: RequestModel(id: 'r1', url: '$base/{{path}}'),
+    );
     await ws.send('r1');
     expect(ws.state.tab('r1')!.outcome!.result!.statusCode, 200);
   });
 
   test('build errors are reported without sending', () async {
-    ws.newTab(model: RequestModel(id: 'r1', url: '{{missing}}/x'));
+    ws.newTab(
+      model: RequestModel(id: 'r1', url: '{{missing}}/x'),
+    );
     await ws.send('r1');
     final o = ws.state.tab('r1')!.outcome!;
     expect(o.buildError!.code, 'unresolved_url');
@@ -142,7 +164,9 @@ void main() {
   });
 
   test('cancel produces a cancelled failure and no history entry', () async {
-    ws.newTab(model: RequestModel(id: 'r1', url: '$base/slow'));
+    ws.newTab(
+      model: RequestModel(id: 'r1', url: '$base/slow'),
+    );
     final f = ws.send('r1');
     await Future<void>.delayed(const Duration(milliseconds: 200));
     expect(ws.state.tab('r1')!.phase, SendPhase.sending);
@@ -153,26 +177,31 @@ void main() {
     expect(history.state.entries, isEmpty);
   });
 
-  test('history with privacy off keeps a replayable request without secrets', () async {
-    await settings.update((s) => s.copyWith(omitSensitiveInHistory: false));
-    ws.newTab(
-      model: RequestModel(
-        id: 'r1',
-        url: '$base/x',
-        auth: const AuthConfig(type: AuthType.bearer, token: 'TOPSECRET'),
-      ),
-    );
-    await ws.send('r1');
-    final e = history.state.entries.single;
-    expect(e.requestJson, isNotNull);
-    expect(e.requestJson!.contains('TOPSECRET'), isFalse);
-    expect(e.url.contains('TOPSECRET'), isFalse);
-    expect(seenAuth.single, 'Bearer TOPSECRET');
-  });
+  test(
+    'history with privacy off keeps a replayable request without secrets',
+    () async {
+      await settings.update((s) => s.copyWith(omitSensitiveInHistory: false));
+      ws.newTab(
+        model: RequestModel(
+          id: 'r1',
+          url: '$base/x',
+          auth: const AuthConfig(type: AuthType.bearer, token: 'TOPSECRET'),
+        ),
+      );
+      await ws.send('r1');
+      final e = history.state.entries.single;
+      expect(e.requestJson, isNotNull);
+      expect(e.requestJson!.contains('TOPSECRET'), isFalse);
+      expect(e.url.contains('TOPSECRET'), isFalse);
+      expect(seenAuth.single, 'Bearer TOPSECRET');
+    },
+  );
 
   test('history can be switched off', () async {
     await settings.update((s) => s.copyWith(persistHistory: false));
-    ws.newTab(model: RequestModel(id: 'r1', url: '$base/x'));
+    ws.newTab(
+      model: RequestModel(id: 'r1', url: '$base/x'),
+    );
     await ws.send('r1');
     expect(history.state.entries, isEmpty);
   });
@@ -190,9 +219,12 @@ void main() {
     expect(ws.state.tab('r1')!.dirty, isTrue);
     await ws.save('r1', collectionId: col.id);
     expect(ws.state.tab('r1')!.dirty, isFalse);
-    final raw = services.database.db
-        .select('SELECT data_json FROM nodes WHERE id = ?', <Object?>['r1'])
-        .first['data_json'] as String;
+    final raw =
+        services.database.db.select(
+              'SELECT data_json FROM nodes WHERE id = ?',
+              <Object?>['r1'],
+            ).first['data_json']
+            as String;
     expect(raw.contains('TOPSECRET'), isFalse);
 
     final node = cols.state.node('r1')!;
@@ -252,65 +284,95 @@ void main() {
     expect(copy.name, 'A copy');
   });
 
-  test('secret environment variables are stored outside the database', () async {
-    final env = await envs.create('Prod');
-    await envs.save(env.copyWith(variables: const <Variable>[
-      Variable(id: 'v1', key: 'api', value: 'S3CRETVALUE', secret: true),
-      Variable(id: 'v2', key: 'host', value: 'h'),
-    ]));
-    final raw = services.database.db.select('SELECT vars_json FROM environments').first['vars_json'] as String;
-    expect(raw.contains('S3CRETVALUE'), isFalse);
-    expect(await services.secrets.read('var.v1'), 'S3CRETVALUE');
-    // Reload (as after an app restart) restores the secret value.
-    final again = EnvironmentsCubit(services.environments, services.vault);
-    await again.load();
-    expect(again.state.environments.single.variables.firstWhere((v) => v.key == 'api').value, 'S3CRETVALUE');
-    await again.close();
-  });
+  test(
+    'secret environment variables are stored outside the database',
+    () async {
+      final env = await envs.create('Prod');
+      await envs.save(
+        env.copyWith(
+          variables: const <Variable>[
+            Variable(id: 'v1', key: 'api', value: 'S3CRETVALUE', secret: true),
+            Variable(id: 'v2', key: 'host', value: 'h'),
+          ],
+        ),
+      );
+      final raw =
+          services.database.db
+                  .select('SELECT vars_json FROM environments')
+                  .first['vars_json']
+              as String;
+      expect(raw.contains('S3CRETVALUE'), isFalse);
+      expect(await services.secrets.read('var.v1'), 'S3CRETVALUE');
+      // Reload (as after an app restart) restores the secret value.
+      final again = EnvironmentsCubit(services.environments, services.vault);
+      await again.load();
+      expect(
+        again.state.environments.single.variables
+            .firstWhere((v) => v.key == 'api')
+            .value,
+        'S3CRETVALUE',
+      );
+      await again.close();
+    },
+  );
 
-  test('runner chains values between requests and does not persist them', () async {
-    final col = await cols.createCollection('Flow');
-    await cols.saveRequest(
-      request: RequestModel(
-        id: 'a',
-        name: 'login',
-        url: '$base/login',
-        extractions: <Extraction>[
-          Extraction(id: 'e', variable: 'tok', source: ExtractionSource.jsonPath, expression: r'$.token'),
-        ],
-      ),
-      collectionId: col.id,
-    );
-    await cols.saveRequest(
-      request: RequestModel(
-        id: 'b',
-        name: 'me',
-        url: '$base/me/{{tok}}',
-        assertions: <Assertion>[Assertion(id: 'x', kind: AssertionKind.statusEquals, expected: '200')],
-      ),
-      collectionId: col.id,
-    );
-    await cols.saveRequest(
-      request: RequestModel(id: 'c', name: 'wrong', url: '$base/me/other'),
-      collectionId: col.id,
-    );
-    final runner = RunnerCubit(
-      collections: cols,
-      environments: envs,
-      settings: settings,
-      executor: services.executor,
-    );
-    addTearDown(runner.close);
-    await runner.run(col.id);
-    final s = runner.state;
-    expect(s.running, isFalse);
-    expect(s.results.map((r) => r.name), <String>['login', 'me', 'wrong']);
-    expect(s.results.map((r) => r.passed), <bool>[true, true, false]);
-    expect(envs.state.globals, isEmpty);
-    expect(s.toMarkdown(), contains('FAIL'));
-    expect(jsonDecode(s.toJsonString())['failed'], 1);
+  test(
+    'runner chains values between requests and does not persist them',
+    () async {
+      final col = await cols.createCollection('Flow');
+      await cols.saveRequest(
+        request: RequestModel(
+          id: 'a',
+          name: 'login',
+          url: '$base/login',
+          extractions: <Extraction>[
+            Extraction(
+              id: 'e',
+              variable: 'tok',
+              source: ExtractionSource.jsonPath,
+              expression: r'$.token',
+            ),
+          ],
+        ),
+        collectionId: col.id,
+      );
+      await cols.saveRequest(
+        request: RequestModel(
+          id: 'b',
+          name: 'me',
+          url: '$base/me/{{tok}}',
+          assertions: <Assertion>[
+            Assertion(
+              id: 'x',
+              kind: AssertionKind.statusEquals,
+              expected: '200',
+            ),
+          ],
+        ),
+        collectionId: col.id,
+      );
+      await cols.saveRequest(
+        request: RequestModel(id: 'c', name: 'wrong', url: '$base/me/other'),
+        collectionId: col.id,
+      );
+      final runner = RunnerCubit(
+        collections: cols,
+        environments: envs,
+        settings: settings,
+        executor: services.executor,
+      );
+      addTearDown(runner.close);
+      await runner.run(col.id);
+      final s = runner.state;
+      expect(s.running, isFalse);
+      expect(s.results.map((r) => r.name), <String>['login', 'me', 'wrong']);
+      expect(s.results.map((r) => r.passed), <bool>[true, true, false]);
+      expect(envs.state.globals, isEmpty);
+      expect(s.toMarkdown(), contains('FAIL'));
+      expect(jsonDecode(s.toJsonString())['failed'], 1);
 
-    await runner.run(col.id, stopOnFailure: true);
-    expect(runner.state.results.length, 3);
-  });
+      await runner.run(col.id, stopOnFailure: true);
+      expect(runner.state.results.length, 3);
+    },
+  );
 }

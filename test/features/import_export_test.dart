@@ -76,9 +76,17 @@ void main() {
     test('rejects malformed input', () {
       expect(parsePostmanCollection('{').hasErrors, isTrue);
       expect(parsePostmanCollection('[]').hasErrors, isTrue);
-      expect(parsePostmanCollection('{"info":{"name":"x","schema":"foo"},"item":[]}').hasErrors, isTrue);
+      expect(
+        parsePostmanCollection(
+          '{"info":{"name":"x","schema":"foo"},"item":[]}',
+        ).hasErrors,
+        isTrue,
+      );
       expect(parsePostmanCollection('{"nothing":1}').hasErrors, isTrue);
-      expect(parsePostmanCollection('x' * (11 * 1024 * 1024)).hasErrors, isTrue);
+      expect(
+        parsePostmanCollection('x' * (11 * 1024 * 1024)).hasErrors,
+        isTrue,
+      );
     });
   });
 
@@ -90,15 +98,17 @@ void main() {
         const Variable(id: '2', key: 's', value: 'hidden', secret: true),
       ],
       nodes: <ImportedNode>[
-        ImportedNode.request(const RequestModel(
-          id: 'r',
-          name: 'One',
-          method: 'POST',
-          url: 'https://a.test/x',
-          bodyType: BodyType.json,
-          body: '{"a":1}',
-          auth: AuthConfig(type: AuthType.bearer, token: 'SECRETTOKEN'),
-        )),
+        ImportedNode.request(
+          const RequestModel(
+            id: 'r',
+            name: 'One',
+            method: 'POST',
+            url: 'https://a.test/x',
+            bodyType: BodyType.json,
+            body: '{"a":1}',
+            auth: AuthConfig(type: AuthType.bearer, token: 'SECRETTOKEN'),
+          ),
+        ),
       ],
     );
 
@@ -110,13 +120,17 @@ void main() {
     });
 
     test('includes secrets when asked', () {
-      final text = jsonEncode(exportPostmanCollection(col, includeSecrets: true));
+      final text = jsonEncode(
+        exportPostmanCollection(col, includeSecrets: true),
+      );
       expect(text, contains('SECRETTOKEN'));
       expect(text, contains('hidden'));
     });
 
     test('export then import keeps requests', () {
-      final text = prettyJson(exportPostmanCollection(col, includeSecrets: true));
+      final text = prettyJson(
+        exportPostmanCollection(col, includeSecrets: true),
+      );
       final back = parsePostmanCollection(text);
       expect(back.hasErrors, isFalse);
       final r = back.collections.single.nodes.single.request!;
@@ -131,24 +145,39 @@ void main() {
     final col = ImportedCollection(
       name: 'Mine',
       description: 'desc',
-      variables: <Variable>[const Variable(id: 'v', key: 'sec', value: 'topsecret', secret: true)],
+      variables: <Variable>[
+        const Variable(id: 'v', key: 'sec', value: 'topsecret', secret: true),
+      ],
       nodes: <ImportedNode>[
         ImportedNode.folder('F', <ImportedNode>[
-          ImportedNode.request(const RequestModel(
-            id: 'r1',
-            name: 'Req',
-            url: 'https://a.test',
-            auth: AuthConfig(type: AuthType.basic, username: 'u', password: 'PASSWORD'),
-          )),
+          ImportedNode.request(
+            const RequestModel(
+              id: 'r1',
+              name: 'Req',
+              url: 'https://a.test',
+              auth: AuthConfig(
+                type: AuthType.basic,
+                username: 'u',
+                password: 'PASSWORD',
+              ),
+            ),
+          ),
         ]),
       ],
     );
     final envs = <Environment>[
-      const Environment(id: 'e', name: 'Prod', variables: <Variable>[Variable(id: 'x', key: 'k', value: 'v')]),
+      const Environment(
+        id: 'e',
+        name: 'Prod',
+        variables: <Variable>[Variable(id: 'x', key: 'k', value: 'v')],
+      ),
     ];
 
     test('default export has no secrets and re-imports', () {
-      final map = exportPostBox(collections: <ImportedCollection>[col], environments: envs);
+      final map = exportPostBox(
+        collections: <ImportedCollection>[col],
+        environments: envs,
+      );
       final text = jsonEncode(map);
       expect(text.contains('PASSWORD'), isFalse);
       expect(text.contains('topsecret'), isFalse);
@@ -163,20 +192,32 @@ void main() {
     });
 
     test('import assigns fresh ids', () {
-      final text = jsonEncode(exportPostBox(collections: <ImportedCollection>[col]));
-      final r = parsePostBox(text).collections.single.nodes.single.children.single.request!;
+      final text = jsonEncode(
+        exportPostBox(collections: <ImportedCollection>[col]),
+      );
+      final r = parsePostBox(
+        text,
+      ).collections.single.nodes.single.children.single.request!;
       expect(r.id, isNot('r1'));
     });
 
     test('opt-in export carries secrets', () {
-      final text = jsonEncode(exportPostBox(collections: <ImportedCollection>[col], includeSecrets: true));
+      final text = jsonEncode(
+        exportPostBox(
+          collections: <ImportedCollection>[col],
+          includeSecrets: true,
+        ),
+      );
       expect(text, contains('PASSWORD'));
       expect(text, contains('topsecret'));
     });
 
     test('rejects other formats and future versions', () {
       expect(parsePostBox('{"format":"other"}').hasErrors, isTrue);
-      expect(parsePostBox('{"format":"postbox","version":99}').hasErrors, isTrue);
+      expect(
+        parsePostBox('{"format":"postbox","version":99}').hasErrors,
+        isTrue,
+      );
       expect(parsePostBox('nope').hasErrors, isTrue);
     });
   });
@@ -210,7 +251,10 @@ void main() {
       final c = plan.collections.single;
       expect(c.name, 'Pets');
       expect(c.requestCount, 3);
-      expect(c.variables.firstWhere((v) => v.key == 'base_url').value, 'https://pets.test/v1');
+      expect(
+        c.variables.firstWhere((v) => v.key == 'base_url').value,
+        'https://pets.test/v1',
+      );
       expect(c.variables.any((v) => v.key == 'petId'), isTrue);
       final folder = c.nodes.firstWhere((n) => n.isFolder);
       expect(folder.name, 'pets');
@@ -220,8 +264,14 @@ void main() {
       expect(get.params.single.enabled, isFalse);
       final put = folder.children[1].request!;
       expect(put.bodyType, BodyType.json);
-      expect(jsonDecode(put.body), <String, dynamic>{'name': 'string', 'age': 0});
-      expect(plan.notes.any((n) => n.message.contains('Security schemes')), isTrue);
+      expect(jsonDecode(put.body), <String, dynamic>{
+        'name': 'string',
+        'age': 0,
+      });
+      expect(
+        plan.notes.any((n) => n.message.contains('Security schemes')),
+        isTrue,
+      );
     });
 
     test('rejects non-OpenAPI 3 input', () {

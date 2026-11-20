@@ -7,9 +7,21 @@ import '../../testing/domain/assertions.dart';
 
 enum RequestKind { http, sse, websocket }
 
-enum BodyType { none, json, text, formUrlEncoded, multipart, raw, graphql }
+/// `binary` sends one file from disk ([RequestModel.body] holds its path).
+enum BodyType {
+  none,
+  json,
+  text,
+  formUrlEncoded,
+  multipart,
+  raw,
+  graphql,
+  binary,
+}
 
-enum AuthType { none, basic, bearer, apiKey, oauth2 }
+/// `inherit` uses the auth of the nearest folder or collection that defines
+/// one (see InheritanceResolver). It is never sent on the wire by itself.
+enum AuthType { none, basic, bearer, apiKey, oauth2, inherit }
 
 /// Authentication settings. Fields listed in [secretFields] are persisted in
 /// secure storage, never in the database or exports (unless opted in).
@@ -60,34 +72,34 @@ class AuthConfig {
   ];
 
   Map<String, String> secretFields() => <String, String>{
-        'password': password,
-        'token': token,
-        'apiKeyValue': apiKeyValue,
-        'clientSecret': clientSecret,
-        'accessToken': accessToken,
-        'refreshToken': refreshToken,
-      };
+    'password': password,
+    'token': token,
+    'apiKeyValue': apiKeyValue,
+    'clientSecret': clientSecret,
+    'accessToken': accessToken,
+    'refreshToken': refreshToken,
+  };
 
   AuthConfig withSecrets(Map<String, String> s) => copyWith(
-        password: s['password'],
-        token: s['token'],
-        apiKeyValue: s['apiKeyValue'],
-        clientSecret: s['clientSecret'],
-        accessToken: s['accessToken'],
-        refreshToken: s['refreshToken'],
-      );
+    password: s['password'],
+    token: s['token'],
+    apiKeyValue: s['apiKeyValue'],
+    clientSecret: s['clientSecret'],
+    accessToken: s['accessToken'],
+    refreshToken: s['refreshToken'],
+  );
 
   AuthConfig withoutSecrets() => AuthConfig(
-        type: type,
-        username: username,
-        apiKeyName: apiKeyName,
-        apiKeyInHeader: apiKeyInHeader,
-        authUrl: authUrl,
-        tokenUrl: tokenUrl,
-        clientId: clientId,
-        scope: scope,
-        expiresAtMs: expiresAtMs,
-      );
+    type: type,
+    username: username,
+    apiKeyName: apiKeyName,
+    apiKeyInHeader: apiKeyInHeader,
+    authUrl: authUrl,
+    tokenUrl: tokenUrl,
+    clientId: clientId,
+    scope: scope,
+    expiresAtMs: expiresAtMs,
+  );
 
   AuthConfig copyWith({
     AuthType? type,
@@ -105,26 +117,26 @@ class AuthConfig {
     String? accessToken,
     String? refreshToken,
     int? expiresAtMs,
-  }) =>
-      AuthConfig(
-        type: type ?? this.type,
-        username: username ?? this.username,
-        password: password ?? this.password,
-        token: token ?? this.token,
-        apiKeyName: apiKeyName ?? this.apiKeyName,
-        apiKeyValue: apiKeyValue ?? this.apiKeyValue,
-        apiKeyInHeader: apiKeyInHeader ?? this.apiKeyInHeader,
-        authUrl: authUrl ?? this.authUrl,
-        tokenUrl: tokenUrl ?? this.tokenUrl,
-        clientId: clientId ?? this.clientId,
-        clientSecret: clientSecret ?? this.clientSecret,
-        scope: scope ?? this.scope,
-        accessToken: accessToken ?? this.accessToken,
-        refreshToken: refreshToken ?? this.refreshToken,
-        expiresAtMs: expiresAtMs ?? this.expiresAtMs,
-      );
+  }) => AuthConfig(
+    type: type ?? this.type,
+    username: username ?? this.username,
+    password: password ?? this.password,
+    token: token ?? this.token,
+    apiKeyName: apiKeyName ?? this.apiKeyName,
+    apiKeyValue: apiKeyValue ?? this.apiKeyValue,
+    apiKeyInHeader: apiKeyInHeader ?? this.apiKeyInHeader,
+    authUrl: authUrl ?? this.authUrl,
+    tokenUrl: tokenUrl ?? this.tokenUrl,
+    clientId: clientId ?? this.clientId,
+    clientSecret: clientSecret ?? this.clientSecret,
+    scope: scope ?? this.scope,
+    accessToken: accessToken ?? this.accessToken,
+    refreshToken: refreshToken ?? this.refreshToken,
+    expiresAtMs: expiresAtMs ?? this.expiresAtMs,
+  );
 
-  Map<String, dynamic> toJson({bool includeSecrets = false}) => <String, dynamic>{
+  Map<String, dynamic> toJson({bool includeSecrets = false}) =>
+      <String, dynamic>{
         'type': type.name,
         'username': username,
         'apiKeyName': apiKeyName,
@@ -176,6 +188,9 @@ class RequestModel {
     this.description = '',
     this.assertions = const <Assertion>[],
     this.extractions = const <Extraction>[],
+    this.variables = const <KeyValue>[],
+    this.preScript = '',
+    this.postScript = '',
   });
 
   final String id;
@@ -200,8 +215,18 @@ class RequestModel {
   final List<Assertion> assertions;
   final List<Extraction> extractions;
 
-  factory RequestModel.blank({String method = 'GET', RequestKind kind = RequestKind.http}) =>
-      RequestModel(id: newId(), method: method, kind: kind);
+  /// Request-level variables (plain text, never secret). They override folder
+  /// and collection variables but not the active environment.
+  final List<KeyValue> variables;
+
+  /// Sandboxed scripts (see features/scripting). Empty means none.
+  final String preScript;
+  final String postScript;
+
+  factory RequestModel.blank({
+    String method = 'GET',
+    RequestKind kind = RequestKind.http,
+  }) => RequestModel(id: newId(), method: method, kind: kind);
 
   String get displayName {
     if (name.trim().isNotEmpty) return name.trim();
@@ -225,26 +250,32 @@ class RequestModel {
     String? description,
     List<Assertion>? assertions,
     List<Extraction>? extractions,
-  }) =>
-      RequestModel(
-        id: id ?? this.id,
-        name: name ?? this.name,
-        kind: kind ?? this.kind,
-        method: method ?? this.method,
-        url: url ?? this.url,
-        params: params ?? this.params,
-        headers: headers ?? this.headers,
-        bodyType: bodyType ?? this.bodyType,
-        body: body ?? this.body,
-        bodyAux: bodyAux ?? this.bodyAux,
-        formFields: formFields ?? this.formFields,
-        auth: auth ?? this.auth,
-        description: description ?? this.description,
-        assertions: assertions ?? this.assertions,
-        extractions: extractions ?? this.extractions,
-      );
+    List<KeyValue>? variables,
+    String? preScript,
+    String? postScript,
+  }) => RequestModel(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    kind: kind ?? this.kind,
+    method: method ?? this.method,
+    url: url ?? this.url,
+    params: params ?? this.params,
+    headers: headers ?? this.headers,
+    bodyType: bodyType ?? this.bodyType,
+    body: body ?? this.body,
+    bodyAux: bodyAux ?? this.bodyAux,
+    formFields: formFields ?? this.formFields,
+    auth: auth ?? this.auth,
+    description: description ?? this.description,
+    assertions: assertions ?? this.assertions,
+    extractions: extractions ?? this.extractions,
+    variables: variables ?? this.variables,
+    preScript: preScript ?? this.preScript,
+    postScript: postScript ?? this.postScript,
+  );
 
-  Map<String, dynamic> toJson({bool includeSecrets = false}) => <String, dynamic>{
+  Map<String, dynamic> toJson({bool includeSecrets = false}) =>
+      <String, dynamic>{
         'id': id,
         'name': name,
         'kind': kind.name,
@@ -260,6 +291,9 @@ class RequestModel {
         'description': description,
         'assertions': assertions.map((a) => a.toJson()).toList(),
         'extractions': extractions.map((e) => e.toJson()).toList(),
+        'variables': KeyValue.listToJson(variables),
+        if (preScript.isNotEmpty) 'preScript': preScript,
+        if (postScript.isNotEmpty) 'postScript': postScript,
       };
 
   /// Stable string used for dirty-state comparison.
@@ -283,6 +317,9 @@ class RequestModel {
       description: asString(m['description']),
       assertions: asList(m['assertions']).map(Assertion.fromJson).toList(),
       extractions: asList(m['extractions']).map(Extraction.fromJson).toList(),
+      variables: KeyValue.listFromJson(m['variables']),
+      preScript: asString(m['preScript']),
+      postScript: asString(m['postScript']),
     );
   }
 }
@@ -306,9 +343,14 @@ class RequestModel {
       }
     }
 
-    params.add(eq < 0
-        ? KeyValue(key: dec(part))
-        : KeyValue(key: dec(part.substring(0, eq)), value: dec(part.substring(eq + 1))));
+    params.add(
+      eq < 0
+          ? KeyValue(key: dec(part))
+          : KeyValue(
+              key: dec(part.substring(0, eq)),
+              value: dec(part.substring(eq + 1)),
+            ),
+    );
   }
   return (base, params);
 }

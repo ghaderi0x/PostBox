@@ -37,8 +37,8 @@ class MemorySecretStore implements SecretStore {
 /// an in-memory store and reports [isPersistent] == false instead of crashing.
 class GracefulSecretStore implements SecretStore {
   GracefulSecretStore({FlutterSecureStorage? storage, AppLog? log})
-      : _storage = storage ?? const FlutterSecureStorage(),
-        _log = log;
+    : _storage = storage ?? const FlutterSecureStorage(),
+      _log = log;
 
   static const String _prefix = 'postbox.';
 
@@ -53,7 +53,9 @@ class GracefulSecretStore implements SecretStore {
   void _markBroken(Object e) {
     if (!_broken) {
       _broken = true;
-      _log?.warn('Secure storage unavailable, using memory only: ${e.runtimeType}');
+      _log?.warn(
+        'Secure storage unavailable, using memory only: ${e.runtimeType}',
+      );
     }
   }
 

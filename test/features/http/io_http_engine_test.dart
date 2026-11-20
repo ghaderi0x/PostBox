@@ -60,11 +60,13 @@ void main() {
       req.response.write('got:$data');
       await req.response.close();
     });
-    final r = await engine.send(HttpRequestSpec(
-      method: 'POST',
-      url: _uri(s),
-      body: Uint8List.fromList(utf8.encode('abc')),
-    ));
+    final r = await engine.send(
+      HttpRequestSpec(
+        method: 'POST',
+        url: _uri(s),
+        body: Uint8List.fromList(utf8.encode('abc')),
+      ),
+    );
     expect(utf8.decode(r.body), 'got:abc');
   });
 
@@ -86,13 +88,20 @@ void main() {
       await req.response.close();
     });
     expect(
-      engine.send(HttpRequestSpec(
-        method: 'GET',
-        url: _uri(s),
-        timeout: const Duration(milliseconds: 300),
-      )),
-      throwsA(isA<HttpFailure>()
-          .having((e) => e.kind, 'kind', HttpFailureKind.timeout)),
+      engine.send(
+        HttpRequestSpec(
+          method: 'GET',
+          url: _uri(s),
+          timeout: const Duration(milliseconds: 300),
+        ),
+      ),
+      throwsA(
+        isA<HttpFailure>().having(
+          (e) => e.kind,
+          'kind',
+          HttpFailureKind.timeout,
+        ),
+      ),
     );
   });
 
@@ -110,8 +119,13 @@ void main() {
     token.cancel();
     await expectLater(
       future,
-      throwsA(isA<HttpFailure>()
-          .having((e) => e.kind, 'kind', HttpFailureKind.cancelled)),
+      throwsA(
+        isA<HttpFailure>().having(
+          (e) => e.kind,
+          'kind',
+          HttpFailureKind.cancelled,
+        ),
+      ),
     );
   });
 
@@ -126,11 +140,13 @@ void main() {
       }
       await req.response.close();
     });
-    final r = await engine.send(HttpRequestSpec(
-      method: 'GET',
-      url: _uri(s, '/start'),
-      headers: const {'Authorization': 'Bearer t'},
-    ));
+    final r = await engine.send(
+      HttpRequestSpec(
+        method: 'GET',
+        url: _uri(s, '/start'),
+        headers: const {'Authorization': 'Bearer t'},
+      ),
+    );
     expect(utf8.decode(r.body), 'Bearer t');
     expect(r.redirects.length, 1);
   });
@@ -146,11 +162,13 @@ void main() {
         ..headers.set('location', _uri(target).toString());
       await req.response.close();
     });
-    final r = await engine.send(HttpRequestSpec(
-      method: 'GET',
-      url: _uri(origin),
-      headers: const {'Authorization': 'Bearer secret'},
-    ));
+    final r = await engine.send(
+      HttpRequestSpec(
+        method: 'GET',
+        url: _uri(origin),
+        headers: const {'Authorization': 'Bearer secret'},
+      ),
+    );
     expect(utf8.decode(r.body), 'none');
   });
 
@@ -161,11 +179,13 @@ void main() {
         ..headers.set('location', '/x');
       await req.response.close();
     });
-    final r = await engine.send(HttpRequestSpec(
-      method: 'GET',
-      url: _uri(s),
-      redirectPolicy: RedirectPolicy.never,
-    ));
+    final r = await engine.send(
+      HttpRequestSpec(
+        method: 'GET',
+        url: _uri(s),
+        redirectPolicy: RedirectPolicy.never,
+      ),
+    );
     expect(r.statusCode, 302);
   });
 
@@ -177,9 +197,16 @@ void main() {
       await req.response.close();
     });
     expect(
-      engine.send(HttpRequestSpec(method: 'GET', url: _uri(s), maxRedirects: 3)),
-      throwsA(isA<HttpFailure>()
-          .having((e) => e.kind, 'kind', HttpFailureKind.tooManyRedirects)),
+      engine.send(
+        HttpRequestSpec(method: 'GET', url: _uri(s), maxRedirects: 3),
+      ),
+      throwsA(
+        isA<HttpFailure>().having(
+          (e) => e.kind,
+          'kind',
+          HttpFailureKind.tooManyRedirects,
+        ),
+      ),
     );
   });
 
@@ -189,8 +216,13 @@ void main() {
     await s.close(force: true);
     expect(
       engine.send(HttpRequestSpec(method: 'GET', url: url)),
-      throwsA(isA<HttpFailure>()
-          .having((e) => e.kind, 'kind', HttpFailureKind.connection)),
+      throwsA(
+        isA<HttpFailure>().having(
+          (e) => e.kind,
+          'kind',
+          HttpFailureKind.connection,
+        ),
+      ),
     );
   });
 }

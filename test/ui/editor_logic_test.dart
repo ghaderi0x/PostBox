@@ -37,7 +37,10 @@ void main() {
     });
 
     test('format and minify', () {
-      expect(formatJson('{"a":[1,2],"b":{"c":true}}'), '{\n  "a": [\n    1,\n    2\n  ],\n  "b": {\n    "c": true\n  }\n}');
+      expect(
+        formatJson('{"a":[1,2],"b":{"c":true}}'),
+        '{\n  "a": [\n    1,\n    2\n  ],\n  "b": {\n    "c": true\n  }\n}',
+      );
       expect(formatJson('{"a":1}', indent: 4), '{\n    "a": 1\n}');
       expect(minifyJson('{ "a" : [ 1 , 2 ] }'), '{"a":[1,2]}');
       expect(formatJson('{bad'), isNull);
@@ -54,15 +57,20 @@ void main() {
     final colors = buildColors(ThemePreset.orange, Brightness.light);
     const base = TextStyle(fontSize: 13);
 
-    String plain(String text, CodeLanguage lang, {bool vars = true, int? error}) => buildHighlightedSpan(
-          text: text,
-          language: lang,
-          colors: colors,
-          base: base,
-          variables: vars,
-          errorOffset: error,
-          bracketPair: text.length > 1 ? (0, text.length - 1) : null,
-        ).toPlainText();
+    String plain(
+      String text,
+      CodeLanguage lang, {
+      bool vars = true,
+      int? error,
+    }) => buildHighlightedSpan(
+      text: text,
+      language: lang,
+      colors: colors,
+      base: base,
+      variables: vars,
+      errorOffset: error,
+      bracketPair: text.length > 1 ? (0, text.length - 1) : null,
+    ).toPlainText();
 
     test('span text always equals the source', () {
       const samples = <String>[
@@ -79,12 +87,17 @@ void main() {
         expect(plain(s, CodeLanguage.json), s, reason: s);
         expect(plain(s, CodeLanguage.text), s, reason: s);
         expect(plain(s, CodeLanguage.xml), s, reason: s);
-        expect(plain(s, CodeLanguage.json, vars: false, error: 3), s, reason: s);
+        expect(
+          plain(s, CodeLanguage.json, vars: false, error: 3),
+          s,
+          reason: s,
+        );
       }
     });
 
     test('xml and html markup', () {
-      const x = '<?xml version="1.0"?>\n<!-- c -->\n<a href="u" id=\'i\'><b>t</b><br/></a>';
+      const x =
+          '<?xml version="1.0"?>\n<!-- c -->\n<a href="u" id=\'i\'><b>t</b><br/></a>';
       expect(plain(x, CodeLanguage.xml), x);
     });
 
@@ -96,7 +109,8 @@ void main() {
         base: base,
       );
       final byText = <String, Color?>{
-        for (final c in span.children!.cast<TextSpan>()) c.text!: c.style?.color,
+        for (final c in span.children!.cast<TextSpan>())
+          c.text!: c.style?.color,
       };
       expect(byText['"k"'], colors.synKey);
       expect(byText['"v"'], colors.synString);
@@ -131,14 +145,25 @@ void main() {
   });
 
   group('input formatter', () {
-    TextEditingValue v(String t, int caret) => TextEditingValue(text: t, selection: TextSelection.collapsed(offset: caret));
-    TextEditingValue type(EditorInputFormatter f, TextEditingValue old, String ch) {
+    TextEditingValue v(String t, int caret) => TextEditingValue(
+      text: t,
+      selection: TextSelection.collapsed(offset: caret),
+    );
+    TextEditingValue type(
+      EditorInputFormatter f,
+      TextEditingValue old,
+      String ch,
+    ) {
       final c = old.selection.baseOffset;
       final next = v(old.text.replaceRange(c, c, ch), c + ch.length);
       return f.formatEditUpdate(old, next);
     }
 
-    final json = EditorInputFormatter(language: CodeLanguage.json, tabSize: 2, autoClose: true);
+    final json = EditorInputFormatter(
+      language: CodeLanguage.json,
+      tabSize: 2,
+      autoClose: true,
+    );
 
     test('auto-closes brackets and quotes', () {
       expect(type(json, v('', 0), '{'), v('{}', 1));
@@ -162,13 +187,21 @@ void main() {
     });
 
     test('auto close can be disabled but indentation stays', () {
-      final f = EditorInputFormatter(language: CodeLanguage.json, tabSize: 4, autoClose: false);
+      final f = EditorInputFormatter(
+        language: CodeLanguage.json,
+        tabSize: 4,
+        autoClose: false,
+      );
       expect(type(f, v('', 0), '{'), v('{', 1));
       expect(type(f, v('{', 1), '\n'), v('{\n    ', 6));
     });
 
     test('plain text is never altered', () {
-      final f = EditorInputFormatter(language: CodeLanguage.text, tabSize: 2, autoClose: true);
+      final f = EditorInputFormatter(
+        language: CodeLanguage.text,
+        tabSize: 2,
+        autoClose: true,
+      );
       expect(type(f, v('', 0), '{'), v('{', 1));
       expect(type(f, v('  a', 3), '\n'), v('  a\n', 4));
     });
@@ -183,7 +216,14 @@ void main() {
     test('plain, case and regex matching', () {
       expect(findMatches('abcABC', 'abc').length, 2);
       expect(findMatches('abcABC', 'abc', caseSensitive: true).length, 1);
-      expect(findMatches('a1b22', r'\d+', regex: true).map((r) => (r.start, r.end)).toList(), <(int, int)>[(1, 2), (3, 5)]);
+      expect(
+        findMatches(
+          'a1b22',
+          r'\d+',
+          regex: true,
+        ).map((r) => (r.start, r.end)).toList(),
+        <(int, int)>[(1, 2), (3, 5)],
+      );
       expect(findMatches('a.b', '.').length, 1);
       expect(findMatches('abc', ''), isEmpty);
       expect(findMatches('abc', r'x*', regex: true), isEmpty);
@@ -194,19 +234,33 @@ void main() {
     });
 
     test('replace all with groups', () {
-      expect(replaceAllMatches('a1b2', r'(\w)(\d)', r'$2$1', regex: true), '1a2b');
+      expect(
+        replaceAllMatches('a1b2', r'(\w)(\d)', r'$2$1', regex: true),
+        '1a2b',
+      );
       expect(replaceAllMatches('a.b.c', '.', '-'), 'a-b-c');
       expect(replaceAllMatches('Aa', 'a', 'x'), 'xx');
       expect(replaceAllMatches('Aa', 'a', 'x', caseSensitive: true), 'Ax');
     });
 
     test('replace one', () {
-      expect(replaceOne('foo bar foo', const TextRange(start: 8, end: 11), 'foo', 'X'), 'foo bar X');
+      expect(
+        replaceOne(
+          'foo bar foo',
+          const TextRange(start: 8, end: 11),
+          'foo',
+          'X',
+        ),
+        'foo bar X',
+      );
     });
   });
 
   test('text editing value replace helper keeps selection valid', () {
-    const value = TextEditingValue(text: 'abc', selection: TextSelection.collapsed(offset: 1));
+    const value = TextEditingValue(
+      text: 'abc',
+      selection: TextSelection.collapsed(offset: 1),
+    );
     final r = value.replaced(const TextRange(start: 1, end: 1), '  ');
     expect(r.text, 'a  bc');
   });

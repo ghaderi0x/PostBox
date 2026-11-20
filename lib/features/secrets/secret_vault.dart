@@ -13,6 +13,41 @@ class SecretVault {
 
   String _reqKey(String requestId, String field) => 'req.$requestId.$field';
   String _varKey(String variableId) => 'var.$variableId';
+  String _nodeKey(String ownerId, String field) => 'node.$ownerId.$field';
+
+  /// Auth secrets of a collection or folder (inherited auth).
+  Future<void> saveNodeAuth(String ownerId, AuthConfig auth) async {
+    for (final e in auth.secretFields().entries) {
+      final key = _nodeKey(ownerId, e.key);
+      if (e.value.isEmpty) {
+        await store.delete(key);
+      } else {
+        await store.write(key, e.value);
+      }
+    }
+  }
+
+  Future<AuthConfig> loadNodeAuth(String ownerId, AuthConfig auth) async {
+    final secrets = <String, String>{};
+    for (final k in AuthConfig.secretKeys) {
+      final v = await store.read(_nodeKey(ownerId, k));
+      if (v != null) secrets[k] = v;
+    }
+    return auth.withSecrets(secrets);
+  }
+
+  Future<void> deleteNodeAuth(String ownerId) async {
+    for (final k in AuthConfig.secretKeys) {
+      await store.delete(_nodeKey(ownerId, k));
+    }
+  }
+
+  Future<void> copyNodeAuth(String fromId, String toId) async {
+    for (final k in AuthConfig.secretKeys) {
+      final v = await store.read(_nodeKey(fromId, k));
+      if (v != null) await store.write(_nodeKey(toId, k), v);
+    }
+  }
 
   Future<void> saveRequest(RequestModel r) async {
     for (final e in r.auth.secretFields().entries) {

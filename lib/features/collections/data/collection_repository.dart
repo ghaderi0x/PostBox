@@ -7,6 +7,7 @@ import '../../environments/domain/variables.dart';
 import '../../persistence/app_database.dart';
 import '../../requests/domain/request_models.dart';
 import '../domain/collection_models.dart';
+import '../domain/node_settings.dart';
 import '../../../core/util/json_util.dart';
 
 abstract interface class CollectionRepository {
@@ -34,6 +35,9 @@ abstract interface class CollectionRepository {
     required RequestModel request,
   });
   void saveRequest(String nodeId, RequestModel request);
+
+  /// Saves inherited settings of a folder.
+  void saveNodeSettings(String nodeId, NodeSettings settings);
   void renameNode(String id, String name);
   void setNodeDescription(String id, String description);
   void setFavorite(String id, bool favorite);
@@ -46,7 +50,7 @@ abstract interface class CollectionRepository {
   });
   void reorder(String collectionId, String? parentId, List<String> orderedIds);
 
-  /// Maps old request ids to new ones for every copied request.
+  /// Maps old node ids to new ones for every copied node (folders too).
   Map<String, String> duplicateNode(String id, {String nameSuffix = ' copy'});
 
   /// Returns ids of all request nodes that were removed.
@@ -69,14 +73,25 @@ class SqliteCollectionRepository implements CollectionRepository {
   List<CollectionRecord> listCollections() {
     final rows = _db.select('SELECT * FROM collections ORDER BY sort, created');
     return rows
-        .map((r) => CollectionRecord(
-              id: r['id'] as String,
-              name: r['name'] as String,
-              description: r['description'] as String,
-              sort: r['sort'] as int,
-              variables: _decodeVars(r['vars_json'] as String),
-            ))
+        .map(
+          (r) => CollectionRecord(
+            id: r['id'] as String,
+            name: r['name'] as String,
+            description: r['description'] as String,
+            sort: r['sort'] as int,
+            variables: _decodeVars(r['vars_json'] as String),
+            settings: _decodeSettings(r['settings_json'] as String),
+          ),
+        )
         .toList();
+  }
+
+  NodeSettings _decodeSettings(String json) {
+    try {
+      return NodeSettings.fromJson(jsonDecode(json));
+    } on FormatException {
+      return NodeSettings.empty;
+    }
   }
 
   List<Variable> _decodeVars(String json) {
@@ -91,23 +106,34 @@ class SqliteCollectionRepository implements CollectionRepository {
   CollectionRecord createCollection(String name, {String description = ''}) {
     final id = newId();
     final now = _now();
-    final next = (_db.select('SELECT COALESCE(MAX(sort), -1) + 1 AS n FROM collections')
-            .first['n'] as int);
+    final next =
+        (_db
+                .select(
+                  'SELECT COALESCE(MAX(sort), -1) + 1 AS n FROM collections',
+                )
+                .first['n']
+            as int);
     _db.execute(
       'INSERT INTO collections(id,name,description,sort,vars_json,created,updated) VALUES(?,?,?,?,?,?,?)',
       <Object?>[id, name, description, next, '[]', now, now],
     );
-    return CollectionRecord(id: id, name: name, description: description, sort: next);
+    return CollectionRecord(
+      id: id,
+      name: name,
+      description: description,
+      sort: next,
+    );
   }
 
   @override
   void updateCollection(CollectionRecord c) {
     _db.execute(
-      'UPDATE collections SET name=?, description=?, vars_json=?, updated=? WHERE id=?',
+      'UPDATE collections SET name=?, description=?, vars_json=?, settings_json=?, updated=? WHERE id=?',
       <Object?>[
         c.name,
         c.description,
         jsonEncode(c.variables.map((v) => v.toJson()).toList()),
+        jsonEncode(c.settings.toJson()),
         _now(),
         c.id,
       ],
@@ -118,7 +144,10 @@ class SqliteCollectionRepository implements CollectionRepository {
   List<String> deleteCollection(String id) {
     return _app.transaction<List<String>>(() {
       final removed = _db
-          .select("SELECT id FROM nodes WHERE collection_id=? AND kind='request'", <Object?>[id])
+          .select(
+            "SELECT id FROM nodes WHERE collection_id=? AND kind='request'",
+            <Object?>[id],
+          )
           .map((r) => r['id'] as String)
           .toList();
       _db.execute('DELETE FROM collections WHERE id=?', <Object?>[id]);
@@ -130,7 +159,10 @@ class SqliteCollectionRepository implements CollectionRepository {
   void reorderCollections(List<String> orderedIds) {
     _app.transaction<void>(() {
       for (var i = 0; i < orderedIds.length; i++) {
-        _db.execute('UPDATE collections SET sort=? WHERE id=?', <Object?>[i, orderedIds[i]]);
+        _db.execute('UPDATE collections SET sort=? WHERE id=?', <Object?>[
+          i,
+          orderedIds[i],
+        ]);
       }
     });
   }
@@ -141,7 +173,9 @@ class SqliteCollectionRepository implements CollectionRepository {
     final data = r['data_json'];
     if (kind == NodeKind.request && data is String) {
       try {
-        req = RequestModel.fromJson(jsonDecode(data)).copyWith(id: r['id'] as String);
+        req = RequestModel.fromJson(
+          jsonDecode(data),
+        ).copyWith(id: r['id'] as String);
       } on FormatException {
         req = RequestModel(id: r['id'] as String, name: r['name'] as String);
       }
@@ -157,26 +191,34 @@ class SqliteCollectionRepository implements CollectionRepository {
       favorite: (r['favorite'] as int) == 1,
       lastOpened: r['last_opened'] as int?,
       request: req,
+      settings: kind == NodeKind.folder
+          ? _decodeSettings(r['settings_json'] as String)
+          : NodeSettings.empty,
     );
   }
 
   @override
   List<NodeRecord> listNodes() => _db
-      .select('SELECT * FROM nodes ORDER BY collection_id, parent_id, sort, created')
+      .select(
+        'SELECT * FROM nodes ORDER BY collection_id, parent_id, sort, created',
+      )
       .map(_nodeFromRow)
       .toList();
 
-  NodeRecord _getNode(String id) =>
-      _nodeFromRow(_db.select('SELECT * FROM nodes WHERE id=?', <Object?>[id]).first);
+  NodeRecord _getNode(String id) => _nodeFromRow(
+    _db.select('SELECT * FROM nodes WHERE id=?', <Object?>[id]).first,
+  );
 
   int _nextSort(String collectionId, String? parentId) {
     final rs = parentId == null
         ? _db.select(
             'SELECT COALESCE(MAX(sort), -1) + 1 AS n FROM nodes WHERE collection_id=? AND parent_id IS NULL',
-            <Object?>[collectionId])
+            <Object?>[collectionId],
+          )
         : _db.select(
             'SELECT COALESCE(MAX(sort), -1) + 1 AS n FROM nodes WHERE collection_id=? AND parent_id=?',
-            <Object?>[collectionId, parentId]);
+            <Object?>[collectionId, parentId],
+          );
     return rs.first['n'] as int;
   }
 
@@ -190,7 +232,15 @@ class SqliteCollectionRepository implements CollectionRepository {
     final now = _now();
     _db.execute(
       "INSERT INTO nodes(id,collection_id,parent_id,kind,name,sort,created,updated) VALUES(?,?,?,'folder',?,?,?,?)",
-      <Object?>[id, collectionId, parentId, name, _nextSort(collectionId, parentId), now, now],
+      <Object?>[
+        id,
+        collectionId,
+        parentId,
+        name,
+        _nextSort(collectionId, parentId),
+        now,
+        now,
+      ],
     );
     return _getNode(id);
   }
@@ -232,9 +282,21 @@ class SqliteCollectionRepository implements CollectionRepository {
   }
 
   @override
+  void saveNodeSettings(String nodeId, NodeSettings settings) {
+    _db.execute(
+      'UPDATE nodes SET settings_json=?, updated=? WHERE id=?',
+      <Object?>[jsonEncode(settings.toJson()), _now(), nodeId],
+    );
+  }
+
+  @override
   void renameNode(String id, String name) {
     _app.transaction<void>(() {
-      _db.execute('UPDATE nodes SET name=?, updated=? WHERE id=?', <Object?>[name, _now(), id]);
+      _db.execute('UPDATE nodes SET name=?, updated=? WHERE id=?', <Object?>[
+        name,
+        _now(),
+        id,
+      ]);
       final n = _getNode(id);
       if (n.request != null) {
         saveRequestJsonOnly(id, n.request!.copyWith(name: name));
@@ -243,22 +305,34 @@ class SqliteCollectionRepository implements CollectionRepository {
   }
 
   void saveRequestJsonOnly(String id, RequestModel r) {
-    _db.execute('UPDATE nodes SET data_json=? WHERE id=?', <Object?>[jsonEncode(r.toJson()), id]);
+    _db.execute('UPDATE nodes SET data_json=? WHERE id=?', <Object?>[
+      jsonEncode(r.toJson()),
+      id,
+    ]);
   }
 
   @override
   void setNodeDescription(String id, String description) {
-    _db.execute('UPDATE nodes SET description=?, updated=? WHERE id=?', <Object?>[description, _now(), id]);
+    _db.execute(
+      'UPDATE nodes SET description=?, updated=? WHERE id=?',
+      <Object?>[description, _now(), id],
+    );
   }
 
   @override
   void setFavorite(String id, bool favorite) {
-    _db.execute('UPDATE nodes SET favorite=? WHERE id=?', <Object?>[favorite ? 1 : 0, id]);
+    _db.execute('UPDATE nodes SET favorite=? WHERE id=?', <Object?>[
+      favorite ? 1 : 0,
+      id,
+    ]);
   }
 
   @override
   void touchOpened(String id) {
-    _db.execute('UPDATE nodes SET last_opened=? WHERE id=?', <Object?>[_now(), id]);
+    _db.execute('UPDATE nodes SET last_opened=? WHERE id=?', <Object?>[
+      _now(),
+      id,
+    ]);
   }
 
   List<String> _subtreeIds(String id) => _db
@@ -274,10 +348,12 @@ class SqliteCollectionRepository implements CollectionRepository {
     final rs = parentId == null
         ? _db.select(
             'SELECT id FROM nodes WHERE collection_id=? AND parent_id IS NULL ORDER BY sort, created',
-            <Object?>[collectionId])
+            <Object?>[collectionId],
+          )
         : _db.select(
             'SELECT id FROM nodes WHERE collection_id=? AND parent_id=? ORDER BY sort, created',
-            <Object?>[collectionId, parentId]);
+            <Object?>[collectionId, parentId],
+          );
     return rs.map((r) => r['id'] as String).toList();
   }
 
@@ -298,13 +374,19 @@ class SqliteCollectionRepository implements CollectionRepository {
         <Object?>[newParentId, collectionId, _now(), id],
       );
       for (final sid in subtree) {
-        _db.execute('UPDATE nodes SET collection_id=? WHERE id=?', <Object?>[collectionId, sid]);
+        _db.execute('UPDATE nodes SET collection_id=? WHERE id=?', <Object?>[
+          collectionId,
+          sid,
+        ]);
       }
       final siblings = _childIds(collectionId, newParentId)..remove(id);
       final at = clampInt(index ?? siblings.length, 0, siblings.length);
       siblings.insert(at, id);
       for (var i = 0; i < siblings.length; i++) {
-        _db.execute('UPDATE nodes SET sort=? WHERE id=?', <Object?>[i, siblings[i]]);
+        _db.execute('UPDATE nodes SET sort=? WHERE id=?', <Object?>[
+          i,
+          siblings[i],
+        ]);
       }
     });
   }
@@ -313,7 +395,10 @@ class SqliteCollectionRepository implements CollectionRepository {
   void reorder(String collectionId, String? parentId, List<String> orderedIds) {
     _app.transaction<void>(() {
       for (var i = 0; i < orderedIds.length; i++) {
-        _db.execute('UPDATE nodes SET sort=? WHERE id=?', <Object?>[i, orderedIds[i]]);
+        _db.execute('UPDATE nodes SET sort=? WHERE id=?', <Object?>[
+          i,
+          orderedIds[i],
+        ]);
       }
     });
   }
@@ -325,7 +410,6 @@ class SqliteCollectionRepository implements CollectionRepository {
       final ids = _subtreeIds(id);
       final nodes = <String, NodeRecord>{for (final i in ids) i: _getNode(i)};
       final idMap = <String, String>{for (final i in ids) i: newId()};
-      final reqMap = <String, String>{};
       final now = _now();
 
       // Parents first: _subtreeIds returns the root first, then breadth-wise.
@@ -338,11 +422,10 @@ class SqliteCollectionRepository implements CollectionRepository {
         String? data;
         if (n.request != null) {
           data = jsonEncode(n.request!.copyWith(id: nid, name: name).toJson());
-          reqMap[oldId] = nid;
         }
         _db.execute(
-          'INSERT INTO nodes(id,collection_id,parent_id,kind,name,description,sort,favorite,data_json,created,updated) '
-          'VALUES(?,?,?,?,?,?,?,?,?,?,?)',
+          'INSERT INTO nodes(id,collection_id,parent_id,kind,name,description,sort,favorite,data_json,settings_json,created,updated) '
+          'VALUES(?,?,?,?,?,?,?,?,?,?,?,?)',
           <Object?>[
             nid,
             n.collectionId,
@@ -353,6 +436,7 @@ class SqliteCollectionRepository implements CollectionRepository {
             isRoot ? n.sort + 1 : n.sort,
             0,
             data,
+            jsonEncode(n.settings.toJson()),
             now,
             now,
           ],
@@ -365,9 +449,12 @@ class SqliteCollectionRepository implements CollectionRepository {
       final at = siblings.indexOf(id) + 1;
       siblings.insert(at, copyId);
       for (var i = 0; i < siblings.length; i++) {
-        _db.execute('UPDATE nodes SET sort=? WHERE id=?', <Object?>[i, siblings[i]]);
+        _db.execute('UPDATE nodes SET sort=? WHERE id=?', <Object?>[
+          i,
+          siblings[i],
+        ]);
       }
-      return reqMap;
+      return idMap;
     });
   }
 
@@ -376,7 +463,9 @@ class SqliteCollectionRepository implements CollectionRepository {
     return _app.transaction<List<String>>(() {
       final removed = <String>[];
       for (final sid in _subtreeIds(id)) {
-        final r = _db.select("SELECT kind FROM nodes WHERE id=?", <Object?>[sid]);
+        final r = _db.select('SELECT kind FROM nodes WHERE id=?', <Object?>[
+          sid,
+        ]);
         if (r.isNotEmpty && r.first['kind'] == 'request') removed.add(sid);
       }
       _db.execute('DELETE FROM nodes WHERE id=?', <Object?>[id]);

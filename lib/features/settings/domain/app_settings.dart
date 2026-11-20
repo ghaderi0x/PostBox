@@ -16,6 +16,12 @@ enum UiDensity { comfortable, compact }
 
 enum AppLanguage { system, en, fa }
 
+/// `auto` offers HTTP/2 through ALPN on https and falls back to HTTP/1.1.
+enum HttpVersionPref { http1, auto }
+
+/// Name of the secret-store entry that holds the client key password.
+const String kClientKeyPasswordSecret = 'settings.clientKeyPassword';
+
 const List<String> kHttpMethods = <String>[
   'GET',
   'POST',
@@ -34,7 +40,7 @@ bool isValidProxy(String s) => s.isEmpty || _proxyPattern.hasMatch(s);
 /// in the app; unknown or invalid stored values fall back to defaults.
 class AppSettings {
   const AppSettings({
-    this.themeMode = AppThemeMode.system,
+    this.themeMode = AppThemeMode.dark,
     this.themePreset = ThemePreset.orange,
     this.accentOverride,
     this.surfaceStyle = SurfaceStyle.raised,
@@ -42,7 +48,7 @@ class AppSettings {
     this.fontScale = 1.0,
     this.reducedMotion = false,
     this.language = AppLanguage.system,
-    this.persianDigits = false,
+    this.persianDigits = true,
     this.jalaliDates = false,
     this.defaultMethod = 'GET',
     this.timeoutSeconds = 30,
@@ -65,6 +71,15 @@ class AppSettings {
     this.omitSensitiveInHistory = true,
     this.confirmDestructive = true,
     this.onboardingDone = false,
+    this.useCookieJar = true,
+    this.httpVersion = HttpVersionPref.http1,
+    this.clientCertPath = '',
+    this.clientKeyPath = '',
+    this.caCertPath = '',
+    this.restoreWorkspace = true,
+    this.checkUpdates = true,
+    this.skippedVersion = '',
+    this.shortcuts = const <String, String>{},
   });
 
   final AppThemeMode themeMode;
@@ -108,6 +123,29 @@ class AppSettings {
   /// False until the welcome tour was finished or skipped.
   final bool onboardingDone;
 
+  /// Store cookies from responses and send them back (per host, per hop).
+  final bool useCookieJar;
+  final HttpVersionPref httpVersion;
+
+  /// Mutual TLS and custom CA (PEM file paths). The key password lives in the
+  /// secret store, see [kClientKeyPasswordSecret].
+  final String clientCertPath;
+  final String clientKeyPath;
+  final String caCertPath;
+
+  /// Reopen the tabs and panel layout of the last session on start.
+  final bool restoreWorkspace;
+
+  /// Ask GitHub for the newest release each time the app opens.
+  final bool checkUpdates;
+
+  /// A release the user chose to skip; it is not offered again.
+  final String skippedVersion;
+
+  /// Overrides of the default keyboard shortcuts: action name -> combo text
+  /// such as `ctrl+shift+k`. Missing actions use their default.
+  final Map<String, String> shortcuts;
+
   int get maxResponseBytes => maxResponseMb * 1024 * 1024;
   int get maxRequestBytes => maxRequestMb * 1024 * 1024;
 
@@ -144,11 +182,22 @@ class AppSettings {
     bool? omitSensitiveInHistory,
     bool? confirmDestructive,
     bool? onboardingDone,
+    bool? useCookieJar,
+    HttpVersionPref? httpVersion,
+    String? clientCertPath,
+    String? clientKeyPath,
+    String? caCertPath,
+    bool? restoreWorkspace,
+    bool? checkUpdates,
+    String? skippedVersion,
+    Map<String, String>? shortcuts,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
       themePreset: themePreset ?? this.themePreset,
-      accentOverride: clearAccent ? null : (accentOverride ?? this.accentOverride),
+      accentOverride: clearAccent
+          ? null
+          : (accentOverride ?? this.accentOverride),
       surfaceStyle: surfaceStyle ?? this.surfaceStyle,
       density: density ?? this.density,
       fontScale: fontScale ?? this.fontScale,
@@ -180,6 +229,15 @@ class AppSettings {
           omitSensitiveInHistory ?? this.omitSensitiveInHistory,
       confirmDestructive: confirmDestructive ?? this.confirmDestructive,
       onboardingDone: onboardingDone ?? this.onboardingDone,
+      useCookieJar: useCookieJar ?? this.useCookieJar,
+      httpVersion: httpVersion ?? this.httpVersion,
+      clientCertPath: clientCertPath ?? this.clientCertPath,
+      clientKeyPath: clientKeyPath ?? this.clientKeyPath,
+      caCertPath: caCertPath ?? this.caCertPath,
+      restoreWorkspace: restoreWorkspace ?? this.restoreWorkspace,
+      checkUpdates: checkUpdates ?? this.checkUpdates,
+      skippedVersion: skippedVersion ?? this.skippedVersion,
+      shortcuts: shortcuts ?? this.shortcuts,
     );
   }
 
@@ -187,9 +245,11 @@ class AppSettings {
   /// default for settings exports.
   Map<String, dynamic> toJson({bool redactSensitive = false}) {
     final headers = defaultHeaders
-        .map((h) => redactSensitive && Redactor.isSensitiveHeader(h.key)
-            ? h.copyWith(value: Redactor.mask).toJson()
-            : h.toJson())
+        .map(
+          (h) => redactSensitive && Redactor.isSensitiveHeader(h.key)
+              ? h.copyWith(value: Redactor.mask).toJson()
+              : h.toJson(),
+        )
         .toList();
     return <String, dynamic>{
       'schemaVersion': settingsSchemaVersion,
@@ -224,20 +284,42 @@ class AppSettings {
       'omitSensitiveInHistory': omitSensitiveInHistory,
       'confirmDestructive': confirmDestructive,
       'onboardingDone': onboardingDone,
+      'useCookieJar': useCookieJar,
+      'httpVersion': httpVersion.name,
+      'clientCertPath': clientCertPath,
+      'clientKeyPath': clientKeyPath,
+      'caCertPath': caCertPath,
+      'restoreWorkspace': restoreWorkspace,
+      'checkUpdates': checkUpdates,
+      'skippedVersion': skippedVersion,
+      'shortcuts': shortcuts,
     };
   }
 
   String toJsonString({bool redactSensitive = false}) =>
-      const JsonEncoder.withIndent('  ')
-          .convert(toJson(redactSensitive: redactSensitive));
+      const JsonEncoder.withIndent(
+        '  ',
+      ).convert(toJson(redactSensitive: redactSensitive));
 
-  /// Migrates older schema versions to the current one. There is only one
-  /// version so far; this is where future steps are chained.
+  /// Migrates older schema versions to the current one; steps are chained.
+  ///
+  /// v2 (1.0.0): dark theme and Persian digits became the defaults, and the
+  /// first-run screen now asks for the theme. Settings saved by earlier
+  /// versions are moved to the new defaults once and the first-run screen is
+  /// shown again so the theme can be chosen.
   static Map<String, dynamic> migrate(Map<String, dynamic> json) {
     final out = Map<String, dynamic>.from(json);
     final v = asInt(out['schemaVersion'], 0);
     if (v < 1) {
       out['schemaVersion'] = 1;
+    }
+    if (v < 2) {
+      out['schemaVersion'] = 2;
+      if (json.isNotEmpty) {
+        out['themeMode'] = AppThemeMode.dark.name;
+        out['persianDigits'] = true;
+        out['onboardingDone'] = false;
+      }
     }
     return out;
   }
@@ -246,18 +328,29 @@ class AppSettings {
   factory AppSettings.fromJson(Object? raw) {
     const d = AppSettings();
     final j = migrate(asMap(raw));
-    final method = asString(j['defaultMethod'], d.defaultMethod).trim().toUpperCase();
+    final method = asString(
+      j['defaultMethod'],
+      d.defaultMethod,
+    ).trim().toUpperCase();
     final proxy = asString(j['proxy']).trim();
     final tab = asInt(j['editorTabSize'], d.editorTabSize);
     final accent = j['accentOverride'];
-    final headers = KeyValue.listFromJson(j['defaultHeaders'])
-        .where((h) => h.key.trim().isNotEmpty)
-        .toList();
+    final headers = KeyValue.listFromJson(
+      j['defaultHeaders'],
+    ).where((h) => h.key.trim().isNotEmpty).toList();
     return AppSettings(
       themeMode: enumByName(AppThemeMode.values, j['themeMode'], d.themeMode),
-      themePreset: enumByName(ThemePreset.values, j['themePreset'], d.themePreset),
+      themePreset: enumByName(
+        ThemePreset.values,
+        j['themePreset'],
+        d.themePreset,
+      ),
       accentOverride: accent is int ? accent : null,
-      surfaceStyle: enumByName(SurfaceStyle.values, j['surfaceStyle'], d.surfaceStyle),
+      surfaceStyle: enumByName(
+        SurfaceStyle.values,
+        j['surfaceStyle'],
+        d.surfaceStyle,
+      ),
       density: enumByName(UiDensity.values, j['density'], d.density),
       fontScale: clampDouble(asDouble(j['fontScale'], d.fontScale), 0.8, 1.6),
       reducedMotion: asBool(j['reducedMotion'], d.reducedMotion),
@@ -265,31 +358,72 @@ class AppSettings {
       persianDigits: asBool(j['persianDigits'], d.persianDigits),
       jalaliDates: asBool(j['jalaliDates'], d.jalaliDates),
       defaultMethod: method.isEmpty ? d.defaultMethod : method,
-      timeoutSeconds: clampInt(asInt(j['timeoutSeconds'], d.timeoutSeconds), 1, 600),
-      redirectPolicy: enumByName(RedirectPolicy.values, j['redirectPolicy'], d.redirectPolicy),
+      timeoutSeconds: clampInt(
+        asInt(j['timeoutSeconds'], d.timeoutSeconds),
+        1,
+        600,
+      ),
+      redirectPolicy: enumByName(
+        RedirectPolicy.values,
+        j['redirectPolicy'],
+        d.redirectPolicy,
+      ),
       maxRedirects: clampInt(asInt(j['maxRedirects'], d.maxRedirects), 0, 30),
       proxy: isValidProxy(proxy) ? proxy : '',
-      allowInvalidCertificates:
-          asBool(j['allowInvalidCertificates'], d.allowInvalidCertificates),
+      allowInvalidCertificates: asBool(
+        j['allowInvalidCertificates'],
+        d.allowInvalidCertificates,
+      ),
       defaultHeaders: headers,
-      maxResponseMb: clampInt(asInt(j['maxResponseMb'], d.maxResponseMb), 1, 200),
+      maxResponseMb: clampInt(
+        asInt(j['maxResponseMb'], d.maxResponseMb),
+        1,
+        200,
+      ),
       maxRequestMb: clampInt(asInt(j['maxRequestMb'], d.maxRequestMb), 1, 100),
       editorWordWrap: asBool(j['editorWordWrap'], d.editorWordWrap),
       editorLineNumbers: asBool(j['editorLineNumbers'], d.editorLineNumbers),
-      editorFontSize: clampDouble(asDouble(j['editorFontSize'], d.editorFontSize), 10, 24),
+      editorFontSize: clampDouble(
+        asDouble(j['editorFontSize'], d.editorFontSize),
+        10,
+        24,
+      ),
       editorTabSize: tab == 4 ? 4 : 2,
       editorAutoClose: asBool(j['editorAutoClose'], d.editorAutoClose),
-      editorHighlightVariables:
-          asBool(j['editorHighlightVariables'], d.editorHighlightVariables),
+      editorHighlightVariables: asBool(
+        j['editorHighlightVariables'],
+        d.editorHighlightVariables,
+      ),
       persistHistory: asBool(j['persistHistory'], d.persistHistory),
-      historyRetentionDays:
-          clampInt(asInt(j['historyRetentionDays'], d.historyRetentionDays), 0, 3650),
-      historyMaxEntries:
-          clampInt(asInt(j['historyMaxEntries'], d.historyMaxEntries), 10, 10000),
-      omitSensitiveInHistory:
-          asBool(j['omitSensitiveInHistory'], d.omitSensitiveInHistory),
+      historyRetentionDays: clampInt(
+        asInt(j['historyRetentionDays'], d.historyRetentionDays),
+        0,
+        3650,
+      ),
+      historyMaxEntries: clampInt(
+        asInt(j['historyMaxEntries'], d.historyMaxEntries),
+        10,
+        10000,
+      ),
+      omitSensitiveInHistory: asBool(
+        j['omitSensitiveInHistory'],
+        d.omitSensitiveInHistory,
+      ),
       confirmDestructive: asBool(j['confirmDestructive'], d.confirmDestructive),
       onboardingDone: asBool(j['onboardingDone'], d.onboardingDone),
+      useCookieJar: asBool(j['useCookieJar'], d.useCookieJar),
+      httpVersion: enumByName(
+        HttpVersionPref.values,
+        j['httpVersion'],
+        d.httpVersion,
+      ),
+      clientCertPath: asString(j['clientCertPath']).trim(),
+      clientKeyPath: asString(j['clientKeyPath']).trim(),
+      caCertPath: asString(j['caCertPath']).trim(),
+      restoreWorkspace: asBool(j['restoreWorkspace'], d.restoreWorkspace),
+      checkUpdates: asBool(j['checkUpdates'], d.checkUpdates),
+      skippedVersion: asString(j['skippedVersion']).trim(),
+      shortcuts: _parseShortcuts(j['shortcuts']),
     );
   }
 
@@ -311,4 +445,13 @@ class AppSettings {
       return (settings: null, error: 'invalid_json');
     }
   }
+}
+
+Map<String, String> _parseShortcuts(Object? raw) {
+  final m = asMap(raw);
+  final out = <String, String>{};
+  m.forEach((k, v) {
+    if (v is String && v.length <= 40 && k.length <= 40) out[k] = v;
+  });
+  return out;
 }

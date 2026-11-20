@@ -22,3 +22,18 @@ int clampInt(int v, int min, int max) => v < min ? min : (v > max ? max : v);
 
 double clampDouble(double v, double min, double max) =>
     v < min ? min : (v > max ? max : v);
+
+/// Builds a JSONPath-style path such as `$.users[0].name`.
+String jsonPathFor(List<Object> segments) {
+  final buf = StringBuffer(r'$');
+  for (final s in segments) {
+    if (s is int) {
+      buf.write('[$s]');
+    } else if (RegExp(r'^[A-Za-z_][A-Za-z0-9_]*$').hasMatch(s as String)) {
+      buf.write('.$s');
+    } else {
+      buf.write("['${s.replaceAll("'", r"\'")}']");
+    }
+  }
+  return buf.toString();
+}

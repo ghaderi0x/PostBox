@@ -1,57 +1,187 @@
-# PostBox
+<p align="center">
+  <img src="assets/branding/banner.svg" alt="PostBox: fast, private HTTP API client" width="100%">
+</p>
 
-Open-source, local-first HTTP API client by **Uniqueone**. Android, Windows, Linux. MIT licence. English and Persian (full RTL).
+<p align="center">
+  <a href="https://github.com/ghaderi0x/PostBox/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/ghaderi0x/PostBox?style=for-the-badge&color=FF6A3D&labelColor=1B1611"></a>
+  <a href="https://github.com/ghaderi0x/PostBox/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/ghaderi0x/PostBox/ci.yml?style=for-the-badge&label=CI&labelColor=1B1611"></a>
+  <a href="LICENSE"><img alt="MIT licence" src="https://img.shields.io/badge/licence-MIT-FF6A3D?style=for-the-badge&labelColor=1B1611"></a>
+  <img alt="Platforms" src="https://img.shields.io/badge/Android%20%C2%B7%20Windows%20%C2%B7%20Linux%20%C2%B7%20macOS-444?style=for-the-badge&labelColor=1B1611">
+  <img alt="Made with Flutter" src="https://img.shields.io/badge/Flutter-3.35+-02569B?style=for-the-badge&logo=flutter&logoColor=white&labelColor=1B1611">
+</p>
 
-> **Status: complete first draft, not yet compiled.** All planned phases are written, but the code has never been built or run (no Flutter SDK was available when it was written). Read `docs/PROJECT_STATUS.md` before relying on anything.
+<p align="center">
+  <b>English</b> · <a href="README.fa.md">فارسی</a>
+  &nbsp;|&nbsp;
+  <a href="#-download">Download</a> ·
+  <a href="#-features">Features</a> ·
+  <a href="#-build-from-source">Build</a> ·
+  <a href="docs/RELEASE.md">Release guide</a> ·
+  <a href="CHANGELOG.md">Changelog</a>
+</p>
 
-## Features
+<p align="center">
+  <img src="docs/media/demo.gif" alt="PostBox demo" width="860">
+</p>
 
-Requests with all methods, JSON/form/multipart/raw/GraphQL bodies, SSE and WebSocket; response inspector with pretty/raw/diff views; custom code editor; collections, favorites, history; environments and secret variables; Basic, Bearer, API key and OAuth 2.0 (PKCE); import cURL/Postman/PostBox/OpenAPI-JSON and export cURL/Postman/PostBox; assertions, chaining and a collection runner; six themes; command palette (Ctrl+K). No account, no telemetry, no sync.
+## Why PostBox
 
-## Get started
+PostBox is a **free, open-source HTTP API client** that lives entirely on your device. Send requests, inspect responses, organise collections and run test suites without creating an account, signing in to a cloud, or sending your data anywhere.
 
-```
-./tool/setup_platforms.sh     # generates android/windows/linux, patches the Android manifest
+|   |   |
+|---|---|
+| **Local-first** | Collections, history, environments and cookies live in a database on your machine. No account, no sync server, no telemetry. |
+| **Private by design** | Secrets sit in the system keystore, are masked in the UI and are left out of exports unless you ask. |
+| **Built for big responses** | A native Flutter app. Long responses use a virtualised line view instead of one huge text widget. |
+| **Everywhere** | One codebase for Android, Windows, Linux and macOS, with a layout that adapts to phone and desktop. |
+| **Truly bilingual** | English and Persian with full right-to-left layout and optional Persian digits. |
+
+## ✨ Features
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+**Requests**
+- All HTTP methods, custom methods, params and headers with on/off switches
+- Bodies: JSON, text, form, multipart, binary file, GraphQL
+- Server-sent events and WebSocket
+- HTTP/2 (opt-in), cookie jar, redirects, timeouts, proxy
+- Custom CA, client certificates (mTLS), certificate inspection
+
+**Auth**
+- Basic, Bearer, API key
+- OAuth 2.0 Authorization Code + PKCE with refresh
+- Auth and headers inherited from folder or collection
+
+**Organise**
+- Collections, folders, favourites, templates, search
+- Several workspaces, each with its own database
+- Tabs you can reorder; open tabs restored after a restart
+
+</td>
+<td width="50%" valign="top">
+
+**Responses**
+- Pretty, raw and diff views; JSON tree with copy-JSONPath
+- Status, time, size, headers, cookies, timing timeline
+- **Charts:** timing waterfall, runner results, and an **Insights** page (outcomes, latency, methods, slowest endpoints)
+- Save to file, copy as cURL
+
+**Test and automate**
+- Assertions on status, headers, body, JSONPath and duration
+- Variables: global, collection, folder, request, environment, runtime
+- Chaining, a small built-in script language, collection runner with iterations, parallel runs and CSV/JSON data files
+- Markdown and JSON reports
+
+**Import / export**
+- Import cURL, Postman, PostBox, OpenAPI JSON
+- Export cURL, Postman, PostBox
+
+</td>
+</tr>
+</table>
+
+**Look and feel:** six themes (including a high-contrast one), custom accent colour, comfortable or compact density, text scaling, reduced motion, a command palette (<kbd>Ctrl</kbd>+<kbd>K</kbd>) and rebindable keyboard shortcuts on desktop. Settings and the first-run tour have dedicated desktop layouts.
+
+## 📦 Download
+
+Get the latest build from **[GitHub Releases](https://github.com/ghaderi0x/PostBox/releases/latest)**. Check the `SHA256SUMS.txt` file there if you want to verify a download.
+
+| Platform | File | Notes |
+|---|---|---|
+| **Windows** 10/11 | `PostBox-<version>-windows-setup.exe` | Installer. Unsigned for now, so SmartScreen may warn: choose *More info → Run anyway*. |
+| **macOS** | `PostBox-<version>-macos.dmg` | Drag PostBox to *Applications*. Not notarised yet: on first launch right-click the app and choose *Open*. |
+| **Linux** (Debian/Ubuntu) | `postbox_<version>_amd64.deb` | `sudo apt install ./postbox_<version>_amd64.deb` |
+| **Linux** (any) | `PostBox-<version>-x86_64.AppImage` | `chmod +x PostBox-*.AppImage && ./PostBox-*.AppImage` |
+| **Android** | `PostBox-<version>.apk` | Also on **Myket** and **Cafe Bazaar**. |
+
+Linux needs a keyring service (GNOME Keyring or KWallet) so secrets can be stored.
+
+### Updates
+
+When PostBox starts it asks the GitHub Releases of this repository for the newest version. If there is one, a small card shows the release notes with **Update now**, **Later** and **Skip this version**. On Windows, Linux and macOS the installer is downloaded inside the app and checked against `SHA256SUMS.txt`; on Android the card opens Myket or Bazaar. You can turn the check off in **Settings → About**; it is the only connection PostBox makes that you did not ask for.
+
+## ⌨️ Keyboard shortcuts (desktop)
+
+| Action | Shortcut | Action | Shortcut |
+|---|---|---|---|
+| Send request | <kbd>Ctrl</kbd>+<kbd>Enter</kbd> | New tab | <kbd>Ctrl</kbd>+<kbd>T</kbd> |
+| Save | <kbd>Ctrl</kbd>+<kbd>S</kbd> | Close tab | <kbd>Ctrl</kbd>+<kbd>W</kbd> |
+| Command palette | <kbd>Ctrl</kbd>+<kbd>K</kbd> | Next / previous tab | <kbd>Ctrl</kbd>+<kbd>PgDn</kbd> / <kbd>PgUp</kbd> |
+
+All of them can be changed in **Settings → Keyboard**. On macOS the defaults use <kbd>Ctrl</kbd>, not <kbd>Cmd</kbd>; rebind them there if you prefer.
+
+## 🛠 Build from source
+
+You need the [Flutter SDK](https://docs.flutter.dev/get-started/install) 3.35 or newer.
+
+```bash
+git clone https://github.com/ghaderi0x/PostBox.git
+cd PostBox
+
+./tool/setup_platforms.sh          # creates android/windows/linux/macos runners (see below)
 flutter pub get
 dart format . && flutter analyze && flutter test
-flutter run -d linux          # or windows / an Android device
+
+flutter run -d windows             # or: linux, macos, or an Android device
 ```
 
-Linux needs `libsecret-1-dev` to build and a keyring service at runtime. Fonts and icons are not bundled yet (`assets/fonts/README.md`).
+`PLATFORMS=linux ./tool/setup_platforms.sh` sets up only some platforms. On Windows run the script in Git Bash or WSL.
 
-Feature coverage against the master TODO list: `docs/FEATURE_MATRIX.md`.
+| Platform | Needs |
+|---|---|
+| Windows | Visual Studio 2022 with *Desktop development with C++*, Developer Mode on |
+| Linux | `clang cmake ninja-build pkg-config libgtk-3-dev libsecret-1-dev` |
+| macOS | Xcode and CocoaPods |
+| Android | Android SDK, JDK 17; then `dart run flutter_launcher_icons` and `dart run flutter_native_splash:create` |
 
-## Documentation
+Fonts (Inter, JetBrains Mono, Vazirmatn) are bundled; see `assets/fonts/README.md`.
 
-`docs/` (English) and `docs/fa/` (فارسی): product spec, architecture, design system, security, testing, roadmap, status, editor, import/export, release, privacy policy, Play listing.
+## 🚀 Releasing
 
-## Licence
+1. `tool/bump_version.sh 1.0.1` and add a section to `CHANGELOG.md`.
+2. Commit, then `git tag v1.0.1 && git push origin main v1.0.1`.
+3. The **Release** workflow builds the Windows installer, macOS disk image, Linux `.deb` and AppImage, writes `SHA256SUMS.txt` and publishes the GitHub Release.
+4. Build the Android APK yourself and upload it to the release, Myket and Bazaar.
 
-MIT, see `LICENSE`. Third-party notices: `docs/THIRD_PARTY_NOTICES.md`.
+Details, signing notes and store listings: [`docs/RELEASE.md`](docs/RELEASE.md).
 
----
-
-# پست‌باکس (PostBox)
-
-کلاینت متن‌باز و محلی‌محور HTTP از **Uniqueone** برای اندروید، ویندوز و لینوکس. مجوز MIT. فارسی (راست‌به‌چپ کامل) و انگلیسی.
-
-> **وضعیت: پیش‌نویس کامل، هنوز کامپایل نشده.** همه فازها نوشته شده‌اند اما کد هرگز ساخته یا اجرا نشده است (هنگام نوشتن، Flutter SDK در دسترس نبود). پیش از هر اتکایی `docs/fa/PROJECT_STATUS.md` را بخوانید.
-
-## قابلیت‌ها
-
-درخواست با همه متدها، بدنه JSON/فرم/چندبخشی/خام/GraphQL، SSE و وب‌سوکت؛ بازرس پاسخ با نمای مرتب/خام/تفاوت؛ ویرایشگر کد سفارشی؛ مجموعه‌ها، علاقه‌مندی‌ها و تاریخچه؛ محیط‌ها و متغیرهای رمز؛ Basic، Bearer، کلید API و OAuth 2.0 (PKCE)؛ درون‌ریزی cURL/Postman/PostBox/OpenAPI-JSON و برون‌بری cURL/Postman/PostBox؛ ادعاها، زنجیره‌سازی و اجراگر مجموعه؛ شش تم؛ پالت فرمان (Ctrl+K). بدون حساب کاربری، تله‌متری و همگام‌سازی.
-
-## شروع
+## 🧱 Project layout
 
 ```
-./tool/setup_platforms.sh
-flutter pub get
-dart format . && flutter analyze && flutter test
-flutter run -d linux
+lib/
+  core/        design tokens, platform helpers, utilities
+  features/    requests, collections, history, auth, runner, settings, update …
+  l10n/        English and Persian strings
+  ui/          pages and widgets (desktop and phone layouts)
+test/          unit and widget tests
+packaging/     Inno Setup, .deb, AppImage and .dmg scripts
+tool/          platform setup and version bump scripts
+docs/          architecture, security, privacy policy, release guide, feature matrix
 ```
 
-برای ساخت در لینوکس به `libsecret-1-dev` و هنگام اجرا به یک سرویس keyring نیاز است. فونت‌ها و آیکون‌ها هنوز بسته‌بندی نشده‌اند.
+## 📚 Documentation
 
-## مستندات
+[Product spec](docs/PRODUCT_SPEC.md) · [Architecture](docs/ARCHITECTURE.md) · [Design system](docs/DESIGN_SYSTEM.md) · [Security](docs/SECURITY.md) · [Privacy policy](docs/PRIVACY_POLICY.md) · [Import/export](docs/IMPORT_EXPORT.md) · [Scripting](docs/SCRIPTING.md) · [Testing](docs/TESTING.md) · [Feature matrix](docs/FEATURE_MATRIX.md) · [Roadmap](docs/ROADMAP.md) · [Project status](docs/PROJECT_STATUS.md) · فارسی: [`docs/fa/`](docs/fa)
 
-پوشه `docs/` (انگلیسی) و `docs/fa/` (فارسی).
+## ⚠️ Known limits
+
+- HTTP/3 is not supported; HTTP/2 is opt-in and applies to https without a proxy.
+- OAuth 2.0 covers Authorization Code with PKCE only.
+- No audio or video preview, no JSON-schema validation, no standalone environment file.
+- Windows and macOS builds are not code-signed or notarised yet, and the Linux and macOS packages were produced by the release workflow rather than tested on every distribution or macOS version.
+
+The full, dated list lives in [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md).
+
+## 🤝 Contributing
+
+Issues and pull requests are welcome. Please read [`CONTRIBUTING.md`](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md); report security problems as described in [`SECURITY.md`](SECURITY.md).
+
+## 📄 Licence
+
+[MIT](LICENSE) © Uniqueone. Third-party notices: [`docs/THIRD_PARTY_NOTICES.md`](docs/THIRD_PARTY_NOTICES.md).
+
+<p align="center">
+  <sub>Made by <a href="https://github.com/ghaderi0x"><b>A.M Ghaderi</b></a> · <a href="https://github.com/ghaderi0x/PostBox">github.com/ghaderi0x/PostBox</a></sub>
+</p>

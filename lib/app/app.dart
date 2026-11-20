@@ -1,8 +1,13 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import '../core/design/presets.dart';
 import '../core/design/theme.dart';
+import '../core/platform/file_service.dart';
+import '../core/platform/share_intent_service.dart';
 import '../core/util/app_log.dart';
 import '../features/auth/oauth_service.dart';
 import '../features/collections/application/collections_cubit.dart';
@@ -13,16 +18,24 @@ import '../features/runner/application/runner_cubit.dart';
 import '../features/secrets/secret_store.dart';
 import '../features/settings/application/settings_cubit.dart';
 import '../features/settings/domain/app_settings.dart';
+import '../features/templates/request_templates.dart';
+import '../features/workspaces/workspace_registry.dart';
 import '../features/workspace/application/workspace_cubit.dart';
 import '../l10n/strings.dart';
 import '../ui/app_shell.dart';
 import '../ui/onboarding/onboarding_page.dart';
+import '../ui/splash/splash_screen.dart';
 import 'services.dart';
 
 class PostBoxApp extends StatefulWidget {
-  const PostBoxApp({super.key, required this.services});
+  const PostBoxApp({
+    super.key,
+    required this.services,
+    required this.workspaces,
+  });
 
   final AppServices services;
+  final WorkspaceManager workspaces;
 
   @override
   State<PostBoxApp> createState() => _PostBoxAppState();
@@ -52,6 +65,7 @@ class _PostBoxAppState extends State<PostBoxApp> {
       history: _history,
       executor: s.executor,
       log: s.log,
+      session: s.session,
     );
     _runner = RunnerCubit(
       collections: _collections,
@@ -66,7 +80,11 @@ class _PostBoxAppState extends State<PostBoxApp> {
     await _collections.load();
     await _envs.load();
     _history.prune(_settings.state);
-    _workspace.newTab();
+    var restored = false;
+    if (_settings.state.restoreWorkspace) {
+      restored = await _workspace.restoreSession();
+    }
+    if (!restored) _workspace.newTab();
     if (mounted) setState(() => _ready = true);
   }
 
@@ -101,6 +119,11 @@ class _PostBoxAppState extends State<PostBoxApp> {
         RepositoryProvider<OAuthService>.value(value: services.oauth),
         RepositoryProvider<AppDataService>.value(value: services.data),
         RepositoryProvider<SecretStore>.value(value: services.secrets),
+        RepositoryProvider<FileService>.value(value: services.files),
+        RepositoryProvider<ShareIntentService>.value(value: services.share),
+        RepositoryProvider<TemplateStore>.value(value: services.templates),
+        RepositoryProvider<WorkspaceManager>.value(value: widget.workspaces),
+        RepositoryProvider<AppServices>.value(value: services),
       ],
       child: MultiBlocProvider(
         providers: <BlocProvider<dynamic>>[
@@ -114,8 +137,10 @@ class _PostBoxAppState extends State<PostBoxApp> {
         child: BlocBuilder<SettingsCubit, AppSettings>(
           builder: (context, s) {
             final locale = _effectiveLocale(s);
-            final sysCode = WidgetsBinding.instance.platformDispatcher.locale.languageCode;
-            final code = locale?.languageCode ?? (sysCode == 'fa' ? 'fa' : 'en');
+            final sysCode =
+                WidgetsBinding.instance.platformDispatcher.locale.languageCode;
+            final code =
+                locale?.languageCode ?? (sysCode == 'fa' ? 'fa' : 'en');
             final persianUi = code == 'fa';
             ThemeData theme(Brightness b) =>
                 buildTheme(brightness: b, settings: s, persianUi: persianUi);
@@ -141,17 +166,37 @@ class _PostBoxAppState extends State<PostBoxApp> {
               builder: (context, child) {
                 final mq = MediaQuery.of(context);
                 final base = mq.textScaler.scale(14) / 14;
-                return MediaQuery(
+                final scaled = MediaQuery(
                   data: mq.copyWith(
                     textScaler: TextScaler.linear(base * s.fontScale),
                     disableAnimations: s.reducedMotion || mq.disableAnimations,
                   ),
                   child: child ?? const SizedBox.shrink(),
                 );
+                if (!Platform.isWindows) return scaled;
+                // Window border in the accent colour (Windows only).
+                final accent = buildColors(
+                  s.themePreset,
+                  Theme.of(context).brightness,
+                  accentOverride: s.accentOverride,
+                  surface: s.surfaceStyle,
+                ).accent;
+                return DecoratedBox(
+                  position: DecorationPosition.foreground,
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: accent.withAlpha(200),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: scaled,
+                );
               },
               home: !_ready
-                  ? const Scaffold(body: Center(child: CircularProgressIndicator()))
-                  : (s.onboardingDone ? const AppShell() : const OnboardingPage()),
+                  ? const SplashScreen(animate: false)
+                  : (s.onboardingDone
+                        ? const AppShell()
+                        : const OnboardingPage()),
             );
           },
         ),

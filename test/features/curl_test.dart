@@ -7,12 +7,23 @@ import 'package:postbox/features/requests/domain/request_models.dart';
 void main() {
   group('tokenizeShell', () {
     test('quotes, escapes and continuations', () {
-      expect(
-        tokenizeShell(r'''curl -H 'A: b c' "d e" f\ g'''),
-        <String>['curl', '-H', 'A: b c', 'd e', 'f g'],
-      );
-      expect(tokenizeShell('curl \\\n  -X GET url'), <String>['curl', '-X', 'GET', 'url']);
-      expect(tokenizeShell(r'''echo "a \"q\" b"'''), <String>['echo', 'a "q" b']);
+      expect(tokenizeShell(r'''curl -H 'A: b c' "d e" f\ g'''), <String>[
+        'curl',
+        '-H',
+        'A: b c',
+        'd e',
+        'f g',
+      ]);
+      expect(tokenizeShell('curl \\\n  -X GET url'), <String>[
+        'curl',
+        '-X',
+        'GET',
+        'url',
+      ]);
+      expect(tokenizeShell(r'''echo "a \"q\" b"'''), <String>[
+        'echo',
+        'a "q" b',
+      ]);
       expect(tokenizeShell(r"echo $'a\nb'"), <String>['echo', 'a\nb']);
     });
 
@@ -48,11 +59,16 @@ void main() {
     test('form data becomes urlencoded fields', () {
       final r = parseCurl("curl https://a.test -d 'a=1&b=x%20y'").request!;
       expect(r.bodyType, BodyType.formUrlEncoded);
-      expect(r.formFields.map((e) => '${e.key}=${e.value}').toList(), <String>['a=1', 'b=x y']);
+      expect(r.formFields.map((e) => '${e.key}=${e.value}').toList(), <String>[
+        'a=1',
+        'b=x y',
+      ]);
     });
 
     test('multipart -F with file', () {
-      final r = parseCurl("curl https://a.test -F 'name=x' -F 'file=@/tmp/a.png'").request!;
+      final r = parseCurl(
+        "curl https://a.test -F 'name=x' -F 'file=@/tmp/a.png'",
+      ).request!;
       expect(r.bodyType, BodyType.multipart);
       expect(r.formFields.length, 2);
       expect(r.formFields[1].isFile, isTrue);
@@ -75,7 +91,12 @@ void main() {
 
     test('--insecure is not honoured and is reported', () {
       final res = parseCurl('curl -k https://a.test');
-      expect(res.notes.any((n) => n.level == NoteLevel.warning && n.message.contains('insecure')), isTrue);
+      expect(
+        res.notes.any(
+          (n) => n.level == NoteLevel.warning && n.message.contains('insecure'),
+        ),
+        isTrue,
+      );
     });
 
     test('unsupported options produce warnings, not failures', () {
@@ -113,7 +134,10 @@ void main() {
     });
 
     test('includes secrets only on request', () {
-      expect(exportCurl(req, includeSecrets: true), contains('Bearer TOPSECRET'));
+      expect(
+        exportCurl(req, includeSecrets: true),
+        contains('Bearer TOPSECRET'),
+      );
     });
 
     test('quotes single quotes safely and round-trips', () {

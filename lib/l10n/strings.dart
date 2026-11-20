@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show SynchronousFuture;
 import 'package:flutter/material.dart';
 
 import 'strings_en.dart';
@@ -11,14 +12,19 @@ class AppStrings {
 
   final Locale locale;
 
-  static const List<Locale> supportedLocales = <Locale>[Locale('en'), Locale('fa')];
-  static const LocalizationsDelegate<AppStrings> delegate = _AppStringsDelegate();
+  static const List<Locale> supportedLocales = <Locale>[
+    Locale('en'),
+    Locale('fa'),
+  ];
+  static const LocalizationsDelegate<AppStrings> delegate =
+      _AppStringsDelegate();
 
   static Map<String, String> tableFor(String languageCode) =>
       languageCode == 'fa' ? faStrings : enStrings;
 
   static AppStrings of(BuildContext context) =>
-      Localizations.of<AppStrings>(context, AppStrings) ?? AppStrings(const Locale('en'));
+      Localizations.of<AppStrings>(context, AppStrings) ??
+      AppStrings(const Locale('en'));
 
   String t(String key, [List<String>? args]) {
     final table = tableFor(locale.languageCode);
@@ -40,12 +46,16 @@ class _AppStringsDelegate extends LocalizationsDelegate<AppStrings> {
       locale.languageCode == 'en' || locale.languageCode == 'fa';
 
   @override
-  Future<AppStrings> load(Locale locale) async => AppStrings(locale);
+  // Synchronous so the first frame already has its strings; an async load
+  // leaves Localizations empty for a frame and nothing below it is built.
+  Future<AppStrings> load(Locale locale) =>
+      SynchronousFuture<AppStrings>(AppStrings(locale));
 
   @override
   bool shouldReload(_AppStringsDelegate old) => false;
 }
 
 extension L10nContext on BuildContext {
-  String t(String key, [List<String>? args]) => AppStrings.of(this).t(key, args);
+  String t(String key, [List<String>? args]) =>
+      AppStrings.of(this).t(key, args);
 }

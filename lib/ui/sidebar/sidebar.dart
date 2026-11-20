@@ -29,8 +29,16 @@ class _SidebarState extends State<Sidebar> {
             child: SegmentedButton<int>(
               style: const ButtonStyle(visualDensity: VisualDensity.compact),
               segments: <ButtonSegment<int>>[
-                ButtonSegment<int>(value: 0, icon: const Icon(Icons.folder_outlined, size: 16), label: Text(context.t('nav.collections'))),
-                ButtonSegment<int>(value: 1, icon: const Icon(Icons.history, size: 16), label: Text(context.t('nav.history'))),
+                ButtonSegment<int>(
+                  value: 0,
+                  icon: const Icon(Icons.folder_outlined, size: 16),
+                  label: Text(context.t('nav.collections')),
+                ),
+                ButtonSegment<int>(
+                  value: 1,
+                  icon: const Icon(Icons.history, size: 16),
+                  label: Text(context.t('nav.history')),
+                ),
               ],
               selected: <int>{_index},
               onSelectionChanged: (s) => setState(() => _index = s.first),

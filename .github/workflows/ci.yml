@@ -14,7 +14,7 @@ jobs:
           cache: true
       - name: Generate platform folders if they are not committed
         run: |
-          if [ ! -d android ]; then ./tool/setup_platforms.sh; fi
+          if [ ! -d linux ]; then PLATFORMS=linux ./tool/setup_platforms.sh; fi
       - run: flutter pub get
       - run: dart format --output=none --set-exit-if-changed .
       - run: flutter analyze
@@ -29,6 +29,7 @@ jobs:
         with: { channel: stable, cache: true }
       - run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libsecret-1-dev
       - run: flutter config --enable-linux-desktop
+      - run: if [ ! -d linux ]; then PLATFORMS=linux ./tool/setup_platforms.sh; fi
       - run: flutter pub get
       - run: flutter build linux --release
       - uses: actions/upload-artifact@v4
@@ -44,6 +45,9 @@ jobs:
       - uses: subosito/flutter-action@v2
         with: { channel: stable, cache: true }
       - run: flutter config --enable-windows-desktop
+      - name: Generate the Windows runner if it is not committed
+        shell: bash
+        run: if [ ! -d windows ]; then PLATFORMS=windows ./tool/setup_platforms.sh; fi
       - run: flutter pub get
       - run: flutter build windows --release
       - uses: actions/upload-artifact@v4
@@ -60,9 +64,26 @@ jobs:
         with: { distribution: temurin, java-version: '17' }
       - uses: subosito/flutter-action@v2
         with: { channel: stable, cache: true }
+      - run: if [ ! -d android ]; then PLATFORMS=android ./tool/setup_platforms.sh; fi
       - run: flutter pub get
       - run: flutter build apk --release
       - uses: actions/upload-artifact@v4
         with:
           name: postbox-android-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+
+  build-macos:
+    needs: check
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+      - run: flutter config --enable-macos-desktop
+      - run: if [ ! -d macos ]; then PLATFORMS=macos ./tool/setup_platforms.sh; fi
+      - run: flutter pub get
+      - run: flutter build macos --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: postbox-macos
+          path: build/macos/Build/Products/Release/*.app

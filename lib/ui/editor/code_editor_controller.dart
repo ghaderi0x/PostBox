@@ -7,11 +7,13 @@ import 'highlighter.dart';
 /// Text controller that paints syntax highlighting, variable highlighting,
 /// bracket matching, error underline and find matches.
 class CodeEditorController extends TextEditingController {
-  CodeEditorController({super.text, CodeLanguage language = CodeLanguage.json})
-      : _language = language;
+  CodeEditorController({super.text, this.language = CodeLanguage.json});
 
-  CodeLanguage _language;
-  bool _variables = true;
+  /// No notification on purpose: [language] and [highlightVariables] are set
+  /// while the owning widget updates (during build) and the field repaints
+  /// from that rebuild anyway.
+  CodeLanguage language;
+  bool highlightVariables = true;
   int? _errorOffset;
   List<TextRange> _matches = const <TextRange>[];
   int _current = -1;
@@ -21,14 +23,6 @@ class CodeEditorController extends TextEditingController {
   String? _spanText;
   int _spanCaret = -2;
   Object? _spanKey;
-
-  CodeLanguage get language => _language;
-  /// No notification on purpose: this is set while the owning widget updates
-  /// (during build) and the field repaints from that rebuild anyway.
-  set language(CodeLanguage v) => _language = v;
-
-  bool get highlightVariables => _variables;
-  set highlightVariables(bool v) => _variables = v;
 
   int? get errorOffset => _errorOffset;
   List<TextRange> get matches => _matches;
@@ -55,26 +49,43 @@ class CodeEditorController extends TextEditingController {
     final comp = value.composing;
     if (withComposing && comp.isValid && !comp.isCollapsed) {
       // Keep IME composition underlines intact; highlighting resumes after.
-      return super.buildTextSpan(context: context, style: style, withComposing: withComposing);
+      return super.buildTextSpan(
+        context: context,
+        style: style,
+        withComposing: withComposing,
+      );
     }
     final base = style ?? context.codeStyle;
     final t = text;
     if (t.length > kHighlightLimit) return TextSpan(style: base, text: t);
     final c = context.colors;
-    final caret = selection.isValid && selection.isCollapsed ? selection.baseOffset : -1;
-    final key = Object.hash(_language, _variables, _errorOffset, _current, identityHashCode(_matches), c, base);
-    if (_span != null && _spanText == t && _spanCaret == caret && _spanKey == key) {
+    final caret = selection.isValid && selection.isCollapsed
+        ? selection.baseOffset
+        : -1;
+    final key = Object.hash(
+      language,
+      highlightVariables,
+      _errorOffset,
+      _current,
+      identityHashCode(_matches),
+      c,
+      base,
+    );
+    if (_span != null &&
+        _spanText == t &&
+        _spanCaret == caret &&
+        _spanKey == key) {
       return _span!;
     }
     final pair = caret >= 0
-        ? findBracketPair(t, caret, skipStrings: _language == CodeLanguage.json)
+        ? findBracketPair(t, caret, skipStrings: language == CodeLanguage.json)
         : null;
     final span = buildHighlightedSpan(
       text: t,
-      language: _language,
+      language: language,
       colors: c,
       base: base,
-      variables: _variables,
+      variables: highlightVariables,
       errorOffset: _errorOffset,
       bracketPair: pair,
       matches: _matches,

@@ -4,8 +4,8 @@ import '../secrets/secret_store.dart';
 /// Destroys local user data on request ("Clear local data").
 class AppDataService {
   AppDataService({required AppDatabase database, required SecretStore secrets})
-      : _db = database,
-        _secrets = secrets;
+    : _db = database,
+      _secrets = secrets;
 
   final AppDatabase _db;
   final SecretStore _secrets;

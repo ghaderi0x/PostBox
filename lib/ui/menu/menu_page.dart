@@ -2,19 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/app_info.dart';
-import '../../core/design/shapes.dart';
 import '../../core/design/tokens.dart';
 import '../../core/design/typography.dart';
-import '../../core/util/json_util.dart';
 import '../../features/collections/application/collections_cubit.dart';
 import '../../features/environments/application/environments_cubit.dart';
 import '../../features/settings/application/settings_cubit.dart';
 import '../../features/settings/domain/app_settings.dart';
 import '../../l10n/strings.dart';
+import '../cookies/cookies_page.dart';
 import '../env/environments_page.dart';
 import '../import_export/import_export_page.dart';
+import '../insights/insights_page.dart';
 import '../runner/runner_page.dart';
 import '../settings/settings_page.dart';
+import '../templates/templates_sheet.dart';
+import '../workspaces/workspaces_page.dart';
+import '../widgets/brand.dart';
 import '../widgets/common.dart';
 import '../widgets/soft.dart';
 
@@ -52,7 +55,9 @@ class MenuPage extends StatelessWidget {
         ),
       ),
     );
-    if (id != null && context.mounted) _push(context, RunnerPage(collectionId: id));
+    if (id != null && context.mounted) {
+      _push(context, RunnerPage(collectionId: id));
+    }
   }
 
   Future<void> _pickLanguage(BuildContext context) async {
@@ -103,34 +108,17 @@ class MenuPage extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(4, 8, 4, 16),
           child: Text(
             context.t('menu.title'),
-            style: context.pageTitle.copyWith(fontSize: 30, fontWeight: FontWeight.w700),
+            style: context.pageTitle.copyWith(
+              fontSize: 30,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
         SoftCard(
           padding: const EdgeInsets.all(14),
           child: Row(
             children: <Widget>[
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: <Color>[
-                      HSLColor.fromColor(c.accent)
-                          .withLightness(clampDouble(HSLColor.fromColor(c.accent).lightness + 0.1, 0.0, 0.9))
-                          .toColor(),
-                      c.accent,
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(Radii.md),
-                  boxShadow: <BoxShadow>[
-                    BoxShadow(color: c.accent.withAlpha(70), blurRadius: 16, offset: const Offset(0, 6)),
-                  ],
-                ),
-                child: Icon(Icons.inbox_rounded, color: c.onAccent, size: 30),
-              ),
+              const BrandLogo(size: 60),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -141,75 +129,117 @@ class MenuPage extends StatelessWidget {
                   ],
                 ),
               ),
-              Text('v$appVersion', style: context.timingStyle),
+              Text('v$appVersionLabel', style: context.timingStyle),
             ],
           ),
         ),
         const SizedBox(height: 16),
-        GroupedList(children: <Widget>[
-          GroupedRow(
-            icon: Icons.layers_outlined,
-            title: context.t('env.title'),
-            value: env?.name ?? context.t('env.none'),
-            onTap: () => _push(context, const EnvironmentsPage()),
-          ),
-          GroupedRow(
-            icon: Icons.import_export,
-            iconColor: c.methodPut,
-            title: context.t('ie.title'),
-            onTap: () => _push(context, const ImportExportPage()),
-          ),
-          GroupedRow(
-            icon: Icons.play_circle_outline,
-            iconColor: c.success,
-            title: context.t('menu.runner'),
-            onTap: () => _pickCollection(context),
-          ),
-        ]),
+        GroupedList(
+          children: <Widget>[
+            GroupedRow(
+              icon: Icons.layers_outlined,
+              title: context.t('env.title'),
+              value: env?.name ?? context.t('env.none'),
+              onTap: () => _push(context, const EnvironmentsPage()),
+            ),
+            GroupedRow(
+              icon: Icons.import_export,
+              iconColor: c.methodPut,
+              title: context.t('ie.title'),
+              onTap: () => _push(context, const ImportExportPage()),
+            ),
+            GroupedRow(
+              icon: Icons.play_circle_outline,
+              iconColor: c.success,
+              title: context.t('menu.runner'),
+              onTap: () => _pickCollection(context),
+            ),
+            GroupedRow(
+              icon: Icons.dashboard_customize_outlined,
+              title: context.t('palette.fromTemplate'),
+              onTap: () => showTemplatePicker(context),
+            ),
+            GroupedRow(
+              icon: Icons.cookie_outlined,
+              title: context.t('cookies.title'),
+              onTap: () => _push(context, const CookiesPage()),
+            ),
+            GroupedRow(
+              icon: Icons.workspaces_outlined,
+              title: context.t('ws.title'),
+              onTap: () => _push(context, const WorkspacesPage()),
+            ),
+            GroupedRow(
+              icon: Icons.insights_outlined,
+              iconColor: c.accent,
+              title: context.t('insights.title'),
+              onTap: () => _push(context, const InsightsPage()),
+            ),
+          ],
+        ),
         const SizedBox(height: 16),
-        GroupedList(children: <Widget>[
-          GroupedRow(
-            icon: Icons.palette_outlined,
-            iconColor: c.methodPatch,
-            title: context.t('menu.appearance'),
-            value: context.t('preset.${settings.themePreset.name}'),
-            onTap: () => _push(context, const SettingsPage()),
-          ),
-          GroupedRow(
-            icon: Icons.language,
-            iconColor: c.methodPut,
-            title: context.t('settings.languageLabel'),
-            value: _languageName(context, settings.language),
-            onTap: () => _pickLanguage(context),
-          ),
-          GroupedRow(
-            icon: Icons.settings_outlined,
-            iconColor: c.textSecondary,
-            title: context.t('settings.title'),
-            onTap: () => _push(context, const SettingsPage()),
-          ),
-        ]),
+        GroupedList(
+          children: <Widget>[
+            GroupedRow(
+              icon: Icons.palette_outlined,
+              iconColor: c.methodPatch,
+              title: context.t('menu.appearance'),
+              value: context.t('preset.${settings.themePreset.name}'),
+              onTap: () => _push(
+                context,
+                const SettingsCategoryPage(
+                  category: SettingsCategory.appearance,
+                ),
+              ),
+            ),
+            GroupedRow(
+              icon: Icons.language,
+              iconColor: c.methodPut,
+              title: context.t('settings.languageLabel'),
+              value: _languageName(context, settings.language),
+              onTap: () => _pickLanguage(context),
+            ),
+            GroupedRow(
+              icon: Icons.settings_outlined,
+              iconColor: c.textSecondary,
+              title: context.t('settings.title'),
+              onTap: () => _push(context, const SettingsPage()),
+            ),
+          ],
+        ),
         const SizedBox(height: 16),
-        GroupedList(children: <Widget>[
-          GroupedRow(
-            icon: Icons.explore_outlined,
-            iconColor: c.warning,
-            title: context.t('menu.tour'),
-            onTap: () => context.read<SettingsCubit>().update((s) => s.copyWith(onboardingDone: false)),
-          ),
-          GroupedRow(
-            icon: Icons.privacy_tip_outlined,
-            iconColor: c.success,
-            title: context.t('about.privacy'),
-            onTap: () => showTextDialog(context, title: context.t('about.privacy'), text: context.t('privacy.body')),
-          ),
-          GroupedRow(
-            icon: Icons.description_outlined,
-            iconColor: c.textSecondary,
-            title: context.t('about.notices'),
-            onTap: () => showLicensePage(context: context, applicationName: appName, applicationVersion: appVersion),
-          ),
-        ]),
+        GroupedList(
+          children: <Widget>[
+            GroupedRow(
+              icon: Icons.explore_outlined,
+              iconColor: c.warning,
+              title: context.t('menu.tour'),
+              onTap: () => context.read<SettingsCubit>().update(
+                (s) => s.copyWith(onboardingDone: false),
+              ),
+            ),
+            GroupedRow(
+              icon: Icons.privacy_tip_outlined,
+              iconColor: c.success,
+              title: context.t('about.privacy'),
+              onTap: () => showTextDialog(
+                context,
+                title: context.t('about.privacy'),
+                text: context.t('privacy.body'),
+              ),
+            ),
+            GroupedRow(
+              icon: Icons.description_outlined,
+              iconColor: c.textSecondary,
+              title: context.t('about.notices'),
+              onTap: () => showLicensePage(
+                context: context,
+                applicationName: appName,
+                applicationVersion: appVersionLabel,
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }

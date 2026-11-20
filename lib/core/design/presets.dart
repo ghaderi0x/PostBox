@@ -25,32 +25,129 @@ class _Neutrals {
 /// [light, dark] neutrals per preset. Contrast ratios (text/surface >= 4.5,
 /// onAccent/accent >= 4.5) were computed when the table was written; see
 /// test/design_contrast_test.dart which re-checks them.
-const Map<ThemePreset, List<_Neutrals>> _presets = <ThemePreset, List<_Neutrals>>{
-  ThemePreset.orange: <_Neutrals>[
-    _Neutrals(0xFFFAF8F6, 0xFFFFFFFF, 0xFFE6E0DA, 0xFF1F1B17, 0xFF6B625A, 0xFFC2410C, 0xFFFFFFFF),
-    _Neutrals(0xFF16130F, 0xFF211D18, 0xFF3A342D, 0xFFF3EEE9, 0xFFA89E94, 0xFFFF8A3D, 0xFF1A0E05),
-  ],
-  ThemePreset.midnight: <_Neutrals>[
-    _Neutrals(0xFFF4F6FB, 0xFFFFFFFF, 0xFFDCE1EE, 0xFF141A2A, 0xFF566079, 0xFF2F5BD8, 0xFFFFFFFF),
-    _Neutrals(0xFF0E1420, 0xFF151C2B, 0xFF26314A, 0xFFE6EAF4, 0xFF9AA6C0, 0xFF6D9BFF, 0xFF0A1020),
-  ],
-  ThemePreset.arctic: <_Neutrals>[
-    _Neutrals(0xFFF3F8FB, 0xFFFFFFFF, 0xFFD5E3EC, 0xFF0F2230, 0xFF4D6676, 0xFF0A759A, 0xFFFFFFFF),
-    _Neutrals(0xFF0D1A22, 0xFF14252F, 0xFF244050, 0xFFE4F1F8, 0xFF93B0C0, 0xFF4CC2EA, 0xFF06141C),
-  ],
-  ThemePreset.emerald: <_Neutrals>[
-    _Neutrals(0xFFF4F9F6, 0xFFFFFFFF, 0xFFD6E6DC, 0xFF10241A, 0xFF4B6657, 0xFF0B7A50, 0xFFFFFFFF),
-    _Neutrals(0xFF0E1A14, 0xFF15261C, 0xFF25402F, 0xFFE3F2E9, 0xFF94B3A1, 0xFF3DD598, 0xFF06180F),
-  ],
-  ThemePreset.violet: <_Neutrals>[
-    _Neutrals(0xFFF8F6FC, 0xFFFFFFFF, 0xFFE3DCF0, 0xFF1C1630, 0xFF5F567A, 0xFF6D3FD0, 0xFFFFFFFF),
-    _Neutrals(0xFF14101F, 0xFF1C172B, 0xFF372E52, 0xFFEEE9FA, 0xFFA79EC4, 0xFFA78BFA, 0xFF120A26),
-  ],
-  ThemePreset.highContrast: <_Neutrals>[
-    _Neutrals(0xFFFFFFFF, 0xFFFFFFFF, 0xFF000000, 0xFF000000, 0xFF1A1A1A, 0xFF0033CC, 0xFFFFFFFF),
-    _Neutrals(0xFF000000, 0xFF000000, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFE6E6E6, 0xFFFFD400, 0xFF000000),
-  ],
-};
+const Map<ThemePreset, List<_Neutrals>> _presets =
+    <ThemePreset, List<_Neutrals>>{
+      ThemePreset.orange: <_Neutrals>[
+        _Neutrals(
+          0xFFFAF8F6,
+          0xFFFFFFFF,
+          0xFFE6E0DA,
+          0xFF1F1B17,
+          0xFF6B625A,
+          0xFFC2410C,
+          0xFFFFFFFF,
+        ),
+        _Neutrals(
+          0xFF16130F,
+          0xFF211D18,
+          0xFF3A342D,
+          0xFFF3EEE9,
+          0xFFA89E94,
+          0xFFFF8A3D,
+          0xFF1A0E05,
+        ),
+      ],
+      ThemePreset.midnight: <_Neutrals>[
+        _Neutrals(
+          0xFFF4F6FB,
+          0xFFFFFFFF,
+          0xFFDCE1EE,
+          0xFF141A2A,
+          0xFF566079,
+          0xFF2F5BD8,
+          0xFFFFFFFF,
+        ),
+        _Neutrals(
+          0xFF0E1420,
+          0xFF151C2B,
+          0xFF26314A,
+          0xFFE6EAF4,
+          0xFF9AA6C0,
+          0xFF6D9BFF,
+          0xFF0A1020,
+        ),
+      ],
+      ThemePreset.arctic: <_Neutrals>[
+        _Neutrals(
+          0xFFF3F8FB,
+          0xFFFFFFFF,
+          0xFFD5E3EC,
+          0xFF0F2230,
+          0xFF4D6676,
+          0xFF0A759A,
+          0xFFFFFFFF,
+        ),
+        _Neutrals(
+          0xFF0D1A22,
+          0xFF14252F,
+          0xFF244050,
+          0xFFE4F1F8,
+          0xFF93B0C0,
+          0xFF4CC2EA,
+          0xFF06141C,
+        ),
+      ],
+      ThemePreset.emerald: <_Neutrals>[
+        _Neutrals(
+          0xFFF4F9F6,
+          0xFFFFFFFF,
+          0xFFD6E6DC,
+          0xFF10241A,
+          0xFF4B6657,
+          0xFF0B7A50,
+          0xFFFFFFFF,
+        ),
+        _Neutrals(
+          0xFF0E1A14,
+          0xFF15261C,
+          0xFF25402F,
+          0xFFE3F2E9,
+          0xFF94B3A1,
+          0xFF3DD598,
+          0xFF06180F,
+        ),
+      ],
+      ThemePreset.violet: <_Neutrals>[
+        _Neutrals(
+          0xFFF8F6FC,
+          0xFFFFFFFF,
+          0xFFE3DCF0,
+          0xFF1C1630,
+          0xFF5F567A,
+          0xFF6D3FD0,
+          0xFFFFFFFF,
+        ),
+        _Neutrals(
+          0xFF14101F,
+          0xFF1C172B,
+          0xFF372E52,
+          0xFFEEE9FA,
+          0xFFA79EC4,
+          0xFFA78BFA,
+          0xFF120A26,
+        ),
+      ],
+      ThemePreset.highContrast: <_Neutrals>[
+        _Neutrals(
+          0xFFFFFFFF,
+          0xFFFFFFFF,
+          0xFF000000,
+          0xFF000000,
+          0xFF1A1A1A,
+          0xFF0033CC,
+          0xFFFFFFFF,
+        ),
+        _Neutrals(
+          0xFF000000,
+          0xFF000000,
+          0xFFFFFFFF,
+          0xFFFFFFFF,
+          0xFFE6E6E6,
+          0xFFFFD400,
+          0xFF000000,
+        ),
+      ],
+    };
 
 /// Accent swatches offered in settings besides the custom picker.
 const List<int> kAccentSwatches = <int>[
@@ -80,7 +177,9 @@ PostBoxColors buildColors(
   final dark = brightness == Brightness.dark;
   final n = _presets[preset]![dark ? 1 : 0];
   final accent = Color(accentOverride ?? n.accent);
-  final onAccent = accentOverride != null ? onColorFor(accent) : Color(n.onAccent);
+  final onAccent = accentOverride != null
+      ? onColorFor(accent)
+      : Color(n.onAccent);
   final base = Color(n.base);
   var raised = Color(n.raised);
   var border = Color(n.border);

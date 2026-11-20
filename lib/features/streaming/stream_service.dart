@@ -9,7 +9,7 @@ enum StreamEventType { open, message, event, sent, close, error }
 
 class StreamEvent {
   StreamEvent(this.type, this.data, {this.label = '', DateTime? time})
-      : time = time ?? DateTime.now();
+    : time = time ?? DateTime.now();
 
   final StreamEventType type;
   final String data;
@@ -32,8 +32,11 @@ Stream<StreamEvent> parseSse(Stream<String> lines) async* {
   await for (final line in lines) {
     if (line.isEmpty) {
       if (data.isNotEmpty) {
-        yield StreamEvent(StreamEventType.event, data.join('\n'),
-            label: event.isEmpty ? 'message' : event);
+        yield StreamEvent(
+          StreamEventType.event,
+          data.join('\n'),
+          label: event.isEmpty ? 'message' : event,
+        );
       }
       event = '';
       data.clear();
@@ -51,8 +54,11 @@ Stream<StreamEvent> parseSse(Stream<String> lines) async* {
     }
   }
   if (data.isNotEmpty) {
-    yield StreamEvent(StreamEventType.event, data.join('\n'),
-        label: event.isEmpty ? 'message' : event);
+    yield StreamEvent(
+      StreamEventType.event,
+      data.join('\n'),
+      label: event.isEmpty ? 'message' : event,
+    );
   }
 }
 
@@ -75,10 +81,14 @@ class SseSession implements StreamSession {
       final req = await _client.openUrl(spec.method, spec.url);
       req.followRedirects = false;
       req.headers.set('Accept', 'text/event-stream');
-      spec.headers.forEach((k, v) => req.headers.set(k, v, preserveHeaderCase: true));
+      spec.headers.forEach(
+        (k, v) => req.headers.set(k, v, preserveHeaderCase: true),
+      );
       final res = await req.close();
       if (res.statusCode != 200) {
-        _controller.add(StreamEvent(StreamEventType.error, 'HTTP ${res.statusCode}'));
+        _controller.add(
+          StreamEvent(StreamEventType.error, 'HTTP ${res.statusCode}'),
+        );
         await close();
         return;
       }
@@ -92,11 +102,17 @@ class SseSession implements StreamSession {
         _controller.add(StreamEvent(StreamEventType.close, ''));
       }
     } on SocketException catch (e) {
-      if (!_controller.isClosed) _controller.add(StreamEvent(StreamEventType.error, e.message));
+      if (!_controller.isClosed) {
+        _controller.add(StreamEvent(StreamEventType.error, e.message));
+      }
     } on HttpException catch (e) {
-      if (!_controller.isClosed) _controller.add(StreamEvent(StreamEventType.error, e.message));
+      if (!_controller.isClosed) {
+        _controller.add(StreamEvent(StreamEventType.error, e.message));
+      }
     } on TlsException catch (e) {
-      if (!_controller.isClosed) _controller.add(StreamEvent(StreamEventType.error, e.message));
+      if (!_controller.isClosed) {
+        _controller.add(StreamEvent(StreamEventType.error, e.message));
+      }
     } finally {
       await close();
     }
@@ -122,13 +138,18 @@ class WebSocketSession implements StreamSession {
         if (m is String) {
           _controller.add(StreamEvent(StreamEventType.message, m));
         } else if (m is List<int>) {
-          _controller.add(StreamEvent(StreamEventType.message, '[binary ${m.length} bytes]'));
+          _controller.add(
+            StreamEvent(StreamEventType.message, '[binary ${m.length} bytes]'),
+          );
         }
       },
-      onError: (Object e) => _controller.add(StreamEvent(StreamEventType.error, '$e')),
+      onError: (Object e) =>
+          _controller.add(StreamEvent(StreamEventType.error, '$e')),
       onDone: () {
         if (!_controller.isClosed) {
-          _controller.add(StreamEvent(StreamEventType.close, '${_socket.closeCode ?? ''}'));
+          _controller.add(
+            StreamEvent(StreamEventType.close, '${_socket.closeCode ?? ''}'),
+          );
           _controller.close();
         }
       },
@@ -162,7 +183,9 @@ class WebSocketSession implements StreamSession {
   @override
   Future<void> send(String data) async {
     _socket.add(data);
-    if (!_controller.isClosed) _controller.add(StreamEvent(StreamEventType.sent, data));
+    if (!_controller.isClosed) {
+      _controller.add(StreamEvent(StreamEventType.sent, data));
+    }
   }
 
   @override

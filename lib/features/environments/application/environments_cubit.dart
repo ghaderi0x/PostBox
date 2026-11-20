@@ -40,16 +40,21 @@ class EnvironmentsCubit extends Cubit<EnvironmentsState> {
     final globals = await _vault.loadVariables(_repo.globals());
     var active = _repo.activeId();
     if (active != null && !envs.any((e) => e.id == active)) active = null;
-    emit(EnvironmentsState(
-      environments: envs,
-      activeId: active,
-      globals: globals,
-      secretsPersistent: _vault.isPersistent,
-    ));
+    emit(
+      EnvironmentsState(
+        environments: envs,
+        activeId: active,
+        globals: globals,
+        secretsPersistent: _vault.isPersistent,
+      ),
+    );
   }
 
   Future<Environment> create(String name) async {
-    final env = Environment(id: newId(), name: name.trim().isEmpty ? 'Environment' : name.trim());
+    final env = Environment(
+      id: newId(),
+      name: name.trim().isEmpty ? 'Environment' : name.trim(),
+    );
     await save(env);
     return env;
   }
@@ -64,45 +69,53 @@ class EnvironmentsCubit extends Cubit<EnvironmentsState> {
     } else {
       list.add(e);
     }
-    emit(EnvironmentsState(
-      environments: list,
-      activeId: state.activeId,
-      globals: state.globals,
-      secretsPersistent: _vault.isPersistent,
-    ));
+    emit(
+      EnvironmentsState(
+        environments: list,
+        activeId: state.activeId,
+        globals: state.globals,
+        secretsPersistent: _vault.isPersistent,
+      ),
+    );
   }
 
   Future<void> delete(String id) async {
     final env = state.environments.where((e) => e.id == id).firstOrNull;
     if (env != null) await _vault.deleteVariables(env.variables);
     _repo.delete(id);
-    emit(EnvironmentsState(
-      environments: state.environments.where((e) => e.id != id).toList(),
-      activeId: state.activeId == id ? null : state.activeId,
-      globals: state.globals,
-      secretsPersistent: _vault.isPersistent,
-    ));
+    emit(
+      EnvironmentsState(
+        environments: state.environments.where((e) => e.id != id).toList(),
+        activeId: state.activeId == id ? null : state.activeId,
+        globals: state.globals,
+        secretsPersistent: _vault.isPersistent,
+      ),
+    );
   }
 
   Future<void> setActive(String? id) async {
     _repo.setActive(id);
-    emit(EnvironmentsState(
-      environments: state.environments,
-      activeId: id,
-      globals: state.globals,
-      secretsPersistent: _vault.isPersistent,
-    ));
+    emit(
+      EnvironmentsState(
+        environments: state.environments,
+        activeId: id,
+        globals: state.globals,
+        secretsPersistent: _vault.isPersistent,
+      ),
+    );
   }
 
   Future<void> saveGlobals(List<Variable> vars) async {
     await _vault.saveVariables(vars);
     _repo.saveGlobals(vars);
-    emit(EnvironmentsState(
-      environments: state.environments,
-      activeId: state.activeId,
-      globals: vars,
-      secretsPersistent: _vault.isPersistent,
-    ));
+    emit(
+      EnvironmentsState(
+        environments: state.environments,
+        activeId: state.activeId,
+        globals: vars,
+        secretsPersistent: _vault.isPersistent,
+      ),
+    );
   }
 
   /// Stores values extracted by request chaining as ordinary variables in the

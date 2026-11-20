@@ -44,7 +44,12 @@ String replaceAllMatches(
     caseSensitive: caseSensitive,
     multiLine: true,
   );
-  return text.replaceAllMapped(re, (m) => m.end == m.start ? m[0]! : (regex ? _expand(m, replacement) : replacement));
+  return text.replaceAllMapped(
+    re,
+    (m) => m.end == m.start
+        ? m[0]!
+        : (regex ? _expand(m, replacement) : replacement),
+  );
 }
 
 /// Replaces the single match covering [range].
@@ -63,5 +68,9 @@ String replaceOne(
     final m = re.matchAsPrefix(text, range.start);
     if (m != null) rep = _expand(m, replacement);
   }
-  return text.replaceRange(range.start, range.end, matched.isEmpty ? matched : rep);
+  return text.replaceRange(
+    range.start,
+    range.end,
+    matched.isEmpty ? matched : rep,
+  );
 }

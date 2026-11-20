@@ -14,47 +14,73 @@ class EnvSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    return BlocBuilder<EnvironmentsCubit, EnvironmentsState>(builder: (context, s) {
-      final active = s.active;
-      return PopupMenuButton<String>(
-        tooltip: context.t('env.title'),
-        onSelected: (v) {
-          if (v == '*manage') {
-            Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const EnvironmentsPage()));
-          } else if (v == '*none') {
-            context.read<EnvironmentsCubit>().setActive(null);
-          } else {
-            context.read<EnvironmentsCubit>().setActive(v);
-          }
-        },
-        itemBuilder: (ctx) => <PopupMenuEntry<String>>[
-          CheckedPopupMenuItem<String>(
-            value: '*none',
-            checked: active == null,
-            child: Text(ctx.t('env.none')),
-          ),
-          for (final e in s.environments)
-            CheckedPopupMenuItem<String>(value: e.id, checked: e.id == s.activeId, child: Text(e.name)),
-          const PopupMenuDivider(),
-          PopupMenuItem<String>(value: '*manage', child: Text(ctx.t('env.manage'))),
-        ],
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            border: Border.all(color: c.border),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Row(mainAxisSize: MainAxisSize.min, children: <Widget>[
-            Icon(Icons.layers_outlined, size: 16, color: active == null ? c.textSecondary : c.accent),
-            const SizedBox(width: 6),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 140),
-              child: Text(active?.name ?? context.t('env.none'), overflow: TextOverflow.ellipsis, style: context.body),
+    return BlocBuilder<EnvironmentsCubit, EnvironmentsState>(
+      builder: (context, s) {
+        final active = s.active;
+        return PopupMenuButton<String>(
+          tooltip: context.t('env.title'),
+          onSelected: (v) {
+            if (v == '*manage') {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const EnvironmentsPage(),
+                ),
+              );
+            } else if (v == '*none') {
+              context.read<EnvironmentsCubit>().setActive(null);
+            } else {
+              context.read<EnvironmentsCubit>().setActive(v);
+            }
+          },
+          itemBuilder: (ctx) => <PopupMenuEntry<String>>[
+            CheckedPopupMenuItem<String>(
+              value: '*none',
+              checked: active == null,
+              child: Text(ctx.t('env.none')),
             ),
-            Icon(Icons.arrow_drop_down, size: 18, color: c.textSecondary),
-          ]),
-        ),
-      );
-    });
+            for (final e in s.environments)
+              CheckedPopupMenuItem<String>(
+                value: e.id,
+                checked: e.id == s.activeId,
+                child: Text(e.name),
+              ),
+            const PopupMenuDivider(),
+            PopupMenuItem<String>(
+              value: '*manage',
+              child: Text(ctx.t('env.manage')),
+            ),
+          ],
+          child: Container(
+            height: 38,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: BoxDecoration(
+              color: c.surfaceRaised,
+              border: Border.all(color: c.border),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Icon(
+                  Icons.layers_outlined,
+                  size: 16,
+                  color: active == null ? c.textSecondary : c.accent,
+                ),
+                const SizedBox(width: 6),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 140),
+                  child: Text(
+                    active?.name ?? context.t('env.none'),
+                    overflow: TextOverflow.ellipsis,
+                    style: context.body,
+                  ),
+                ),
+                Icon(Icons.arrow_drop_down, size: 18, color: c.textSecondary),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 }

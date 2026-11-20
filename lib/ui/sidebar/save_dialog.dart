@@ -8,7 +8,11 @@ import '../../l10n/strings.dart';
 import '../widgets/common.dart';
 
 class SaveTarget {
-  const SaveTarget({required this.collectionId, required this.parentId, required this.name});
+  const SaveTarget({
+    required this.collectionId,
+    required this.parentId,
+    required this.name,
+  });
   final String collectionId;
   final String? parentId;
   final String name;
@@ -54,7 +58,9 @@ class _SaveDialog extends StatefulWidget {
 }
 
 class _SaveDialogState extends State<_SaveDialog> {
-  late final TextEditingController _name = TextEditingController(text: widget.initialName);
+  late final TextEditingController _name = TextEditingController(
+    text: widget.initialName,
+  );
   String? _collectionId;
   String? _parentId;
 
@@ -91,7 +97,11 @@ class _SaveDialogState extends State<_SaveDialog> {
   }
 
   Future<void> _newCollection() async {
-    final name = await promptText(context, title: context.t('collections.new'), label: context.t('common.name'));
+    final name = await promptText(
+      context,
+      title: context.t('collections.new'),
+      label: context.t('common.name'),
+    );
     if (name == null || name.trim().isEmpty || !mounted) return;
     final c = await context.read<CollectionsCubit>().createCollection(name);
     setState(() {
@@ -102,76 +112,100 @@ class _SaveDialogState extends State<_SaveDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<CollectionsCubit, CollectionsState>(builder: (context, s) {
-      final folders = _collectionId == null ? <(NodeRecord, int)>[] : _folders(s);
-      return AlertDialog(
-        title: Text(context.t(widget.titleKey)),
-        content: SizedBox(
-          width: 420,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              if (widget.askName) ...<Widget>[
-                TextField(
-                  controller: _name,
-                  autofocus: true,
-                  decoration: InputDecoration(labelText: context.t('common.name')),
-                ),
-                const SizedBox(height: 14),
-              ],
-              if (s.collections.isEmpty)
-                Text(context.t('save.noCollections'), style: context.secondary)
-              else ...<Widget>[
-                DropdownButtonFormField<String>(
-                  key: ValueKey<String?>(_collectionId),
-                  initialValue: _collectionId,
-                  isExpanded: true,
-                  decoration: InputDecoration(labelText: context.t('save.collection')),
-                  items: <DropdownMenuItem<String>>[
-                    for (final c in s.collections)
-                      DropdownMenuItem<String>(value: c.id, child: Text(c.name, overflow: TextOverflow.ellipsis)),
-                  ],
-                  onChanged: (v) => setState(() {
-                    _collectionId = v;
-                    _parentId = null;
-                  }),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String?>(
-                  key: ValueKey<String?>('f$_collectionId'),
-                  initialValue: _parentId,
-                  isExpanded: true,
-                  decoration: InputDecoration(labelText: context.t('save.folder')),
-                  items: <DropdownMenuItem<String?>>[
-                    DropdownMenuItem<String?>(value: null, child: Text(context.t('save.root'))),
-                    for (final f in folders)
+    return BlocBuilder<CollectionsCubit, CollectionsState>(
+      builder: (context, s) {
+        final folders = _collectionId == null
+            ? <(NodeRecord, int)>[]
+            : _folders(s);
+        return AlertDialog(
+          title: Text(context.t(widget.titleKey)),
+          content: SizedBox(
+            width: 420,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                if (widget.askName) ...<Widget>[
+                  TextField(
+                    controller: _name,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      labelText: context.t('common.name'),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                ],
+                if (s.collections.isEmpty)
+                  Text(
+                    context.t('save.noCollections'),
+                    style: context.secondary,
+                  )
+                else ...<Widget>[
+                  DropdownButtonFormField<String>(
+                    key: ValueKey<String?>(_collectionId),
+                    initialValue: _collectionId,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      labelText: context.t('save.collection'),
+                    ),
+                    items: <DropdownMenuItem<String>>[
+                      for (final c in s.collections)
+                        DropdownMenuItem<String>(
+                          value: c.id,
+                          child: Text(c.name, overflow: TextOverflow.ellipsis),
+                        ),
+                    ],
+                    onChanged: (v) => setState(() {
+                      _collectionId = v;
+                      _parentId = null;
+                    }),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String?>(
+                    key: ValueKey<String?>('f$_collectionId'),
+                    initialValue: _parentId,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      labelText: context.t('save.folder'),
+                    ),
+                    items: <DropdownMenuItem<String?>>[
                       DropdownMenuItem<String?>(
-                        value: f.$1.id,
-                        child: Text('${'  ' * f.$2}${f.$1.name}', overflow: TextOverflow.ellipsis),
+                        value: null,
+                        child: Text(context.t('save.root')),
                       ),
-                  ],
-                  onChanged: (v) => setState(() => _parentId = v),
+                      for (final f in folders)
+                        DropdownMenuItem<String?>(
+                          value: f.$1.id,
+                          child: Text(
+                            '${'  ' * f.$2}${f.$1.name}',
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                    ],
+                    onChanged: (v) => setState(() => _parentId = v),
+                  ),
+                ],
+                const SizedBox(height: 8),
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: TextButton.icon(
+                    onPressed: _newCollection,
+                    icon: const Icon(Icons.add, size: 18),
+                    label: Text(context.t('collections.new')),
+                  ),
                 ),
               ],
-              const SizedBox(height: 8),
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: TextButton.icon(
-                  onPressed: _newCollection,
-                  icon: const Icon(Icons.add, size: 18),
-                  label: Text(context.t('collections.new')),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-        actions: <Widget>[
-          TextButton(onPressed: () => Navigator.pop(context), child: Text(context.t('common.cancel'))),
-          FilledButton(
-            onPressed: _collectionId == null
-                ? null
-                : () => Navigator.pop(
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(context.t('common.cancel')),
+            ),
+            FilledButton(
+              onPressed: _collectionId == null
+                  ? null
+                  : () => Navigator.pop(
                       context,
                       SaveTarget(
                         collectionId: _collectionId!,
@@ -179,10 +213,11 @@ class _SaveDialogState extends State<_SaveDialog> {
                         name: _name.text.trim(),
                       ),
                     ),
-            child: Text(context.t(widget.confirmKey)),
-          ),
-        ],
-      );
-    });
+              child: Text(context.t(widget.confirmKey)),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

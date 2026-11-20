@@ -68,7 +68,11 @@ class _EnvironmentsPageState extends State<EnvironmentsPage> {
 
   Future<void> _create() async {
     if (!await _discardOk() || !mounted) return;
-    final name = await promptText(context, title: context.t('env.new'), label: context.t('common.name'));
+    final name = await promptText(
+      context,
+      title: context.t('env.new'),
+      label: context.t('common.name'),
+    );
     if (name == null || name.trim().isEmpty || !mounted) return;
     final env = await context.read<EnvironmentsCubit>().create(name);
     setState(() {
@@ -79,7 +83,12 @@ class _EnvironmentsPageState extends State<EnvironmentsPage> {
   }
 
   Future<void> _rename(Environment e) async {
-    final name = await promptText(context, title: context.t('common.rename'), initial: e.name, label: context.t('common.name'));
+    final name = await promptText(
+      context,
+      title: context.t('common.rename'),
+      initial: e.name,
+      label: context.t('common.name'),
+    );
     if (name == null || name.trim().isEmpty || !mounted) return;
     await context.read<EnvironmentsCubit>().save(e.copyWith(name: name.trim()));
   }
@@ -89,7 +98,17 @@ class _EnvironmentsPageState extends State<EnvironmentsPage> {
     final copy = Environment(
       id: newId(),
       name: '${e.name} ${context.t('common.copySuffix')}',
-      variables: e.variables.map((v) => Variable(id: newId(), key: v.key, value: v.value, secret: v.secret, enabled: v.enabled)).toList(),
+      variables: e.variables
+          .map(
+            (v) => Variable(
+              id: newId(),
+              key: v.key,
+              value: v.value,
+              secret: v.secret,
+              enabled: v.enabled,
+            ),
+          )
+          .toList(),
     );
     await cubit.save(copy);
     if (mounted) setState(() => _selected = copy.id);
@@ -115,112 +134,144 @@ class _EnvironmentsPageState extends State<EnvironmentsPage> {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    return BlocBuilder<EnvironmentsCubit, EnvironmentsState>(builder: (context, s) {
-      final env = _selected == _globalsId ? null : s.environments.where((e) => e.id == _selected).firstOrNull;
-      if (_selected != _globalsId && env == null) {
-        // The selected environment was removed elsewhere.
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) setState(() => _selected = _globalsId);
-        });
-      }
-      final vars = _working ?? _sourceVars(s);
-      return Scaffold(
-        appBar: AppBar(
-          title: Text(context.t('env.title')),
-          actions: <Widget>[
-            TextButton.icon(
-              onPressed: _dirty ? () => _save(s) : null,
-              icon: const Icon(Icons.save_outlined, size: 18),
-              label: Text(context.t('common.save')),
-            ),
-            const SizedBox(width: 8),
-          ],
-        ),
-        body: Column(
-          children: <Widget>[
-            if (!s.secretsPersistent)
+    return BlocBuilder<EnvironmentsCubit, EnvironmentsState>(
+      builder: (context, s) {
+        final env = _selected == _globalsId
+            ? null
+            : s.environments.where((e) => e.id == _selected).firstOrNull;
+        if (_selected != _globalsId && env == null) {
+          // The selected environment was removed elsewhere.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) setState(() => _selected = _globalsId);
+          });
+        }
+        final vars = _working ?? _sourceVars(s);
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(context.t('env.title')),
+            actions: <Widget>[
+              TextButton.icon(
+                onPressed: _dirty ? () => _save(s) : null,
+                icon: const Icon(Icons.save_outlined, size: 18),
+                label: Text(context.t('common.save')),
+              ),
+              const SizedBox(width: 8),
+            ],
+          ),
+          body: Column(
+            children: <Widget>[
+              if (!s.secretsPersistent)
+                Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: InfoBanner(
+                    context.t('env.secretsMemoryOnly'),
+                    warning: true,
+                  ),
+                ),
               Padding(
-                padding: const EdgeInsets.all(10),
-                child: InfoBanner(context.t('env.secretsMemoryOnly'), warning: true),
-              ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: <Widget>[
-                  ChoiceChip(
-                    label: Text(context.t('env.globals')),
-                    selected: _selected == _globalsId,
-                    onSelected: (_) => _select(_globalsId),
-                  ),
-                  for (final e in s.environments)
+                padding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: <Widget>[
                     ChoiceChip(
-                      avatar: s.activeId == e.id ? Icon(Icons.check_circle, size: 16, color: c.success) : null,
-                      label: Text(e.name),
-                      selected: _selected == e.id,
-                      onSelected: (_) => _select(e.id),
+                      label: Text(context.t('env.globals')),
+                      selected: _selected == _globalsId,
+                      onSelected: (_) => _select(_globalsId),
                     ),
-                  ActionChip(
-                    avatar: const Icon(Icons.add, size: 16),
-                    label: Text(context.t('env.new')),
-                    onPressed: _create,
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Text(
-                      env == null ? context.t('env.globalsHint') : context.t('env.precedence'),
-                      style: context.secondary,
-                    ),
-                  ),
-                  if (env != null) ...<Widget>[
-                    TextButton(
-                      onPressed: s.activeId == env.id
-                          ? null
-                          : () => context.read<EnvironmentsCubit>().setActive(env.id),
-                      child: Text(context.t(s.activeId == env.id ? 'env.active' : 'env.makeActive')),
-                    ),
-                    PopupMenuButton<String>(
-                      onSelected: (v) {
-                        switch (v) {
-                          case 'rename':
-                            _rename(env);
-                          case 'dup':
-                            _duplicate(env);
-                          case 'del':
-                            _delete(env);
-                        }
-                      },
-                      itemBuilder: (ctx) => <PopupMenuEntry<String>>[
-                        PopupMenuItem<String>(value: 'rename', child: Text(ctx.t('common.rename'))),
-                        PopupMenuItem<String>(value: 'dup', child: Text(ctx.t('common.duplicate'))),
-                        PopupMenuItem<String>(value: 'del', child: Text(ctx.t('common.delete'))),
-                      ],
+                    for (final e in s.environments)
+                      ChoiceChip(
+                        avatar: s.activeId == e.id
+                            ? Icon(
+                                Icons.check_circle,
+                                size: 16,
+                                color: c.success,
+                              )
+                            : null,
+                        label: Text(e.name),
+                        selected: _selected == e.id,
+                        onSelected: (_) => _select(e.id),
+                      ),
+                    ActionChip(
+                      avatar: const Icon(Icons.add, size: 16),
+                      label: Text(context.t('env.new')),
+                      onPressed: _create,
                     ),
                   ],
-                ],
+                ),
               ),
-            ),
-            Expanded(
-              child: VariablesEditor(
-                key: ValueKey<String>(_selected),
-                variables: vars,
-                onChanged: (v) => setState(() {
-                  _working = v;
-                  _dirty = true;
-                }),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Text(
+                        env == null
+                            ? context.t('env.globalsHint')
+                            : context.t('env.precedence'),
+                        style: context.secondary,
+                      ),
+                    ),
+                    if (env != null) ...<Widget>[
+                      TextButton(
+                        onPressed: s.activeId == env.id
+                            ? null
+                            : () => context.read<EnvironmentsCubit>().setActive(
+                                env.id,
+                              ),
+                        child: Text(
+                          context.t(
+                            s.activeId == env.id
+                                ? 'env.active'
+                                : 'env.makeActive',
+                          ),
+                        ),
+                      ),
+                      PopupMenuButton<String>(
+                        onSelected: (v) {
+                          switch (v) {
+                            case 'rename':
+                              _rename(env);
+                            case 'dup':
+                              _duplicate(env);
+                            case 'del':
+                              _delete(env);
+                          }
+                        },
+                        itemBuilder: (ctx) => <PopupMenuEntry<String>>[
+                          PopupMenuItem<String>(
+                            value: 'rename',
+                            child: Text(ctx.t('common.rename')),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'dup',
+                            child: Text(ctx.t('common.duplicate')),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'del',
+                            child: Text(ctx.t('common.delete')),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-      );
-    });
+              Expanded(
+                child: VariablesEditor(
+                  key: ValueKey<String>(_selected),
+                  variables: vars,
+                  onChanged: (v) => setState(() {
+                    _working = v;
+                    _dirty = true;
+                  }),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

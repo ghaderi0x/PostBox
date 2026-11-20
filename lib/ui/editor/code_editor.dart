@@ -13,6 +13,8 @@ import 'find_logic.dart';
 import 'highlighter.dart';
 import 'json_tools.dart';
 import '../../core/util/json_util.dart';
+import '../widgets/pressable.dart';
+import '../widgets/common.dart';
 
 class EditorOptions {
   const EditorOptions({
@@ -33,7 +35,13 @@ class EditorOptions {
 }
 
 class _Layout {
-  _Layout(this.lineTops, this.lineHeights, this.textWidth, this.gutterWidth, this.lineHeight);
+  _Layout(
+    this.lineTops,
+    this.lineHeights,
+    this.textWidth,
+    this.gutterWidth,
+    this.lineHeight,
+  );
   final List<double> lineTops;
   final List<double> lineHeights;
   final double textWidth;
@@ -43,10 +51,14 @@ class _Layout {
 
 TextDirection _directionOf(String text) {
   for (final r in text.runes) {
-    if ((r >= 0x0590 && r <= 0x08FF) || (r >= 0xFB1D && r <= 0xFDFF) || (r >= 0xFE70 && r <= 0xFEFF)) {
+    if ((r >= 0x0590 && r <= 0x08FF) ||
+        (r >= 0xFB1D && r <= 0xFDFF) ||
+        (r >= 0xFE70 && r <= 0xFEFF)) {
       return TextDirection.rtl;
     }
-    if ((r >= 0x41 && r <= 0x5A) || (r >= 0x61 && r <= 0x7A)) return TextDirection.ltr;
+    if ((r >= 0x41 && r <= 0x5A) || (r >= 0x61 && r <= 0x7A)) {
+      return TextDirection.ltr;
+    }
   }
   return TextDirection.ltr;
 }
@@ -124,7 +136,9 @@ class _CodeEditorState extends State<CodeEditor> {
     }
     widget.controller.language = widget.language;
     widget.controller.highlightVariables = widget.options.highlightVariables;
-    if (old.options.wordWrap != widget.options.wordWrap) _wrap = widget.options.wordWrap;
+    if (old.options.wordWrap != widget.options.wordWrap) {
+      _wrap = widget.options.wordWrap;
+    }
     if (old.language != widget.language) _scheduleValidate();
   }
 
@@ -158,7 +172,8 @@ class _CodeEditorState extends State<CodeEditor> {
   void _validate() {
     if (!mounted) return;
     JsonProblem? p;
-    if (widget.language == CodeLanguage.json && widget.controller.text.length < 2000000) {
+    if (widget.language == CodeLanguage.json &&
+        widget.controller.text.length < 2000000) {
       p = validateJson(widget.controller.text);
     }
     widget.controller.setError(p?.offset);
@@ -179,7 +194,12 @@ class _CodeEditorState extends State<CodeEditor> {
     List<TextRange> m = const <TextRange>[];
     var err = false;
     try {
-      m = findMatches(widget.controller.text, _findCtl.text, regex: _regex, caseSensitive: _case);
+      m = findMatches(
+        widget.controller.text,
+        _findCtl.text,
+        regex: _regex,
+        caseSensitive: _case,
+      );
     } on FormatException {
       err = true;
     }
@@ -187,7 +207,9 @@ class _CodeEditorState extends State<CodeEditor> {
     if (m.isNotEmpty) {
       cur = keepIndex ? clampInt(_current, 0, m.length - 1) : 0;
       if (!keepIndex) {
-        final caret = widget.controller.selection.isValid ? widget.controller.selection.baseOffset : 0;
+        final caret = widget.controller.selection.isValid
+            ? widget.controller.selection.baseOffset
+            : 0;
         final idx = m.indexWhere((r) => r.start >= caret);
         cur = idx < 0 ? 0 : idx;
       }
@@ -222,7 +244,9 @@ class _CodeEditorState extends State<CodeEditor> {
 
   void _openFind() {
     final sel = widget.controller.selection;
-    if (sel.isValid && !sel.isCollapsed && !widget.controller.text.substring(sel.start, sel.end).contains('\n')) {
+    if (sel.isValid &&
+        !sel.isCollapsed &&
+        !widget.controller.text.substring(sel.start, sel.end).contains('\n')) {
       _findCtl.text = widget.controller.text.substring(sel.start, sel.end);
     }
     setState(() => _findOpen = true);
@@ -232,8 +256,14 @@ class _CodeEditorState extends State<CodeEditor> {
   void _replaceCurrent() {
     if (widget.readOnly || _current < 0 || _current >= _matches.length) return;
     final c = widget.controller;
-    final next = replaceOne(c.text, _matches[_current], _findCtl.text, _replaceCtl.text,
-        regex: _regex, caseSensitive: _case);
+    final next = replaceOne(
+      c.text,
+      _matches[_current],
+      _findCtl.text,
+      _replaceCtl.text,
+      regex: _regex,
+      caseSensitive: _case,
+    );
     c.value = TextEditingValue(
       text: next,
       selection: TextSelection.collapsed(offset: _matches[_current].start),
@@ -245,9 +275,17 @@ class _CodeEditorState extends State<CodeEditor> {
     if (widget.readOnly || _findCtl.text.isEmpty) return;
     final c = widget.controller;
     try {
-      final next = replaceAllMatches(c.text, _findCtl.text, _replaceCtl.text,
-          regex: _regex, caseSensitive: _case);
-      c.value = TextEditingValue(text: next, selection: const TextSelection.collapsed(offset: 0));
+      final next = replaceAllMatches(
+        c.text,
+        _findCtl.text,
+        _replaceCtl.text,
+        regex: _regex,
+        caseSensitive: _case,
+      );
+      c.value = TextEditingValue(
+        text: next,
+        selection: const TextSelection.collapsed(offset: 0),
+      );
       _runFind();
     } on FormatException {
       setState(() => _findError = true);
@@ -268,39 +306,54 @@ class _CodeEditorState extends State<CodeEditor> {
     if (line >= layout.lineTops.length) return;
     final y = layout.lineTops[line] + 8;
     final pos = _vScroll.position;
-    final target = clampDouble(y - pos.viewportDimension * 0.3, 0.0, pos.maxScrollExtent);
+    final target = clampDouble(
+      y - pos.viewportDimension * 0.3,
+      0.0,
+      pos.maxScrollExtent,
+    );
     if (widget.options.reducedMotion) {
       _vScroll.jumpTo(target);
     } else {
-      unawaited(_vScroll.animateTo(target, duration: const Duration(milliseconds: 150), curve: Curves.easeOut));
+      unawaited(
+        _vScroll.animateTo(
+          target,
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOut,
+        ),
+      );
     }
   }
 
   Future<void> _goToLine() async {
-    final ctl = TextEditingController();
     final total = '\n'.allMatches(widget.controller.text).length + 1;
     final result = await showDialog<int>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(ctx.t('editor.goToLine')),
-        content: TextField(
-          controller: ctl,
-          autofocus: true,
-          keyboardType: TextInputType.number,
-          inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.digitsOnly],
-          decoration: InputDecoration(hintText: '1 - $total'),
-          onSubmitted: (v) => Navigator.pop(ctx, int.tryParse(v)),
-        ),
-        actions: <Widget>[
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(ctx.t('common.cancel'))),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, int.tryParse(ctl.text)),
-            child: Text(ctx.t('common.ok')),
+      builder: (_) => WithTextController(
+        builder: (ctx, ctl) => AlertDialog(
+          title: Text(ctx.t('editor.goToLine')),
+          content: TextField(
+            controller: ctl,
+            autofocus: true,
+            keyboardType: TextInputType.number,
+            inputFormatters: <TextInputFormatter>[
+              FilteringTextInputFormatter.digitsOnly,
+            ],
+            decoration: InputDecoration(hintText: '1 - $total'),
+            onSubmitted: (v) => Navigator.pop(ctx, int.tryParse(v)),
           ),
-        ],
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(ctx.t('common.cancel')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, int.tryParse(ctl.text)),
+              child: Text(ctx.t('common.ok')),
+            ),
+          ],
+        ),
       ),
     );
-    ctl.dispose();
     if (result == null) return;
     final target = clampInt(result, 1, total);
     final text = widget.controller.text;
@@ -318,21 +371,30 @@ class _CodeEditorState extends State<CodeEditor> {
   }
 
   void _format() {
-    final out = formatJson(widget.controller.text, indent: widget.options.tabSize);
+    final out = formatJson(
+      widget.controller.text,
+      indent: widget.options.tabSize,
+    );
     if (out == null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.t('editor.formatFailed'))));
+      unawaited(showToast(context, context.t('editor.formatFailed')));
       return;
     }
-    widget.controller.value = TextEditingValue(text: out, selection: const TextSelection.collapsed(offset: 0));
+    widget.controller.value = TextEditingValue(
+      text: out,
+      selection: const TextSelection.collapsed(offset: 0),
+    );
   }
 
   void _minify() {
     final out = minifyJson(widget.controller.text);
     if (out == null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.t('editor.formatFailed'))));
+      unawaited(showToast(context, context.t('editor.formatFailed')));
       return;
     }
-    widget.controller.value = TextEditingValue(text: out, selection: const TextSelection.collapsed(offset: 0));
+    widget.controller.value = TextEditingValue(
+      text: out,
+      selection: const TextSelection.collapsed(offset: 0),
+    );
   }
 
   void _indent({required bool outdent}) {
@@ -341,7 +403,9 @@ class _CodeEditorState extends State<CodeEditor> {
     if (!sel.isValid) return;
     final pad = ' ' * widget.options.tabSize;
     if (!outdent && sel.isCollapsed) {
-      c.value = c.value.replaced(sel, pad).copyWith(
+      c.value = c.value
+          .replaced(sel, pad)
+          .copyWith(
             selection: TextSelection.collapsed(offset: sel.start + pad.length),
           );
       return;
@@ -363,16 +427,31 @@ class _CodeEditorState extends State<CodeEditor> {
     final delta = mapped.join('\n').length - block.length;
     c.value = TextEditingValue(
       text: next,
-      selection: TextSelection(baseOffset: math.max(0, sel.start + (outdent ? 0 : pad.length)), extentOffset: sel.end + delta),
+      selection: TextSelection(
+        baseOffset: math.max(0, sel.start + (outdent ? 0 : pad.length)),
+        extentOffset: sel.end + delta,
+      ),
     );
   }
 
   // --- layout -----------------------------------------------------------
 
-  _Layout _computeLayout(double maxWidth, TextStyle style, StrutStyle strut, TextDirection dir) {
+  _Layout _computeLayout(
+    double maxWidth,
+    TextStyle style,
+    StrutStyle strut,
+    TextDirection dir,
+  ) {
     final text = widget.controller.text;
     final showNumbers = widget.options.lineNumbers;
-    final key = Object.hash(text.length, text.hashCode, _wrap, maxWidth.round(), style.fontSize, showNumbers);
+    final key = Object.hash(
+      text.length,
+      text.hashCode,
+      _wrap,
+      maxWidth.round(),
+      style.fontSize,
+      showNumbers,
+    );
     if (_layout != null && _layoutKey == key) return _layout!;
 
     final probe = TextPainter(
@@ -386,14 +465,18 @@ class _CodeEditorState extends State<CodeEditor> {
 
     final lines = text.split('\n');
     final digits = math.max(2, '${lines.length}'.length);
-    final gutter = showNumbers && lines.length <= 5000 ? digits * charW + 18 : 0.0;
+    final gutter = showNumbers && lines.length <= 5000
+        ? digits * charW + 18
+        : 0.0;
     final avail = math.max(60.0, maxWidth - gutter);
 
     var longest = 0;
     for (final l in lines) {
       if (l.length > longest) longest = l.length;
     }
-    final textWidth = _wrap ? avail : math.max(avail, math.min(longest * charW + 32, 200000.0));
+    final textWidth = _wrap
+        ? avail
+        : math.max(avail, math.min(longest * charW + 32, 200000.0));
 
     final heights = List<double>.filled(lines.length, lineH);
     if (_wrap && lines.length <= 3000) {
@@ -428,15 +511,21 @@ class _CodeEditorState extends State<CodeEditor> {
     final style = context.codeStyle;
     final strut = StrutStyle.fromTextStyle(style, forceStrutHeight: true);
     final text = widget.controller.text;
-    final dir = widget.language == CodeLanguage.json ? TextDirection.ltr : _directionOf(text);
+    final dir = widget.language == CodeLanguage.json
+        ? TextDirection.ltr
+        : _directionOf(text);
 
     final shortcuts = <ShortcutActivator, VoidCallback>{
       const SingleActivator(LogicalKeyboardKey.keyF, control: true): _openFind,
       const SingleActivator(LogicalKeyboardKey.keyG, control: true): _goToLine,
-      if (_findOpen) const SingleActivator(LogicalKeyboardKey.escape): _closeFind,
-      if (!widget.readOnly) const SingleActivator(LogicalKeyboardKey.tab): () => _indent(outdent: false),
+      if (_findOpen)
+        const SingleActivator(LogicalKeyboardKey.escape): _closeFind,
       if (!widget.readOnly)
-        const SingleActivator(LogicalKeyboardKey.tab, shift: true): () => _indent(outdent: true),
+        const SingleActivator(LogicalKeyboardKey.tab): () =>
+            _indent(outdent: false),
+      if (!widget.readOnly)
+        const SingleActivator(LogicalKeyboardKey.tab, shift: true): () =>
+            _indent(outdent: true),
     };
 
     return CallbackShortcuts(
@@ -454,10 +543,17 @@ class _CodeEditorState extends State<CodeEditor> {
             _buildToolbar(context),
             if (_findOpen) _buildFindBar(context),
             Expanded(
-              child: LayoutBuilder(builder: (ctx, cons) {
-                final layout = _computeLayout(cons.maxWidth, style, strut, dir);
-                return _buildBody(ctx, cons, layout, style, strut, dir);
-              }),
+              child: LayoutBuilder(
+                builder: (ctx, cons) {
+                  final layout = _computeLayout(
+                    cons.maxWidth,
+                    style,
+                    strut,
+                    dir,
+                  );
+                  return _buildBody(ctx, cons, layout, style, strut, dir);
+                },
+              ),
             ),
             if (_problem != null) _buildProblem(context),
           ],
@@ -521,9 +617,10 @@ class _CodeEditorState extends State<CodeEditor> {
                   SizedBox(
                     height: layout.lineHeights[i],
                     child: Align(
-                      alignment: AlignmentDirectional.topEnd,
+                      alignment: Alignment.topRight,
                       child: Text(
                         '${i + 1}',
+                        textDirection: TextDirection.ltr,
                         style: style.copyWith(
                           color: i == errorLine ? c.danger : c.textSecondary,
                           fontWeight: i == errorLine ? FontWeight.w700 : null,
@@ -538,10 +635,18 @@ class _CodeEditorState extends State<CodeEditor> {
 
     final area = _wrap
         ? SizedBox(width: layout.textWidth, child: field)
-        : SingleChildScrollView(
-            controller: _hScroll,
-            scrollDirection: Axis.horizontal,
-            child: SizedBox(width: layout.textWidth, child: field),
+        : Directionality(
+            // Horizontal scrolling starts at the left edge even in RTL, so
+            // the first characters of every line stay in view.
+            textDirection: TextDirection.ltr,
+            child: SingleChildScrollView(
+              controller: _hScroll,
+              scrollDirection: Axis.horizontal,
+              child: Directionality(
+                textDirection: dir,
+                child: SizedBox(width: layout.textWidth, child: field),
+              ),
+            ),
           );
 
     return Scrollbar(
@@ -556,7 +661,10 @@ class _CodeEditorState extends State<CodeEditor> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               textDirection: TextDirection.ltr,
-              children: <Widget>[gutter, Expanded(child: area)],
+              children: <Widget>[
+                gutter,
+                Expanded(child: area),
+              ],
             ),
           ),
         ),
@@ -564,10 +672,19 @@ class _CodeEditorState extends State<CodeEditor> {
     );
   }
 
-  Widget _tool(IconData icon, String tip, VoidCallback? onTap, {bool active = false}) {
+  Widget _tool(
+    IconData icon,
+    String tip,
+    VoidCallback? onTap, {
+    bool active = false,
+  }) {
     final c = context.colors;
     return IconButton(
-      icon: Icon(icon, size: 18, color: onTap == null ? c.border : (active ? c.accent : c.textSecondary)),
+      icon: Icon(
+        icon,
+        size: 18,
+        color: onTap == null ? c.border : (active ? c.accent : c.textSecondary),
+      ),
       tooltip: tip,
       onPressed: onTap,
       visualDensity: VisualDensity.compact,
@@ -580,7 +697,9 @@ class _CodeEditorState extends State<CodeEditor> {
     final c = context.colors;
     final ro = widget.readOnly;
     return Container(
-      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: c.border))),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: c.border)),
+      ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
@@ -588,15 +707,38 @@ class _CodeEditorState extends State<CodeEditor> {
             if (!ro)
               ValueListenableBuilder<UndoHistoryValue>(
                 valueListenable: _undo,
-                builder: (ctx, v, _) => Row(children: <Widget>[
-                  _tool(Icons.undo, ctx.t('editor.undo'), v.canUndo ? _undo.undo : null),
-                  _tool(Icons.redo, ctx.t('editor.redo'), v.canRedo ? _undo.redo : null),
-                ]),
+                builder: (ctx, v, _) => Row(
+                  children: <Widget>[
+                    _tool(
+                      Icons.undo,
+                      ctx.t('editor.undo'),
+                      v.canUndo ? _undo.undo : null,
+                    ),
+                    _tool(
+                      Icons.redo,
+                      ctx.t('editor.redo'),
+                      v.canRedo ? _undo.redo : null,
+                    ),
+                  ],
+                ),
               ),
-            _tool(Icons.search, context.t('editor.find'), _findOpen ? _closeFind : _openFind, active: _findOpen),
-            _tool(Icons.format_list_numbered, context.t('editor.goToLine'), _goToLine),
+            _tool(
+              Icons.search,
+              context.t('editor.find'),
+              _findOpen ? _closeFind : _openFind,
+              active: _findOpen,
+            ),
+            _tool(
+              Icons.format_list_numbered,
+              context.t('editor.goToLine'),
+              _goToLine,
+            ),
             if (widget.language == CodeLanguage.json && !ro) ...<Widget>[
-              _tool(Icons.format_align_left, context.t('editor.format'), _format),
+              _tool(
+                Icons.format_align_left,
+                context.t('editor.format'),
+                _format,
+              ),
               _tool(Icons.compress, context.t('editor.minify'), _minify),
             ],
             _tool(Icons.wrap_text, context.t('editor.wrap'), () {
@@ -604,9 +746,11 @@ class _CodeEditorState extends State<CodeEditor> {
               widget.onWrapChanged?.call(_wrap);
             }, active: _wrap),
             _tool(Icons.copy, context.t('editor.copy'), () async {
-              await Clipboard.setData(ClipboardData(text: widget.controller.text));
+              await Clipboard.setData(
+                ClipboardData(text: widget.controller.text),
+              );
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.t('common.copied'))));
+                await showToast(context, context.t('common.copied'));
               }
             }),
           ],
@@ -625,25 +769,34 @@ class _CodeEditorState extends State<CodeEditor> {
     }
 
     Widget toggle(String label, String tip, bool on, VoidCallback f) => Tooltip(
-          message: tip,
-          child: InkWell(
+      message: tip,
+      child: Pressable(
+        borderRadius: BorderRadius.circular(4),
+        onTap: f,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          decoration: BoxDecoration(
+            color: on ? c.accent.withAlpha(40) : null,
             borderRadius: BorderRadius.circular(4),
-            onTap: f,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-              decoration: BoxDecoration(
-                color: on ? c.accent.withAlpha(40) : null,
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: on ? c.accent : c.border),
-              ),
-              child: Text(label, style: context.mono.copyWith(fontSize: 12, color: on ? c.accent : c.textSecondary)),
+            border: Border.all(color: on ? c.accent : c.border),
+          ),
+          child: Text(
+            label,
+            style: context.mono.copyWith(
+              fontSize: 12,
+              color: on ? c.accent : c.textSecondary,
             ),
           ),
-        );
+        ),
+      ),
+    );
 
     return Container(
       padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(color: c.surfaceBase, border: Border(bottom: BorderSide(color: c.border))),
+      decoration: BoxDecoration(
+        color: c.surfaceBase,
+        border: Border(bottom: BorderSide(color: c.border)),
+      ),
       child: Column(
         children: <Widget>[
           Row(
@@ -658,9 +811,14 @@ class _CodeEditorState extends State<CodeEditor> {
                     decoration: InputDecoration(
                       hintText: context.t('editor.find'),
                       errorText: null,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 6,
+                      ),
                       enabledBorder: _findError
-                          ? OutlineInputBorder(borderSide: BorderSide(color: c.danger))
+                          ? OutlineInputBorder(
+                              borderSide: BorderSide(color: c.danger),
+                            )
                           : null,
                     ),
                     onChanged: (_) => _runFind(),
@@ -680,8 +838,16 @@ class _CodeEditorState extends State<CodeEditor> {
               }),
               const SizedBox(width: 6),
               Text(count(), style: context.secondary),
-              _tool(Icons.keyboard_arrow_up, context.t('editor.prev'), () => _step(-1)),
-              _tool(Icons.keyboard_arrow_down, context.t('editor.next'), () => _step(1)),
+              _tool(
+                Icons.keyboard_arrow_up,
+                context.t('editor.prev'),
+                () => _step(-1),
+              ),
+              _tool(
+                Icons.keyboard_arrow_down,
+                context.t('editor.next'),
+                () => _step(1),
+              ),
               _tool(Icons.close, context.t('common.close'), _closeFind),
             ],
           ),
@@ -698,14 +864,23 @@ class _CodeEditorState extends State<CodeEditor> {
                         style: context.mono,
                         decoration: InputDecoration(
                           hintText: context.t('editor.replaceWith'),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 6,
+                          ),
                         ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 6),
-                  TextButton(onPressed: _replaceCurrent, child: Text(context.t('editor.replace'))),
-                  TextButton(onPressed: _replaceAll, child: Text(context.t('editor.replaceAll'))),
+                  TextButton(
+                    onPressed: _replaceCurrent,
+                    child: Text(context.t('editor.replace')),
+                  ),
+                  TextButton(
+                    onPressed: _replaceAll,
+                    child: Text(context.t('editor.replaceAll')),
+                  ),
                 ],
               ),
             ),
@@ -717,7 +892,7 @@ class _CodeEditorState extends State<CodeEditor> {
   Widget _buildProblem(BuildContext context) {
     final c = context.colors;
     final p = _problem!;
-    return InkWell(
+    return Pressable(
       onTap: () {
         widget.controller.selection = TextSelection.collapsed(offset: p.offset);
         _focus.requestFocus();
@@ -726,14 +901,21 @@ class _CodeEditorState extends State<CodeEditor> {
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(color: c.surfaceBase, border: Border(top: BorderSide(color: c.border))),
+        decoration: BoxDecoration(
+          color: c.surfaceBase,
+          border: Border(top: BorderSide(color: c.border)),
+        ),
         child: Row(
           children: <Widget>[
             Icon(Icons.error_outline, size: 16, color: c.danger),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
-                context.t('editor.jsonError', <String>['${p.line}', '${p.column}', p.message]),
+                context.t('editor.jsonError', <String>[
+                  '${p.line}',
+                  '${p.column}',
+                  p.message,
+                ]),
                 style: context.secondary.copyWith(color: c.danger),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,

@@ -19,7 +19,10 @@ void main() {
 
     test('dot and index access', () {
       expect(JsonPath.parse(r'$.data.id')!.evaluate(doc), (true, 7));
-      expect(JsonPath.parse(r'$.data.items[1].name')!.evaluate(doc), (true, 'b'));
+      expect(JsonPath.parse(r'$.data.items[1].name')!.evaluate(doc), (
+        true,
+        'b',
+      ));
     });
 
     test('bracket string keys', () {
@@ -61,13 +64,27 @@ void main() {
         a(AssertionKind.durationLessThanMs, expected: '100'),
         a(AssertionKind.durationLessThanMs, expected: '50'),
       ], res);
-      expect(r.map((e) => e.passed).toList(), <bool>[true, false, true, true, false]);
+      expect(r.map((e) => e.passed).toList(), <bool>[
+        true,
+        false,
+        true,
+        true,
+        false,
+      ]);
     });
 
     test('headers are case-insensitive', () {
       final r = evaluateAssertions(<Assertion>[
-        a(AssertionKind.headerEquals, target: 'content-type', expected: 'application/json'),
-        a(AssertionKind.headerContains, target: 'CONTENT-TYPE', expected: 'json'),
+        a(
+          AssertionKind.headerEquals,
+          target: 'content-type',
+          expected: 'application/json',
+        ),
+        a(
+          AssertionKind.headerContains,
+          target: 'CONTENT-TYPE',
+          expected: 'json',
+        ),
         a(AssertionKind.headerEquals, target: 'x-missing', expected: 'x'),
       ], res);
       expect(r.map((e) => e.passed).toList(), <bool>[true, true, false]);
@@ -82,14 +99,20 @@ void main() {
         a(AssertionKind.jsonPathExists, target: r'$.nope'),
         a(AssertionKind.jsonPathEquals, target: 'bad', expected: 'x'),
       ], res);
-      expect(r.map((e) => e.passed).toList(), <bool>[true, true, true, true, false, false]);
+      expect(r.map((e) => e.passed).toList(), <bool>[
+        true,
+        true,
+        true,
+        true,
+        false,
+        false,
+      ]);
     });
 
     test('json assertions fail cleanly on non-JSON bodies', () {
-      final r = evaluateAssertions(
-        <Assertion>[a(AssertionKind.jsonPathExists, target: r'$.a')],
-        fakeResult(body: 'not json'),
-      );
+      final r = evaluateAssertions(<Assertion>[
+        a(AssertionKind.jsonPathExists, target: r'$.a'),
+      ], fakeResult(body: 'not json'));
       expect(r.single.passed, isFalse);
     });
   });
@@ -102,10 +125,30 @@ void main() {
       body: '{"user":{"id":42},"name":"x"}',
     );
     final out = applyExtractions(<Extraction>[
-      Extraction(id: '1', variable: 'uid', source: ExtractionSource.jsonPath, expression: r'$.user.id'),
-      Extraction(id: '2', variable: 'rid', source: ExtractionSource.header, expression: 'x-request-id'),
-      Extraction(id: '3', variable: 'missing', source: ExtractionSource.jsonPath, expression: r'$.zzz'),
-      Extraction(id: '4', variable: '', source: ExtractionSource.jsonPath, expression: r'$.name'),
+      Extraction(
+        id: '1',
+        variable: 'uid',
+        source: ExtractionSource.jsonPath,
+        expression: r'$.user.id',
+      ),
+      Extraction(
+        id: '2',
+        variable: 'rid',
+        source: ExtractionSource.header,
+        expression: 'x-request-id',
+      ),
+      Extraction(
+        id: '3',
+        variable: 'missing',
+        source: ExtractionSource.jsonPath,
+        expression: r'$.zzz',
+      ),
+      Extraction(
+        id: '4',
+        variable: '',
+        source: ExtractionSource.jsonPath,
+        expression: r'$.name',
+      ),
     ], res);
     expect(out, <String, String>{'uid': '42', 'rid': 'r-1'});
   });

@@ -40,12 +40,19 @@ void main() {
       req.response.write('event: tick\ndata: 1\n\n');
       await req.response.close();
     });
-    final session = await SseSession.connect(HttpRequestSpec(
-      method: 'GET',
-      url: Uri.parse('http://127.0.0.1:${server.port}/'),
-    ));
-    final events = await session.events.toList().timeout(const Duration(seconds: 5));
-    final data = events.where((e) => e.type == StreamEventType.event).map((e) => e.data).toList();
+    final session = await SseSession.connect(
+      HttpRequestSpec(
+        method: 'GET',
+        url: Uri.parse('http://127.0.0.1:${server.port}/'),
+      ),
+    );
+    final events = await session.events.toList().timeout(
+      const Duration(seconds: 5),
+    );
+    final data = events
+        .where((e) => e.type == StreamEventType.event)
+        .map((e) => e.data)
+        .toList();
     expect(data, <String>['hello', '1']);
     expect(events.first.type, StreamEventType.open);
   });
@@ -57,11 +64,15 @@ void main() {
       req.response.statusCode = 503;
       await req.response.close();
     });
-    final session = await SseSession.connect(HttpRequestSpec(
-      method: 'GET',
-      url: Uri.parse('http://127.0.0.1:${server.port}/'),
-    ));
-    final events = await session.events.toList().timeout(const Duration(seconds: 5));
+    final session = await SseSession.connect(
+      HttpRequestSpec(
+        method: 'GET',
+        url: Uri.parse('http://127.0.0.1:${server.port}/'),
+      ),
+    );
+    final events = await session.events.toList().timeout(
+      const Duration(seconds: 5),
+    );
     expect(events.single.type, StreamEventType.error);
     expect(events.single.data, contains('503'));
   });
@@ -73,10 +84,12 @@ void main() {
       final ws = await WebSocketTransformer.upgrade(req);
       ws.listen((m) => ws.add('echo:$m'), onDone: () => ws.close());
     });
-    final session = await WebSocketSession.connect(HttpRequestSpec(
-      method: 'GET',
-      url: Uri.parse('http://127.0.0.1:${server.port}/'),
-    ));
+    final session = await WebSocketSession.connect(
+      HttpRequestSpec(
+        method: 'GET',
+        url: Uri.parse('http://127.0.0.1:${server.port}/'),
+      ),
+    );
     final received = <StreamEvent>[];
     final done = Completer<void>();
     final sub = session.events.listen((e) {
@@ -87,13 +100,30 @@ void main() {
     await done.future.timeout(const Duration(seconds: 5));
     await session.close();
     await sub.cancel();
-    expect(received.any((e) => e.type == StreamEventType.sent && e.data == 'hi'), isTrue);
-    expect(received.any((e) => e.type == StreamEventType.message && e.data == 'echo:hi'), isTrue);
+    expect(
+      received.any((e) => e.type == StreamEventType.sent && e.data == 'hi'),
+      isTrue,
+    );
+    expect(
+      received.any(
+        (e) => e.type == StreamEventType.message && e.data == 'echo:hi',
+      ),
+      isTrue,
+    );
   });
 
   test('toWebSocketUri maps http schemes', () {
-    expect(WebSocketSession.toWebSocketUri(Uri.parse('http://a/x')).scheme, 'ws');
-    expect(WebSocketSession.toWebSocketUri(Uri.parse('https://a/x')).scheme, 'wss');
-    expect(WebSocketSession.toWebSocketUri(Uri.parse('wss://a/x')).scheme, 'wss');
+    expect(
+      WebSocketSession.toWebSocketUri(Uri.parse('http://a/x')).scheme,
+      'ws',
+    );
+    expect(
+      WebSocketSession.toWebSocketUri(Uri.parse('https://a/x')).scheme,
+      'wss',
+    );
+    expect(
+      WebSocketSession.toWebSocketUri(Uri.parse('wss://a/x')).scheme,
+      'wss',
+    );
   });
 }

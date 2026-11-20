@@ -27,7 +27,9 @@ class _StreamViewState extends State<StreamView> {
     super.didUpdateWidget(old);
     if (widget.tab.events.length != old.tab.events.length) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scroll.hasClients) _scroll.jumpTo(_scroll.position.maxScrollExtent);
+        if (_scroll.hasClients) {
+          _scroll.jumpTo(_scroll.position.maxScrollExtent);
+        }
       });
     }
   }
@@ -67,11 +69,25 @@ class _StreamViewState extends State<StreamView> {
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
           child: Row(
             children: <Widget>[
-              Icon(Icons.circle, size: 10, color: tab.streaming ? c.success : c.textSecondary),
+              Icon(
+                Icons.circle,
+                size: 10,
+                color: tab.streaming ? c.success : c.textSecondary,
+              ),
               const SizedBox(width: 8),
-              Text(context.t(tab.streaming ? 'stream.connected' : 'stream.disconnected'), style: context.secondary),
+              Text(
+                context.t(
+                  tab.streaming ? 'stream.connected' : 'stream.disconnected',
+                ),
+                style: context.secondary,
+              ),
               const Spacer(),
-              Text(context.t('stream.limit', <String>['${WorkspaceCubit.maxStreamEvents}']), style: context.secondary),
+              Text(
+                context.t('stream.limit', <String>[
+                  '${WorkspaceCubit.maxStreamEvents}',
+                ]),
+                style: context.secondary,
+              ),
             ],
           ),
         ),
@@ -83,13 +99,18 @@ class _StreamViewState extends State<StreamView> {
                 )
               : ListView.builder(
                   controller: _scroll,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   itemCount: tab.events.length,
                   itemBuilder: (ctx, i) {
                     final e = tab.events[i];
                     final color = e.type == StreamEventType.error
                         ? c.danger
-                        : (e.type == StreamEventType.sent ? c.accent : c.textSecondary);
+                        : (e.type == StreamEventType.sent
+                              ? c.accent
+                              : c.textSecondary);
                     var data = e.data;
                     if (data.startsWith('build:')) {
                       final code = data.substring(6);
@@ -105,7 +126,11 @@ class _StreamViewState extends State<StreamView> {
                             '${_label(ctx, e)}  ${e.time.toLocal().toIso8601String().substring(11, 19)}',
                             style: ctx.timingStyle.copyWith(color: color),
                           ),
-                          if (data.isNotEmpty) SelectableText(data, style: ctx.mono.copyWith(fontSize: 12.5)),
+                          if (data.isNotEmpty)
+                            SelectableText(
+                              data,
+                              style: ctx.mono.copyWith(fontSize: 12.5),
+                            ),
                         ],
                       ),
                     );
@@ -122,12 +147,17 @@ class _StreamViewState extends State<StreamView> {
                     controller: _msg,
                     enabled: tab.streaming,
                     style: context.mono,
-                    decoration: InputDecoration(hintText: context.t('stream.compose')),
+                    decoration: InputDecoration(
+                      hintText: context.t('stream.compose'),
+                    ),
                     onSubmitted: (v) => _send(),
                   ),
                 ),
                 const SizedBox(width: 8),
-                FilledButton(onPressed: tab.streaming ? _send : null, child: Text(context.t('req.send'))),
+                FilledButton(
+                  onPressed: tab.streaming ? _send : null,
+                  child: Text(context.t('req.send')),
+                ),
               ],
             ),
           ),

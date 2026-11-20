@@ -70,7 +70,7 @@ flutter build appbundle --release        # build/app/outputs/bundle/release/app-
 flutter build apk --release              # for installing on a device
 ```
 
-Install the release APK on a real device or emulator and test: launch, send a request, secure storage, OAuth redirect (intent filter), rotation, Persian UI, R8-stripped code paths. Adaptive icon: generate from `assets/branding/logo.svg`.
+Install the release APK on a real device or emulator and test: launch, send a request, secure storage, OAuth redirect (intent filter), rotation, Persian UI, R8-stripped code paths. Icons: run `dart run flutter_launcher_icons` (Android adaptive icon and Windows .ico from `assets/branding`) and `dart run flutter_native_splash:create` once after the platform folders exist.
 
 Play listing text and the Data Safety summary are in `docs/PLAY_STORE.md`; the privacy policy is `docs/PRIVACY_POLICY.md` (publish it on a public URL).
 
@@ -96,11 +96,26 @@ Installer: install Inno Setup 6 and compile `packaging/postbox.iss` (output in `
 ```
 sudo apt install clang cmake ninja-build pkg-config libgtk-3-dev libsecret-1-dev
 flutter build linux --release
-./packaging/build_deb.sh 0.2.0
-./packaging/build_appimage.sh 0.2.0     # needs appimagetool
+./packaging/build_deb.sh 1.0.0
+./packaging/build_appimage.sh 1.0.0     # needs appimagetool
 ```
 
 Runtime needs `libsecret-1-0` and a keyring service (GNOME Keyring, KWallet) for persistent secrets; without them PostBox keeps secrets in memory and warns.
+
+## Publishing a release (and what the in-app updater sees)
+
+1. `tool/bump_version.sh 1.2.0` (updates pubspec, `app_info.dart`, the installer script and the version test) and add a `## 1.2.0` entry to `CHANGELOG.md`.
+2. Commit, then `git tag v1.2.0 && git push origin main v1.2.0`.
+3. `.github/workflows/release.yml` checks that the tag matches `pubspec.yaml`, runs analyze and tests, builds `PostBox-1.2.0-windows-setup.exe`, `PostBox-1.2.0-macos.dmg`, `postbox_1.2.0_amd64.deb` and `PostBox-1.2.0-x86_64.AppImage`, writes `SHA256SUMS.txt` and publishes the GitHub Release with the CHANGELOG section as notes.
+4. Android: build the APK/AAB yourself and upload it to the release, Myket and Bazaar.
+
+The app calls `https://api.github.com/repos/ghaderi0x/PostBox/releases/latest` once per start (switch: Settings > About). Pre-releases and drafts are never offered. The updater picks the asset by file name (`*setup*.exe`, `*.deb`, `*.AppImage`) and verifies it against `SHA256SUMS.txt`, so keep those names. Installers are not code-signed yet, so Windows SmartScreen will warn; add signing before wide distribution.
+
+### macOS
+
+`tool/setup_platforms.sh` creates the `macos/` runner, adds the sandbox entitlements PostBox needs (network client, network server for the OAuth redirect, user-selected files) and generates the app icon. `packaging/build_dmg.sh` wraps `build/macos/Build/Products/Release/*.app` in a drag-to-Applications `.dmg`.
+
+The image is **not signed or notarised**. Users must right-click the app and choose *Open* the first time. To remove that step you need an Apple Developer account: sign with a *Developer ID Application* certificate and notarise with `xcrun notarytool` (store the certificate and credentials as repository secrets and add the steps to the `macos` job). Also check on a real Mac that secrets are saved in the Keychain: `flutter_secure_storage` may need a signed build or the `keychain-access-groups` entitlement. Default shortcuts use Ctrl, not Cmd.
 
 ## CI
 

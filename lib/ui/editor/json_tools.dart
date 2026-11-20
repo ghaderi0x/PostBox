@@ -29,10 +29,8 @@ class JsonProblem {
 
 /// Replaces `{{var}}` with same-length filler so JSON that uses variables
 /// still validates and error offsets stay correct.
-String maskVariables(String text) => text.replaceAllMapped(
-      kVariablePattern,
-      (m) => '0'.padRight(m[0]!.length),
-    );
+String maskVariables(String text) =>
+    text.replaceAllMapped(kVariablePattern, (m) => '0'.padRight(m[0]!.length));
 
 JsonProblem? validateJson(String text) {
   if (text.trim().isEmpty) return null;

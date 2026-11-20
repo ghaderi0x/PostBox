@@ -4,6 +4,7 @@ import '../../core/design/shapes.dart';
 import '../../core/design/tokens.dart';
 import '../../core/design/typography.dart';
 import '../../core/util/json_util.dart';
+import 'pressable.dart';
 
 /// Rounded surface with a soft shadow. The basic building block of the UI.
 class SoftCard extends StatelessWidget {
@@ -44,7 +45,7 @@ class SoftCard extends StatelessWidget {
               color: Colors.transparent,
               borderRadius: r,
               clipBehavior: Clip.antiAlias,
-              child: InkWell(onTap: onTap, child: content),
+              child: Pressable(onTap: onTap, borderRadius: r, child: content),
             ),
     );
   }
@@ -125,7 +126,7 @@ class GroupedRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final rtl = Directionality.of(context) == TextDirection.rtl;
-    return InkWell(
+    return Pressable(
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -137,8 +138,12 @@ class GroupedRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text(title, style: context.body.copyWith(fontWeight: FontWeight.w600)),
-                  if (subtitle != null) Text(subtitle!, style: context.secondary),
+                  Text(
+                    title,
+                    style: context.body.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  if (subtitle != null)
+                    Text(subtitle!, style: context.secondary),
                 ],
               ),
             ),
@@ -147,9 +152,12 @@ class GroupedRow extends StatelessWidget {
                 padding: const EdgeInsetsDirectional.only(end: 6),
                 child: Text(value!, style: context.secondary),
               ),
-            if (trailing != null) trailing!,
+            ?trailing,
             if (onTap != null && trailing == null)
-              Icon(rtl ? Icons.chevron_left : Icons.chevron_right, color: c.textSecondary),
+              Icon(
+                rtl ? Icons.chevron_left : Icons.chevron_right,
+                color: c.textSecondary,
+              ),
           ],
         ),
       ),
@@ -176,7 +184,9 @@ class GradientButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final hsl = HSLColor.fromColor(c.accent);
-    final lighter = hsl.withLightness(clampDouble(hsl.lightness + 0.09, 0.0, 0.92)).toColor();
+    final lighter = hsl
+        .withLightness(clampDouble(hsl.lightness + 0.09, 0.0, 0.92))
+        .toColor();
     final enabled = onPressed != null;
     final r = BorderRadius.circular(Radii.md);
     final button = Opacity(
@@ -191,13 +201,17 @@ class GradientButton extends StatelessWidget {
           borderRadius: r,
           boxShadow: enabled
               ? <BoxShadow>[
-                  BoxShadow(color: c.accent.withAlpha(70), blurRadius: 18, offset: const Offset(0, 8)),
+                  BoxShadow(
+                    color: c.accent.withAlpha(70),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
+                  ),
                 ]
               : null,
         ),
         child: Material(
           type: MaterialType.transparency,
-          child: InkWell(
+          child: Pressable(
             borderRadius: r,
             onTap: onPressed,
             child: Padding(
@@ -210,7 +224,10 @@ class GradientButton extends StatelessWidget {
                     child: Text(
                       label,
                       overflow: TextOverflow.ellipsis,
-                      style: context.body.copyWith(color: c.onAccent, fontWeight: FontWeight.w700),
+                      style: context.body.copyWith(
+                        color: c.onAccent,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                   if (icon != null) ...<Widget>[
@@ -252,7 +269,7 @@ class PillTabBar extends StatelessWidget {
                   child: Semantics(
                     button: true,
                     selected: controller.index == i,
-                    child: InkWell(
+                    child: Pressable(
                       borderRadius: BorderRadius.circular(Radii.pill),
                       onTap: () {
                         if (context.pb.reducedMotion) {
@@ -262,18 +279,29 @@ class PillTabBar extends StatelessWidget {
                         }
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
-                          color: controller.index == i ? c.accent.withAlpha(36) : Colors.transparent,
+                          color: controller.index == i
+                              ? c.accent.withAlpha(36)
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(Radii.pill),
-                          border: Border.all(color: controller.index == i ? c.accent : c.border),
+                          border: Border.all(
+                            color: controller.index == i ? c.accent : c.border,
+                          ),
                         ),
                         child: Text(
                           labels[i],
                           style: context.body.copyWith(
                             fontSize: 13,
-                            fontWeight: controller.index == i ? FontWeight.w700 : FontWeight.w500,
-                            color: controller.index == i ? c.accent : c.textSecondary,
+                            fontWeight: controller.index == i
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: controller.index == i
+                                ? c.accent
+                                : c.textSecondary,
                           ),
                         ),
                       ),
@@ -311,7 +339,9 @@ class FloatingNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final fast = context.pb.reducedMotion ? Duration.zero : const Duration(milliseconds: 180);
+    final fast = context.pb.reducedMotion
+        ? Duration.zero
+        : const Duration(milliseconds: 180);
     return SafeArea(
       top: false,
       child: Padding(
@@ -336,7 +366,7 @@ class FloatingNavBar extends StatelessWidget {
                       button: true,
                       selected: i == index,
                       label: items[i].label,
-                      child: InkWell(
+                      child: Pressable(
                         borderRadius: BorderRadius.circular(Radii.pill),
                         onTap: () => onSelected(i),
                         child: AnimatedContainer(
@@ -350,9 +380,13 @@ class FloatingNavBar extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: <Widget>[
                               Icon(
-                                i == index ? items[i].selectedIcon : items[i].icon,
+                                i == index
+                                    ? items[i].selectedIcon
+                                    : items[i].icon,
                                 size: 22,
-                                color: i == index ? c.onAccent : c.textSecondary,
+                                color: i == index
+                                    ? c.onAccent
+                                    : c.textSecondary,
                               ),
                               if (i == index) ...<Widget>[
                                 const SizedBox(width: 6),
@@ -409,7 +443,10 @@ class AccentGlow extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: <Color>[c.accent.withAlpha(dark ? 52 : 28), c.accent.withAlpha(0)],
+                  colors: <Color>[
+                    c.accent.withAlpha(dark ? 52 : 28),
+                    c.accent.withAlpha(0),
+                  ],
                 ),
               ),
             ),

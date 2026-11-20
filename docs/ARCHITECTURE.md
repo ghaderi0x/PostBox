@@ -57,3 +57,38 @@ Chaining outside the runner writes extracted values into the active environment 
 ## Dependency update practice
 
 Commit `pubspec.lock`. Update one package at a time, read its changelog, run format, analyze and tests, and re-check licences and platform support. Prefer fewer packages: this app currently uses ten runtime packages.
+
+
+## 0.4.0 additions
+
+### Inheritance and variables
+
+Collections and folders carry `NodeSettings` (auth, headers, scripts; folders also variables), stored as JSON in a `settings_json` column (migration v2). Secrets of those levels live in the secret vault under `node.<id>.<field>` and `var.<id>`, never in the database row. `InheritanceResolver` merges the chain collection > folders for a request: the innermost defined auth wins (`AuthType.inherit` means "ask the parent", `none` means "explicitly no auth"), inherited headers sit under the request's own headers (same name: the request wins, inner level beats outer), scripts run outermost first before and innermost first after.
+
+Variable precedence, lowest to highest: global, collection, folder (inner wins), request, active environment, runtime values (extractions, scripts, runner data). The environment deliberately beats the whole collection tree so one collection can run against several environments.
+
+### HTTP
+
+`IoHttpEngine` stays on `dart:io`. Per hop it builds the Cookie header from the jar (so cookies never follow a redirect to another host), sends over HTTP/1.1, or over HTTP/2 when the setting is on, the URL is https and no proxy is configured. HTTP/2 uses the pure-Dart `http2` package on a `SecureSocket` with ALPN; if the server does not pick `h2` the request falls back to HTTP/1.1 on a new connection. Limits: one connection per request, no push, no connection reuse. Custom CA and client certificates use a `SecurityContext`; files that cannot be read or parsed become a `tls` failure with a clear message. Timings: connect (DNS + TCP + TLS together), wait, download, earlier redirect hops.
+
+### Declined, with reasons
+
+- **FFI / native engine**: no measured need; it would add per-platform native builds.
+- **HTTP/3**: `dart:io` has no QUIC; a third-party native library would be required.
+- **Audio/video preview**: needs a native media stack on three platforms; the inspector says so and offers Save.
+
+### Workspaces and session
+
+A workspace is one SQLite file (`postbox.db` for the default, `ws_<id>.db` for others) listed in a small registry in shared preferences. Switching workspaces builds new services and rebuilds the app under `PostBoxRoot`. Settings and secrets are shared by all workspaces. Tabs (drafts without secrets) and layout are stored in the workspace database (`kv`) and restored on start when the setting is on.
+
+### Scripts
+
+`features/scripting` is a hand-written lexer, parser and tree-walking interpreter with step, time and size limits. Host objects expose only what `docs/SCRIPTING.md` lists. No JavaScript engine is embedded: it would add a native dependency on every platform and a larger attack surface.
+
+### Platform edges
+
+`FileService` hides `file_picker`; `ShareIntentService` talks to `android_overlay/MainActivity.kt` over a MethodChannel; `desktop_drop` is wrapped in the app shell and switched off in widget tests (`AppServices.enableFileDrop`).
+
+### Reversible assumptions
+
+Default HTTP version is HTTP/1.1 (HTTP/2 is opt-in); cookies are stored in plain text in the local database (they are server-issued session ids, removed by Clear local data); deleting a workspace deletes its database file but not its entries in the system secure storage.

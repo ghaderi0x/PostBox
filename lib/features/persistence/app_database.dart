@@ -66,6 +66,32 @@ class AppDatabase {
         value TEXT NOT NULL
       )''',
     ],
+    // v2: inherited settings, cookie jar, request templates.
+    <String>[
+      "ALTER TABLE collections ADD COLUMN settings_json TEXT NOT NULL DEFAULT '{}'",
+      "ALTER TABLE nodes ADD COLUMN settings_json TEXT NOT NULL DEFAULT '{}'",
+      '''
+      CREATE TABLE cookies(
+        domain TEXT NOT NULL,
+        path TEXT NOT NULL,
+        name TEXT NOT NULL,
+        value TEXT NOT NULL,
+        host_only INTEGER NOT NULL DEFAULT 1,
+        secure INTEGER NOT NULL DEFAULT 0,
+        http_only INTEGER NOT NULL DEFAULT 0,
+        same_site TEXT NOT NULL DEFAULT '',
+        expires INTEGER,
+        created INTEGER NOT NULL,
+        PRIMARY KEY(domain, path, name)
+      )''',
+      '''
+      CREATE TABLE templates(
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        data_json TEXT NOT NULL,
+        created INTEGER NOT NULL
+      )''',
+    ],
   ];
 
   static int get latestVersion => migrations.length;
@@ -113,9 +139,24 @@ class AppDatabase {
     }
   }
 
+  int _txDepth = 0;
+
   /// Runs [body] inside a transaction; rolls back on any error.
+  ///
+  /// Calls can be nested: an inner call joins the outer transaction, so the
+  /// whole outer block is committed or rolled back together (for example a
+  /// bulk move built from single moves).
   T transaction<T>(T Function() body) {
+    if (_txDepth > 0) {
+      _txDepth++;
+      try {
+        return body();
+      } finally {
+        _txDepth--;
+      }
+    }
     db.execute('BEGIN');
+    _txDepth = 1;
     try {
       final r = body();
       db.execute('COMMIT');
@@ -123,8 +164,13 @@ class AppDatabase {
     } on Object {
       db.execute('ROLLBACK');
       rethrow;
+    } finally {
+      _txDepth = 0;
     }
   }
+
+  /// Releases the database file. Used when switching workspaces.
+  void close() => db.dispose();
 
   /// Deletes all user data (not the schema).
   void clearAllData() {
@@ -133,6 +179,8 @@ class AppDatabase {
       db.execute('DELETE FROM collections');
       db.execute('DELETE FROM environments');
       db.execute('DELETE FROM history');
+      db.execute('DELETE FROM cookies');
+      db.execute('DELETE FROM templates');
       db.execute('DELETE FROM kv');
     });
   }

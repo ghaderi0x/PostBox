@@ -16,22 +16,26 @@ class KeyValue {
   /// Multipart only: [value] is a file path instead of text.
   final bool isFile;
 
-  KeyValue copyWith({String? key, String? value, bool? enabled, bool? isFile}) =>
-      KeyValue(
-        key: key ?? this.key,
-        value: value ?? this.value,
-        enabled: enabled ?? this.enabled,
-        isFile: isFile ?? this.isFile,
-      );
+  KeyValue copyWith({
+    String? key,
+    String? value,
+    bool? enabled,
+    bool? isFile,
+  }) => KeyValue(
+    key: key ?? this.key,
+    value: value ?? this.value,
+    enabled: enabled ?? this.enabled,
+    isFile: isFile ?? this.isFile,
+  );
 
   bool get isBlank => key.isEmpty && value.isEmpty;
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'key': key,
-        'value': value,
-        'enabled': enabled,
-        if (isFile) 'isFile': true,
-      };
+    'key': key,
+    'value': value,
+    'enabled': enabled,
+    if (isFile) 'isFile': true,
+  };
 
   factory KeyValue.fromJson(Object? j) {
     final m = asMap(j);

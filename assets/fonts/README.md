@@ -1,21 +1,14 @@
 # Fonts
 
-PostBox uses three open fonts, all under the SIL Open Font License 1.1:
+PostBox bundles three open fonts, all under the SIL Open Font License 1.1. The licence text of each is next to its files.
 
-| Role | Family | Source |
-|---|---|---|
-| Persian text | Vazirmatn | https://github.com/rastikerdar/vazirmatn |
-| English UI | Inter | https://rsms.me/inter/ |
-| Code, URLs | JetBrains Mono | https://www.jetbrains.com/lp/mono/ |
+| Role | Family (in `pubspec.yaml`) | Version | Files | Source |
+|---|---|---|---|---|
+| Persian UI text | Vazirmatn | repository master at bundling time | Regular, Medium, SemiBold | https://github.com/rastikerdar/vazirmatn |
+| English UI | Inter | 4.1 | Regular, Medium, SemiBold | https://github.com/rsms/inter |
+| Numbers in UI text | PostBoxDigits | derived | Regular, Medium, SemiBold, Bold | Ten glyphs taken from Vazirmatn (Persian digit shapes mapped onto 0-9). Licence: Vazirmatn's OFL; the font was renamed. |
+| Code, URLs, JSON | JetBrainsMono | 2.304 | Regular, Bold | https://github.com/JetBrains/JetBrainsMono |
 
-The font files are **not** committed (they could not be downloaded when this
-repository was generated). To bundle them:
+How they are used (`lib/core/design/theme.dart`): with a Persian UI language Vazirmatn is the primary font and Inter the fallback; with English, Inter is primary and Vazirmatn is the fallback, so Persian text inside an English UI still renders in Vazirmatn. Code uses JetBrains Mono with Vazirmatn as its first fallback for Persian strings inside code.
 
-1. Download the static `.ttf` files for the weights listed in `pubspec.yaml`.
-2. Copy them here, keeping the file names used in the commented block.
-3. Uncomment the `fonts:` block in `pubspec.yaml`.
-4. Add each font's licence text next to it (`OFL-Inter.txt`, ...) and keep the
-   copyright lines; `docs/THIRD_PARTY_NOTICES.md` lists what to include.
-
-Until then the app falls back to the platform default fonts. Persian text still
-renders correctly with system fonts, only the look differs.
+Static `.ttf` files are used (not variable fonts) so weights map to the `weight:` entries in `pubspec.yaml`. To update a font, replace the files, keep the file names, and update the version above.

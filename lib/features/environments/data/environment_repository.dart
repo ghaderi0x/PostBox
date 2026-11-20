@@ -23,7 +23,9 @@ class SqliteEnvironmentRepository implements EnvironmentRepository {
   static const String _globalsKey = 'global_variables';
 
   String? _kvGet(String key) {
-    final rs = _app.db.select('SELECT value FROM kv WHERE key=?', <Object?>[key]);
+    final rs = _app.db.select('SELECT value FROM kv WHERE key=?', <Object?>[
+      key,
+    ]);
     return rs.isEmpty ? null : rs.first['value'] as String;
   }
 
@@ -40,7 +42,9 @@ class SqliteEnvironmentRepository implements EnvironmentRepository {
 
   @override
   List<Environment> list() {
-    final rows = _app.db.select('SELECT * FROM environments ORDER BY sort, name');
+    final rows = _app.db.select(
+      'SELECT * FROM environments ORDER BY sort, name',
+    );
     return rows.map((r) {
       List<Variable> vars;
       try {
@@ -48,18 +52,34 @@ class SqliteEnvironmentRepository implements EnvironmentRepository {
       } on FormatException {
         vars = const <Variable>[];
       }
-      return Environment(id: r['id'] as String, name: r['name'] as String, variables: vars);
+      return Environment(
+        id: r['id'] as String,
+        name: r['name'] as String,
+        variables: vars,
+      );
     }).toList();
   }
 
   @override
   void save(Environment e) {
-    final exists = _app.db.select('SELECT 1 FROM environments WHERE id=?', <Object?>[e.id]).isNotEmpty;
+    final exists = _app.db.select(
+      'SELECT 1 FROM environments WHERE id=?',
+      <Object?>[e.id],
+    ).isNotEmpty;
     final vars = jsonEncode(e.variables.map((v) => v.toJson()).toList());
     if (exists) {
-      _app.db.execute('UPDATE environments SET name=?, vars_json=? WHERE id=?', <Object?>[e.name, vars, e.id]);
+      _app.db.execute(
+        'UPDATE environments SET name=?, vars_json=? WHERE id=?',
+        <Object?>[e.name, vars, e.id],
+      );
     } else {
-      final next = _app.db.select('SELECT COALESCE(MAX(sort), -1) + 1 AS n FROM environments').first['n'] as int;
+      final next =
+          _app.db
+                  .select(
+                    'SELECT COALESCE(MAX(sort), -1) + 1 AS n FROM environments',
+                  )
+                  .first['n']
+              as int;
       _app.db.execute(
         'INSERT INTO environments(id,name,sort,vars_json) VALUES(?,?,?,?)',
         <Object?>[e.id, e.name, next, vars],

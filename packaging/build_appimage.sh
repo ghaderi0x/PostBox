@@ -3,14 +3,14 @@
 # appimagetool (https://github.com/AppImage/appimagetool) on PATH, run on Linux
 # after `flutter build linux --release`. libsecret must exist on the target.
 set -euo pipefail
-VERSION="${1:-0.2.0}"
+VERSION="${1:-1.0.0}"
 BUNDLE="build/linux/x64/release/bundle"
 APPDIR="build/appimage/PostBox.AppDir"
 
 rm -rf "$APPDIR"
 mkdir -p "$APPDIR/usr/bin"
 cp -r "$BUNDLE"/* "$APPDIR/usr/bin/"
-cp assets/branding/logo.svg "$APPDIR/postbox.svg"
+cp assets/branding/logo_512.png "$APPDIR/postbox.png"
 
 cat > "$APPDIR/postbox.desktop" <<DESKTOP
 [Desktop Entry]

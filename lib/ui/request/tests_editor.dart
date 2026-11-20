@@ -33,11 +33,17 @@ class TestsEditor extends StatelessWidget {
           _AssertionRow(
             key: ValueKey<String>(a.id),
             a: a,
-            onChanged: (n) => onAssertions(assertions.map((x) => x.id == n.id ? n : x).toList()),
-            onDelete: () => onAssertions(assertions.where((x) => x.id != a.id).toList()),
+            onChanged: (n) => onAssertions(
+              assertions.map((x) => x.id == n.id ? n : x).toList(),
+            ),
+            onDelete: () =>
+                onAssertions(assertions.where((x) => x.id != a.id).toList()),
           ),
         TextButton.icon(
-          onPressed: () => onAssertions(<Assertion>[...assertions, Assertion.blank(AssertionKind.statusEquals)]),
+          onPressed: () => onAssertions(<Assertion>[
+            ...assertions,
+            Assertion.blank(AssertionKind.statusEquals),
+          ]),
           icon: const Icon(Icons.add, size: 18),
           label: Text(context.t('tests.addAssertion')),
         ),
@@ -52,11 +58,15 @@ class TestsEditor extends StatelessWidget {
           _ExtractionRow(
             key: ValueKey<String>(e.id),
             e: e,
-            onChanged: (n) => onExtractions(extractions.map((x) => x.id == n.id ? n : x).toList()),
-            onDelete: () => onExtractions(extractions.where((x) => x.id != e.id).toList()),
+            onChanged: (n) => onExtractions(
+              extractions.map((x) => x.id == n.id ? n : x).toList(),
+            ),
+            onDelete: () =>
+                onExtractions(extractions.where((x) => x.id != e.id).toList()),
           ),
         TextButton.icon(
-          onPressed: () => onExtractions(<Extraction>[...extractions, Extraction.blank()]),
+          onPressed: () =>
+              onExtractions(<Extraction>[...extractions, Extraction.blank()]),
           icon: const Icon(Icons.add, size: 18),
           label: Text(context.t('tests.addExtraction')),
         ),
@@ -66,7 +76,12 @@ class TestsEditor extends StatelessWidget {
 }
 
 class _AssertionRow extends StatefulWidget {
-  const _AssertionRow({super.key, required this.a, required this.onChanged, required this.onDelete});
+  const _AssertionRow({
+    super.key,
+    required this.a,
+    required this.onChanged,
+    required this.onDelete,
+  });
   final Assertion a;
   final ValueChanged<Assertion> onChanged;
   final VoidCallback onDelete;
@@ -76,8 +91,12 @@ class _AssertionRow extends StatefulWidget {
 }
 
 class _AssertionRowState extends State<_AssertionRow> {
-  late final TextEditingController _target = TextEditingController(text: widget.a.target);
-  late final TextEditingController _expected = TextEditingController(text: widget.a.expected);
+  late final TextEditingController _target = TextEditingController(
+    text: widget.a.target,
+  );
+  late final TextEditingController _expected = TextEditingController(
+    text: widget.a.expected,
+  );
 
   @override
   void dispose() {
@@ -103,7 +122,13 @@ class _AssertionRowState extends State<_AssertionRow> {
               isExpanded: true,
               items: <DropdownMenuItem<AssertionKind>>[
                 for (final k in AssertionKind.values)
-                  DropdownMenuItem<AssertionKind>(value: k, child: Text(context.t('tests.kind.${k.name}'), overflow: TextOverflow.ellipsis)),
+                  DropdownMenuItem<AssertionKind>(
+                    value: k,
+                    child: Text(
+                      context.t('tests.kind.${k.name}'),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
               ],
               onChanged: (k) {
                 if (k != null) widget.onChanged(a.copyWith(kind: k));
@@ -117,7 +142,9 @@ class _AssertionRowState extends State<_AssertionRow> {
                 controller: _target,
                 style: context.mono,
                 decoration: InputDecoration(
-                  hintText: a.kind == AssertionKind.jsonPathEquals || a.kind == AssertionKind.jsonPathExists
+                  hintText:
+                      a.kind == AssertionKind.jsonPathEquals ||
+                          a.kind == AssertionKind.jsonPathExists
                       ? r'$.data.id'
                       : 'Content-Type',
                 ),
@@ -130,13 +157,19 @@ class _AssertionRowState extends State<_AssertionRow> {
               child: TextField(
                 controller: _expected,
                 style: context.mono,
-                decoration: InputDecoration(hintText: context.t('tests.expected')),
+                decoration: InputDecoration(
+                  hintText: context.t('tests.expected'),
+                ),
                 onChanged: (v) => widget.onChanged(a.copyWith(expected: v)),
               ),
             ),
           IconButton(
             tooltip: context.t('common.delete'),
-            icon: Icon(Icons.close, size: 18, color: context.colors.textSecondary),
+            icon: Icon(
+              Icons.close,
+              size: 18,
+              color: context.colors.textSecondary,
+            ),
             onPressed: widget.onDelete,
           ),
         ],
@@ -146,7 +179,12 @@ class _AssertionRowState extends State<_AssertionRow> {
 }
 
 class _ExtractionRow extends StatefulWidget {
-  const _ExtractionRow({super.key, required this.e, required this.onChanged, required this.onDelete});
+  const _ExtractionRow({
+    super.key,
+    required this.e,
+    required this.onChanged,
+    required this.onDelete,
+  });
   final Extraction e;
   final ValueChanged<Extraction> onChanged;
   final VoidCallback onDelete;
@@ -156,8 +194,12 @@ class _ExtractionRow extends StatefulWidget {
 }
 
 class _ExtractionRowState extends State<_ExtractionRow> {
-  late final TextEditingController _name = TextEditingController(text: widget.e.variable);
-  late final TextEditingController _expr = TextEditingController(text: widget.e.expression);
+  late final TextEditingController _name = TextEditingController(
+    text: widget.e.variable,
+  );
+  late final TextEditingController _expr = TextEditingController(
+    text: widget.e.expression,
+  );
 
   @override
   void dispose() {
@@ -181,7 +223,9 @@ class _ExtractionRowState extends State<_ExtractionRow> {
             child: TextField(
               controller: _name,
               style: context.mono,
-              decoration: InputDecoration(hintText: context.t('tests.variable')),
+              decoration: InputDecoration(
+                hintText: context.t('tests.variable'),
+              ),
               onChanged: (v) => widget.onChanged(e.copyWith(variable: v)),
             ),
           ),
@@ -192,9 +236,13 @@ class _ExtractionRowState extends State<_ExtractionRow> {
               isExpanded: true,
               items: <DropdownMenuItem<ExtractionSource>>[
                 DropdownMenuItem<ExtractionSource>(
-                    value: ExtractionSource.jsonPath, child: Text(context.t('tests.src.jsonPath'))),
+                  value: ExtractionSource.jsonPath,
+                  child: Text(context.t('tests.src.jsonPath')),
+                ),
                 DropdownMenuItem<ExtractionSource>(
-                    value: ExtractionSource.header, child: Text(context.t('tests.src.header'))),
+                  value: ExtractionSource.header,
+                  child: Text(context.t('tests.src.header')),
+                ),
               ],
               onChanged: (s) {
                 if (s != null) widget.onChanged(e.copyWith(source: s));
@@ -207,14 +255,20 @@ class _ExtractionRowState extends State<_ExtractionRow> {
               controller: _expr,
               style: context.mono,
               decoration: InputDecoration(
-                hintText: e.source == ExtractionSource.jsonPath ? r'$.token' : 'X-Request-Id',
+                hintText: e.source == ExtractionSource.jsonPath
+                    ? r'$.token'
+                    : 'X-Request-Id',
               ),
               onChanged: (v) => widget.onChanged(e.copyWith(expression: v)),
             ),
           ),
           IconButton(
             tooltip: context.t('common.delete'),
-            icon: Icon(Icons.close, size: 18, color: context.colors.textSecondary),
+            icon: Icon(
+              Icons.close,
+              size: 18,
+              color: context.colors.textSecondary,
+            ),
             onPressed: widget.onDelete,
           ),
         ],

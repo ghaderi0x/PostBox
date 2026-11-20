@@ -41,8 +41,9 @@ class SettingsCodeEditor extends StatelessWidget {
         highlightVariables: s.editorHighlightVariables,
         reducedMotion: s.reducedMotion,
       ),
-      onWrapChanged: (v) =>
-          context.read<SettingsCubit>().update((x) => x.copyWith(editorWordWrap: v)),
+      onWrapChanged: (v) => context.read<SettingsCubit>().update(
+        (x) => x.copyWith(editorWordWrap: v),
+      ),
     );
   }
 }

@@ -11,7 +11,11 @@ class DiffLine {
 /// Line-based diff using a longest-common-subsequence table. Returns null when
 /// the changed region is too large to compare (memory is bounded by
 /// [maxCells] table cells).
-List<DiffLine>? lineDiff(List<String> a, List<String> b, {int maxCells = 4000000}) {
+List<DiffLine>? lineDiff(
+  List<String> a,
+  List<String> b, {
+  int maxCells = 4000000,
+}) {
   var start = 0;
   while (start < a.length && start < b.length && a[start] == b[start]) {
     start++;

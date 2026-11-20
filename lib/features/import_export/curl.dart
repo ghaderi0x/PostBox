@@ -96,27 +96,67 @@ class CurlImport {
 }
 
 const Set<String> _ignoredNoArg = <String>{
-  '-s', '--silent', '-S', '--show-error', '-v', '--verbose', '-i', '--include',
-  '--compressed', '-f', '--fail', '-O', '-J', '--http1.1', '--http2', '-#',
-  '--no-keepalive', '-N', '--no-buffer', '-g', '--globoff', '--path-as-is',
+  '-s',
+  '--silent',
+  '-S',
+  '--show-error',
+  '-v',
+  '--verbose',
+  '-i',
+  '--include',
+  '--compressed',
+  '-f',
+  '--fail',
+  '-O',
+  '-J',
+  '--http1.1',
+  '--http2',
+  '-#',
+  '--no-keepalive',
+  '-N',
+  '--no-buffer',
+  '-g',
+  '--globoff',
+  '--path-as-is',
 };
 const Set<String> _ignoredWithArg = <String>{
-  '-o', '--output', '--connect-timeout', '-m', '--max-time', '--retry',
-  '-w', '--write-out', '-e', '--referer', '--cacert', '--cert', '--key',
-  '-x', '--proxy', '-c', '--cookie-jar', '--limit-rate',
+  '-o',
+  '--output',
+  '--connect-timeout',
+  '-m',
+  '--max-time',
+  '--retry',
+  '-w',
+  '--write-out',
+  '-e',
+  '--referer',
+  '--cacert',
+  '--cert',
+  '--key',
+  '-x',
+  '--proxy',
+  '-c',
+  '--cookie-jar',
+  '--limit-rate',
 };
 
 CurlImport parseCurl(String command) {
   final notes = <ImportNote>[];
   if (command.length > 256 * 1024) {
-    return CurlImport(null, const <ImportNote>[ImportNote(NoteLevel.error, 'Input is too large.')]);
+    return CurlImport(null, const <ImportNote>[
+      ImportNote(NoteLevel.error, 'Input is too large.'),
+    ]);
   }
   final tokens = tokenizeShell(command.trim());
   if (tokens == null) {
-    return CurlImport(null, const <ImportNote>[ImportNote(NoteLevel.error, 'Unterminated quote.')]);
+    return CurlImport(null, const <ImportNote>[
+      ImportNote(NoteLevel.error, 'Unterminated quote.'),
+    ]);
   }
   if (tokens.isEmpty || tokens.first != 'curl') {
-    return CurlImport(null, const <ImportNote>[ImportNote(NoteLevel.error, 'Command must start with "curl".')]);
+    return CurlImport(null, const <ImportNote>[
+      ImportNote(NoteLevel.error, 'Command must start with "curl".'),
+    ]);
   }
 
   String? method;
@@ -173,7 +213,12 @@ CurlImport parseCurl(String command) {
         final d = arg();
         if (d != null) {
           if (d.startsWith('@') && t != '--data-raw') {
-            notes.add(ImportNote(NoteLevel.warning, 'Body from file "$d" was not read; add the content manually.'));
+            notes.add(
+              ImportNote(
+                NoteLevel.warning,
+                'Body from file "$d" was not read; add the content manually.',
+              ),
+            );
           } else {
             data.add(d);
           }
@@ -188,11 +233,13 @@ CurlImport parseCurl(String command) {
           final eq = f.indexOf('=');
           if (eq > 0) {
             final v = f.substring(eq + 1);
-            form.add(KeyValue(
-              key: f.substring(0, eq),
-              value: v.startsWith('@') ? v.substring(1) : v,
-              isFile: v.startsWith('@'),
-            ));
+            form.add(
+              KeyValue(
+                key: f.substring(0, eq),
+                value: v.startsWith('@') ? v.substring(1) : v,
+                isFile: v.startsWith('@'),
+              ),
+            );
           }
         }
       case '-u':
@@ -222,13 +269,20 @@ CurlImport parseCurl(String command) {
         url = arg();
       case '-k':
       case '--insecure':
-        notes.add(const ImportNote(
-          NoteLevel.warning,
-          'Flag --insecure was ignored. TLS verification stays on; change it in Settings if you really need to.',
-        ));
+        notes.add(
+          const ImportNote(
+            NoteLevel.warning,
+            'Flag --insecure was ignored. TLS verification stays on; change it in Settings if you really need to.',
+          ),
+        );
       case '-L':
       case '--location':
-        notes.add(const ImportNote(NoteLevel.info, 'Redirects follow the policy in Settings.'));
+        notes.add(
+          const ImportNote(
+            NoteLevel.info,
+            'Redirects follow the policy in Settings.',
+          ),
+        );
       default:
         if (_ignoredNoArg.contains(t)) {
           // no effect on the request definition
@@ -236,19 +290,29 @@ CurlImport parseCurl(String command) {
           arg();
           notes.add(ImportNote(NoteLevel.info, 'Option $t was skipped.'));
         } else if (t.startsWith('-') && t.length > 1) {
-          notes.add(ImportNote(NoteLevel.warning, 'Unsupported option $t was skipped.'));
+          notes.add(
+            ImportNote(NoteLevel.warning, 'Unsupported option $t was skipped.'),
+          );
           needsRest = true;
-        } else if (url == null) {
-          url = t;
+        } else {
+          url ??= t;
         }
     }
     i++;
   }
   if (needsRest) {
-    notes.add(const ImportNote(NoteLevel.info, 'Check the imported request; skipped options may change behaviour.'));
+    notes.add(
+      const ImportNote(
+        NoteLevel.info,
+        'Check the imported request; skipped options may change behaviour.',
+      ),
+    );
   }
   if (url == null || url.trim().isEmpty) {
-    return CurlImport(null, <ImportNote>[...notes, const ImportNote(NoteLevel.error, 'No URL found.')]);
+    return CurlImport(null, <ImportNote>[
+      ...notes,
+      const ImportNote(NoteLevel.error, 'No URL found.'),
+    ]);
   }
 
   var base = url;
@@ -262,9 +326,14 @@ CurlImport parseCurl(String command) {
     for (final d in allData) {
       for (final part in d.split('&')) {
         final eq = part.indexOf('=');
-        params.add(eq < 0
-            ? KeyValue(key: part)
-            : KeyValue(key: part.substring(0, eq), value: part.substring(eq + 1)));
+        params.add(
+          eq < 0
+              ? KeyValue(key: part)
+              : KeyValue(
+                  key: part.substring(0, eq),
+                  value: part.substring(eq + 1),
+                ),
+        );
       }
     }
     allData.clear();
@@ -285,11 +354,14 @@ CurlImport parseCurl(String command) {
   } else if (allData.isNotEmpty) {
     final joined = allData.join('&');
     if (contentType != null && contentType.contains('json') ||
-        (contentType == null && (joined.trimLeft().startsWith('{') || joined.trimLeft().startsWith('[')))) {
+        (contentType == null &&
+            (joined.trimLeft().startsWith('{') ||
+                joined.trimLeft().startsWith('[')))) {
       bodyType = BodyType.json;
       body = data.length == 1 ? data.first : joined;
       headers.removeWhere((h) => h.key.toLowerCase() == 'content-type');
-    } else if (contentType == null || contentType.contains('x-www-form-urlencoded')) {
+    } else if (contentType == null ||
+        contentType.contains('x-www-form-urlencoded')) {
       bodyType = BodyType.formUrlEncoded;
       formFields = joined.split('&').where((p) => p.isNotEmpty).map((p) {
         final eq = p.indexOf('=');
@@ -303,13 +375,18 @@ CurlImport parseCurl(String command) {
 
         return eq < 0
             ? KeyValue(key: dec(p))
-            : KeyValue(key: dec(p.substring(0, eq)), value: dec(p.substring(eq + 1)));
+            : KeyValue(
+                key: dec(p.substring(0, eq)),
+                value: dec(p.substring(eq + 1)),
+              );
       }).toList();
       headers.removeWhere((h) => h.key.toLowerCase() == 'content-type');
     } else {
       bodyType = BodyType.raw;
       body = joined;
-      final ct = headers.firstWhere((h) => h.key.toLowerCase() == 'content-type');
+      final ct = headers.firstWhere(
+        (h) => h.key.toLowerCase() == 'content-type',
+      );
       headers.remove(ct);
     }
   }
@@ -322,7 +399,11 @@ CurlImport parseCurl(String command) {
   if (bearer.isNotEmpty) {
     auth = AuthConfig(type: AuthType.bearer, token: bearer);
   } else if (hasBasic) {
-    auth = AuthConfig(type: AuthType.basic, username: basicUser, password: basicPass);
+    auth = AuthConfig(
+      type: AuthType.basic,
+      username: basicUser,
+      password: basicPass,
+    );
   }
 
   final req = RequestModel(
@@ -334,9 +415,7 @@ CurlImport parseCurl(String command) {
     headers: headers,
     bodyType: bodyType,
     body: body,
-    bodyAux: bodyType == BodyType.raw
-        ? (contentType ?? '')
-        : '',
+    bodyAux: bodyType == BodyType.raw ? (contentType ?? '') : '',
     formFields: formFields,
     auth: auth,
   );
@@ -354,17 +433,24 @@ String exportCurl(RequestModel r, {bool includeSecrets = false}) {
 
   final query = r.params
       .where((p) => p.enabled && p.key.isNotEmpty)
-      .map((p) => '${Uri.encodeQueryComponent(p.key)}=${Uri.encodeQueryComponent(p.value)}')
+      .map(
+        (p) =>
+            '${Uri.encodeQueryComponent(p.key)}=${Uri.encodeQueryComponent(p.value)}',
+      )
       .toList();
 
   final a = r.auth;
-  if (a.type == AuthType.apiKey && !a.apiKeyInHeader && a.apiKeyName.isNotEmpty) {
+  if (a.type == AuthType.apiKey &&
+      !a.apiKeyInHeader &&
+      a.apiKeyName.isNotEmpty) {
     query.add(
       '${Uri.encodeQueryComponent(a.apiKeyName)}=${Uri.encodeQueryComponent(includeSecrets ? a.apiKeyValue : '<api-key>')}',
     );
   }
   var url = r.url;
-  if (query.isNotEmpty) url += (url.contains('?') ? '&' : '?') + query.join('&');
+  if (query.isNotEmpty) {
+    url += (url.contains('?') ? '&' : '?') + query.join('&');
+  }
   parts.add(_shq(url));
 
   for (final h in r.headers.where((h) => h.enabled && h.key.isNotEmpty)) {
@@ -372,16 +458,25 @@ String exportCurl(RequestModel r, {bool includeSecrets = false}) {
   }
   switch (a.type) {
     case AuthType.basic:
-      parts.add('-u ${_shq('${a.username}:${includeSecrets ? a.password : '<password>'}')}');
+      parts.add(
+        '-u ${_shq('${a.username}:${includeSecrets ? a.password : '<password>'}')}',
+      );
     case AuthType.bearer:
-      parts.add('-H ${_shq('Authorization: Bearer ${includeSecrets ? a.token : '<token>'}')}');
+      parts.add(
+        '-H ${_shq('Authorization: Bearer ${includeSecrets ? a.token : '<token>'}')}',
+      );
     case AuthType.oauth2:
-      parts.add('-H ${_shq('Authorization: Bearer ${includeSecrets ? a.accessToken : '<access-token>'}')}');
+      parts.add(
+        '-H ${_shq('Authorization: Bearer ${includeSecrets ? a.accessToken : '<access-token>'}')}',
+      );
     case AuthType.apiKey:
       if (a.apiKeyInHeader && a.apiKeyName.isNotEmpty) {
-        parts.add('-H ${_shq('${a.apiKeyName}: ${includeSecrets ? a.apiKeyValue : '<api-key>'}')}');
+        parts.add(
+          '-H ${_shq('${a.apiKeyName}: ${includeSecrets ? a.apiKeyValue : '<api-key>'}')}',
+        );
       }
     case AuthType.none:
+    case AuthType.inherit:
       break;
   }
 
@@ -395,15 +490,26 @@ String exportCurl(RequestModel r, {bool includeSecrets = false}) {
       parts.add("-H 'Content-Type: text/plain'");
       parts.add('--data-raw ${_shq(r.body)}');
     case BodyType.raw:
-      if (r.bodyAux.isNotEmpty) parts.add('-H ${_shq('Content-Type: ${r.bodyAux}')}');
+      if (r.bodyAux.isNotEmpty) {
+        parts.add('-H ${_shq('Content-Type: ${r.bodyAux}')}');
+      }
       parts.add('--data-raw ${_shq(r.body)}');
     case BodyType.formUrlEncoded:
-      for (final f in r.formFields.where((f) => f.enabled && f.key.isNotEmpty)) {
+      for (final f in r.formFields.where(
+        (f) => f.enabled && f.key.isNotEmpty,
+      )) {
         parts.add('--data-urlencode ${_shq('${f.key}=${f.value}')}');
       }
     case BodyType.multipart:
-      for (final f in r.formFields.where((f) => f.enabled && f.key.isNotEmpty)) {
+      for (final f in r.formFields.where(
+        (f) => f.enabled && f.key.isNotEmpty,
+      )) {
         parts.add('-F ${_shq('${f.key}=${f.isFile ? '@' : ''}${f.value}')}');
+      }
+    case BodyType.binary:
+      if (r.body.isNotEmpty) {
+        parts.add("-H 'Content-Type: application/octet-stream'");
+        parts.add('--data-binary ${_shq('@${r.body}')}');
       }
     case BodyType.graphql:
       final vars = r.bodyAux.trim();

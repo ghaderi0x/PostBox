@@ -21,3 +21,10 @@ flutter test
 ## سیاست
 
 آزمون شکست‌خورده هرگز بی‌صدا رد نمی‌شود؛ اگر قابل رفع نبود، دلیلش در `PROJECT_STATUS.md` ثبت می‌شود.
+
+
+## تست‌های 0.4.0
+
+فایل‌های تازه: `scripting_test`، `cookie_jar_test`، `inheritance_test`، `executor_features_test`، `http/engine_features_test`، `http/http2_engine_test`، `workspace_features_test`، `run_data_and_shortcuts_test` و `core/json_path_test` (شرح هر کدام در نسخه انگلیسی).
+
+**چه چیزی اجرا شد:** محیط نوشتن این نسخه SDK فلاتر نداشت. با SDK دارت، بسته‌های واقعی `sqlite3` و `http2` و یک شیم برای `flutter_test`، همه فایل‌های تست غیرویجت اجرا شدند: ۲۶۱ موفق، ۰ ناموفق، ۵ ردشده. `dart analyze` با قواعد پروژه روی کل `lib/` و تست‌های غیرویجت مشکلی نشان نداد (با منابع واقعی Flutter 3.35.7). **اجرا نشد:** `flutter test` خودش، هر تست ویجت (`test/ui/*`)، هر ساخت پلتفرم و هر اجرا روی دستگاه.

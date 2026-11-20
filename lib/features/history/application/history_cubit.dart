@@ -21,10 +21,19 @@ class HistoryCubit extends Cubit<HistoryState> {
 
   final HistoryRepository _repo;
 
-  void refresh() => emit(HistoryState(entries: _repo.list(query: state.query), query: state.query));
+  void refresh() => emit(
+    HistoryState(
+      entries: _repo.list(query: state.query),
+      query: state.query,
+    ),
+  );
 
-  void setQuery(String q) =>
-      emit(HistoryState(entries: _repo.list(query: q), query: q));
+  void setQuery(String q) => emit(
+    HistoryState(
+      entries: _repo.list(query: q),
+      query: q,
+    ),
+  );
 
   void delete(String id) {
     _repo.delete(id);
@@ -46,6 +55,12 @@ class HistoryCubit extends Cubit<HistoryState> {
     if (!settings.persistHistory) return;
     final failure = outcome.failure;
     if (outcome.buildError != null) return;
+    // A failed pre-request script means nothing was sent.
+    if (outcome.scriptError != null &&
+        outcome.result == null &&
+        failure == null) {
+      return;
+    }
     if (failure != null && failure.kind.name == 'cancelled') return;
 
     final rawUrl = outcome.request?.preview.url ?? request.url;

@@ -2,7 +2,8 @@
 List<int> gregorianToJalali(int gy, int gm, int gd) {
   const gdm = <int>[0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
   final gy2 = gm > 2 ? gy + 1 : gy;
-  var days = 355666 +
+  var days =
+      355666 +
       (365 * gy) +
       ((gy2 + 3) ~/ 4) -
       ((gy2 + 99) ~/ 100) +

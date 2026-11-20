@@ -9,14 +9,13 @@ HttpResult fakeResult({
   Map<String, List<String>> headers = const <String, List<String>>{},
   String body = '',
   Duration duration = const Duration(milliseconds: 120),
-}) =>
-    HttpResult(
-      statusCode: status,
-      reasonPhrase: reason,
-      headers: headers,
-      body: Uint8List.fromList(utf8.encode(body)),
-      truncated: false,
-      duration: duration,
-      finalUrl: Uri.parse('https://example.test/'),
-      redirects: const <Uri>[],
-    );
+}) => HttpResult(
+  statusCode: status,
+  reasonPhrase: reason,
+  headers: headers,
+  body: Uint8List.fromList(utf8.encode(body)),
+  truncated: false,
+  duration: duration,
+  finalUrl: Uri.parse('https://example.test/'),
+  redirects: const <Uri>[],
+);

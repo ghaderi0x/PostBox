@@ -1,0 +1,127 @@
+name: Release
+
+# Push a tag such as v1.0.0 (after tool/bump_version.sh) and this builds
+#   - Windows installer      PostBox-<version>-windows-setup.exe
+#   - macOS disk image       PostBox-<version>-macos.dmg
+#   - Linux packages         postbox_<version>_amd64.deb, PostBox-<version>-x86_64.AppImage
+# then writes SHA256SUMS.txt and publishes a GitHub Release. The in-app
+# updater reads that release, so keep these file names.
+#
+# Android: build the APK/AAB yourself and upload it to the release, Myket and
+# Bazaar. Run this workflow by hand (Actions > Release > Run workflow) to get
+# the installers as downloadable artifacts without publishing a release.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+      - id: v
+        name: Read version and compare with the tag
+        run: |
+          V=$(grep -E '^version:' pubspec.yaml | sed -E 's/version: ([0-9.]+).*/\1/')
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          if [[ "${GITHUB_REF_TYPE}" == "tag" && "${GITHUB_REF_NAME}" != "v$V" ]]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match pubspec version $V"; exit 1
+          fi
+      - run: if [ ! -d linux ]; then PLATFORMS=linux ./tool/setup_platforms.sh; fi
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
+  windows:
+    needs: check
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+      - run: flutter config --enable-windows-desktop
+      - name: Generate the Windows runner if it is not committed
+        shell: bash
+        run: if [ ! -d windows ]; then PLATFORMS=windows ./tool/setup_platforms.sh; fi
+      - run: flutter pub get
+      - run: flutter build windows --release
+      - run: choco install innosetup -y
+      - name: Installer
+        shell: pwsh
+        run: iscc /DAppVersion=${{ needs.check.outputs.version }} packaging\postbox.iss
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: build/installer/PostBox-${{ needs.check.outputs.version }}-windows-setup.exe
+
+  macos:
+    needs: check
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+      - run: flutter config --enable-macos-desktop
+      - name: Generate the macOS runner if it is not committed
+        run: if [ ! -d macos ]; then PLATFORMS=macos ./tool/setup_platforms.sh; fi
+      - run: flutter pub get
+      - run: flutter build macos --release
+      - run: ./packaging/build_dmg.sh ${{ needs.check.outputs.version }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: build/dmg/PostBox-${{ needs.check.outputs.version }}-macos.dmg
+
+  linux:
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+      - run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libsecret-1-dev libfuse2
+      - run: flutter config --enable-linux-desktop
+      - run: if [ ! -d linux ]; then PLATFORMS=linux ./tool/setup_platforms.sh; fi
+      - run: flutter pub get
+      - run: flutter build linux --release
+      - run: ./packaging/build_deb.sh ${{ needs.check.outputs.version }}
+      - name: AppImage
+        run: |
+          sudo wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage -O /usr/local/bin/appimagetool
+          sudo chmod +x /usr/local/bin/appimagetool
+          APPIMAGE_EXTRACT_AND_RUN=1 ./packaging/build_appimage.sh ${{ needs.check.outputs.version }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: |
+            build/deb/postbox_*.deb
+            build/appimage/PostBox-*.AppImage
+
+  publish:
+    # Only for tags. A manual run stops after the build jobs.
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [check, windows, macos, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { path: dist, merge-multiple: true }
+      - name: Checksums and release notes
+        run: |
+          cd dist && sha256sum * > SHA256SUMS.txt && cd ..
+          V=${{ needs.check.outputs.version }}
+          awk -v v="## $V" '$0==v{f=1;next} /^## /{f=0} f' CHANGELOG.md > notes.md
+          [ -s notes.md ] || echo "PostBox $V" > notes.md
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: PostBox ${{ needs.check.outputs.version }}
+          body_path: notes.md
+          files: dist/*

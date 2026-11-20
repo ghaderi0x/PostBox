@@ -95,12 +95,11 @@ class PostBoxTheme extends ThemeExtension<PostBoxTheme> {
     PostBoxColors? colors,
     double? codeFontSize,
     bool? reducedMotion,
-  }) =>
-      PostBoxTheme(
-        colors: colors ?? this.colors,
-        codeFontSize: codeFontSize ?? this.codeFontSize,
-        reducedMotion: reducedMotion ?? this.reducedMotion,
-      );
+  }) => PostBoxTheme(
+    colors: colors ?? this.colors,
+    codeFontSize: codeFontSize ?? this.codeFontSize,
+    reducedMotion: reducedMotion ?? this.reducedMotion,
+  );
 
   @override
   PostBoxTheme lerp(ThemeExtension<PostBoxTheme>? other, double t) =>

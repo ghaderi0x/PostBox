@@ -1,5 +1,7 @@
 import 'package:flutter/widgets.dart' show Locale;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:postbox/features/environments/domain/variables.dart';
+import 'package:postbox/features/shortcuts/shortcut_catalog.dart';
 import 'package:postbox/features/testing/domain/assertions.dart';
 import 'package:postbox/features/http/domain/http_engine.dart';
 import 'package:postbox/features/settings/domain/app_settings.dart';
@@ -36,27 +38,83 @@ void main() {
 
   test('dynamic key families are complete', () {
     for (final k in AssertionKind.values) {
-      expect(enStrings.containsKey('tests.kind.${k.name}'), isTrue, reason: k.name);
+      expect(
+        enStrings.containsKey('tests.kind.${k.name}'),
+        isTrue,
+        reason: k.name,
+      );
     }
     for (final k in HttpFailureKind.values) {
-      expect(enStrings.containsKey('err.http.${k.name}'), isTrue, reason: k.name);
+      expect(
+        enStrings.containsKey('err.http.${k.name}'),
+        isTrue,
+        reason: k.name,
+      );
+    }
+    for (final k in ShortcutAction.values) {
+      expect(
+        enStrings.containsKey('shortcuts.action.${k.name}'),
+        isTrue,
+        reason: k.name,
+      );
+    }
+    for (final k in VariableSource.values) {
+      expect(
+        enStrings.containsKey('var.source.${k.name}'),
+        isTrue,
+        reason: k.name,
+      );
+    }
+    for (final code in <String>[
+      'too_large',
+      'too_many_rows',
+      'too_many_columns',
+      'empty',
+      'bad_json',
+      'bad_csv',
+    ]) {
+      expect(
+        enStrings.containsKey('runner.dataError.$code'),
+        isTrue,
+        reason: code,
+      );
     }
     for (final k in ThemePreset.values) {
       expect(enStrings.containsKey('preset.${k.name}'), isTrue, reason: k.name);
     }
     for (final k in RedirectPolicy.values) {
-      expect(enStrings.containsKey('redirect.${k.name}'), isTrue, reason: k.name);
+      expect(
+        enStrings.containsKey('redirect.${k.name}'),
+        isTrue,
+        reason: k.name,
+      );
     }
     for (final code in const <String>[
-      'empty_url', 'invalid_url', 'unsupported_scheme', 'missing_host', 'unresolved_url',
-      'request_too_large', 'graphql_vars_invalid', 'file_missing',
+      'empty_url',
+      'invalid_url',
+      'unsupported_scheme',
+      'missing_host',
+      'unresolved_url',
+      'request_too_large',
+      'graphql_vars_invalid',
+      'file_missing',
     ]) {
       expect(enStrings.containsKey('err.build.$code'), isTrue, reason: code);
     }
     for (final code in const <String>[
-      'missing_client_id', 'invalid_auth_url', 'invalid_token_url', 'insecure_endpoint', 'browser_failed',
-      'timeout', 'provider_error', 'state_mismatch', 'missing_code', 'token_request_failed', 'token_error',
-      'token_response_invalid', 'no_refresh_token',
+      'missing_client_id',
+      'invalid_auth_url',
+      'invalid_token_url',
+      'insecure_endpoint',
+      'browser_failed',
+      'timeout',
+      'provider_error',
+      'state_mismatch',
+      'missing_code',
+      'token_request_failed',
+      'token_error',
+      'token_response_invalid',
+      'no_refresh_token',
     ]) {
       expect(enStrings.containsKey('oauth.err.$code'), isTrue, reason: code);
     }

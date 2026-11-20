@@ -12,10 +12,7 @@ class Fmt {
 
   String digits(String s) {
     if (!persianDigits) return s;
-    return s.replaceAllMapped(
-      RegExp('[0-9]'),
-      (m) => _fa[int.parse(m[0]!)],
-    );
+    return s.replaceAllMapped(RegExp('[0-9]'), (m) => _fa[int.parse(m[0]!)]);
   }
 
   String integer(int n) => digits('$n');
@@ -38,7 +35,19 @@ class Fmt {
   String dateTime(DateTime t) {
     final l = t.toLocal();
     String two(int v) => v.toString().padLeft(2, '0');
-    final y = jalali ? gregorianToJalali(l.year, l.month, l.day) : <int>[l.year, l.month, l.day];
-    return digits('${y[0]}/${two(y[1])}/${two(y[2])} ${two(l.hour)}:${two(l.minute)}');
+    final y = jalali
+        ? gregorianToJalali(l.year, l.month, l.day)
+        : <int>[l.year, l.month, l.day];
+    return digits(
+      '${y[0]}/${two(y[1])}/${two(y[2])} ${two(l.hour)}:${two(l.minute)}',
+    );
   }
+}
+
+/// The last segment of a file path, for short messages (works with both `/`
+/// and `\` separators).
+String fileNameOf(String path) {
+  final parts = path.split(RegExp(r'[\\/]'));
+  final last = parts.isEmpty ? path : parts.last;
+  return last.isEmpty ? path : last;
 }

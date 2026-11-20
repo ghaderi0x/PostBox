@@ -13,26 +13,44 @@ import 'postman.dart';
 /// used; security schemes are reported, not applied.
 ImportPlan parseOpenApi(String text) {
   if (text.length > kMaxImportBytes) {
-    return const ImportPlan(notes: <ImportNote>[
-      ImportNote(NoteLevel.error, 'File is larger than 10 MB.'),
-    ]);
+    return const ImportPlan(
+      notes: <ImportNote>[
+        ImportNote(NoteLevel.error, 'File is larger than 10 MB.'),
+      ],
+    );
   }
   final Object? decoded;
   try {
     decoded = jsonDecode(text);
   } on FormatException {
-    return const ImportPlan(notes: <ImportNote>[
-      ImportNote(NoteLevel.error, 'Not valid JSON. YAML OpenAPI files are not supported yet; convert to JSON.'),
-    ]);
+    return const ImportPlan(
+      notes: <ImportNote>[
+        ImportNote(
+          NoteLevel.error,
+          'Not valid JSON. YAML OpenAPI files are not supported yet; convert to JSON.',
+        ),
+      ],
+    );
   }
   if (decoded is! Map) {
-    return const ImportPlan(notes: <ImportNote>[ImportNote(NoteLevel.error, 'Expected a JSON object.')]);
+    return const ImportPlan(
+      notes: <ImportNote>[
+        ImportNote(NoteLevel.error, 'Expected a JSON object.'),
+      ],
+    );
   }
   final version = asString(decoded['openapi']);
   if (!version.startsWith('3.')) {
-    return ImportPlan(notes: <ImportNote>[
-      ImportNote(NoteLevel.error, version.isEmpty ? 'Missing "openapi" version (Swagger 2.0 is not supported).' : 'Unsupported OpenAPI version $version.'),
-    ]);
+    return ImportPlan(
+      notes: <ImportNote>[
+        ImportNote(
+          NoteLevel.error,
+          version.isEmpty
+              ? 'Missing "openapi" version (Swagger 2.0 is not supported).'
+              : 'Unsupported OpenAPI version $version.',
+        ),
+      ],
+    );
   }
   final root = Map<String, dynamic>.from(decoded);
   final notes = <ImportNote>[];
@@ -43,7 +61,9 @@ ImportPlan parseOpenApi(String text) {
     if (ref is String && ref.startsWith('#/') && depth < 8) {
       Object? cur = root;
       for (final seg in ref.substring(2).split('/')) {
-        cur = cur is Map ? cur[seg.replaceAll('~1', '/').replaceAll('~0', '~')] : null;
+        cur = cur is Map
+            ? cur[seg.replaceAll('~1', '/').replaceAll('~0', '~')]
+            : null;
       }
       return deref(cur, depth + 1);
     }
@@ -55,7 +75,9 @@ ImportPlan parseOpenApi(String text) {
     final s = deref(schemaNode);
     if (s.containsKey('example')) return s['example'];
     if (s['default'] != null) return s['default'];
-    if (s['enum'] is List && (s['enum'] as List).isNotEmpty) return (s['enum'] as List).first;
+    if (s['enum'] is List && (s['enum'] as List).isNotEmpty) {
+      return (s['enum'] as List).first;
+    }
     switch (asString(s['type'])) {
       case 'object':
         final props = asMap(s['properties']);
@@ -74,7 +96,8 @@ ImportPlan parseOpenApi(String text) {
       default:
         if (s['properties'] != null) {
           return <String, dynamic>{
-            for (final e in asMap(s['properties']).entries) e.key: example(e.value, depth + 1),
+            for (final e in asMap(s['properties']).entries)
+              e.key: example(e.value, depth + 1),
           };
         }
         return null;
@@ -82,12 +105,22 @@ ImportPlan parseOpenApi(String text) {
   }
 
   final servers = asList(root['servers']);
-  final baseUrl = servers.isNotEmpty ? asString(asMap(servers.first)['url'], 'http://localhost') : 'http://localhost';
+  final baseUrl = servers.isNotEmpty
+      ? asString(asMap(servers.first)['url'], 'http://localhost')
+      : 'http://localhost';
   final vars = <String, Variable>{
     'base_url': Variable(id: newId(), key: 'base_url', value: baseUrl),
   };
 
-  const methods = <String>['get', 'put', 'post', 'delete', 'options', 'head', 'patch'];
+  const methods = <String>[
+    'get',
+    'put',
+    'post',
+    'delete',
+    'options',
+    'head',
+    'patch',
+  ];
   final byTag = <String, List<ImportedNode>>{};
   final untagged = <ImportedNode>[];
   var count = 0;
@@ -103,7 +136,10 @@ ImportPlan parseOpenApi(String text) {
       count++;
       final params = <KeyValue>[];
       final headers = <KeyValue>[];
-      for (final raw in <dynamic>[...commonParams, ...asList(op['parameters'])]) {
+      for (final raw in <dynamic>[
+        ...commonParams,
+        ...asList(op['parameters']),
+      ]) {
         final p = deref(raw);
         final name = asString(p['name']);
         if (name.isEmpty) continue;
@@ -116,10 +152,20 @@ ImportPlan parseOpenApi(String text) {
           case 'header':
             headers.add(KeyValue(key: name, value: value, enabled: isRequired));
           case 'path':
-            vars.putIfAbsent(name, () => Variable(id: newId(), key: name, value: value == 'string' ? '' : value));
+            vars.putIfAbsent(
+              name,
+              () => Variable(
+                id: newId(),
+                key: name,
+                value: value == 'string' ? '' : value,
+              ),
+            );
         }
       }
-      final path = pe.key.replaceAllMapped(RegExp(r'\{([^}]+)\}'), (mm) => '{{${mm[1]}}}');
+      final path = pe.key.replaceAllMapped(
+        RegExp(r'\{([^}]+)\}'),
+        (mm) => '{{${mm[1]}}}',
+      );
 
       var bodyType = BodyType.none;
       var body = '';
@@ -134,41 +180,61 @@ ImportPlan parseOpenApi(String text) {
           final media = asMap(content[jsonKey]);
           final ex = media['example'] ?? example(media['schema']);
           bodyType = BodyType.json;
-          body = const JsonEncoder.withIndent('  ').convert(ex ?? <String, dynamic>{});
+          body = const JsonEncoder.withIndent(
+            '  ',
+          ).convert(ex ?? <String, dynamic>{});
         } else {
-          notes.add(ImportNote(NoteLevel.info, '${m.toUpperCase()} ${pe.key}: only JSON request bodies are generated.'));
+          notes.add(
+            ImportNote(
+              NoteLevel.info,
+              '${m.toUpperCase()} ${pe.key}: only JSON request bodies are generated.',
+            ),
+          );
         }
       }
 
       final name = asString(op['summary']).isNotEmpty
           ? asString(op['summary'])
-          : (asString(op['operationId']).isNotEmpty ? asString(op['operationId']) : '${m.toUpperCase()} ${pe.key}');
-      final node = ImportedNode.request(RequestModel(
-        id: newId(),
-        name: name,
-        method: m.toUpperCase(),
-        url: '{{base_url}}$path',
-        params: params,
-        headers: headers,
-        bodyType: bodyType,
-        body: body,
-        description: asString(op['description']),
-      ));
+          : (asString(op['operationId']).isNotEmpty
+                ? asString(op['operationId'])
+                : '${m.toUpperCase()} ${pe.key}');
+      final node = ImportedNode.request(
+        RequestModel(
+          id: newId(),
+          name: name,
+          method: m.toUpperCase(),
+          url: '{{base_url}}$path',
+          params: params,
+          headers: headers,
+          bodyType: bodyType,
+          body: body,
+          description: asString(op['description']),
+        ),
+      );
       final tags = asList(op['tags']);
       if (tags.isEmpty || tags.first is! String) {
         untagged.add(node);
       } else {
-        byTag.putIfAbsent(tags.first as String, () => <ImportedNode>[]).add(node);
+        byTag
+            .putIfAbsent(tags.first as String, () => <ImportedNode>[])
+            .add(node);
       }
     }
   }
 
   final schemes = asMap(asMap(root['components'])['securitySchemes']);
   if (schemes.isNotEmpty) {
-    notes.add(ImportNote(NoteLevel.info, 'Security schemes (${schemes.keys.join(', ')}) were not applied. Set authentication per request.'));
+    notes.add(
+      ImportNote(
+        NoteLevel.info,
+        'Security schemes (${schemes.keys.join(', ')}) were not applied. Set authentication per request.',
+      ),
+    );
   }
   if (count == 0) {
-    notes.add(const ImportNote(NoteLevel.error, 'No operations found under "paths".'));
+    notes.add(
+      const ImportNote(NoteLevel.error, 'No operations found under "paths".'),
+    );
   }
 
   final nodes = <ImportedNode>[

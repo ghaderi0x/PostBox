@@ -2,7 +2,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:postbox/features/testing/domain/line_diff.dart';
 
 String render(List<DiffLine> d) => d
-    .map((l) => '${l.op == DiffOp.same ? ' ' : (l.op == DiffOp.added ? '+' : '-')}${l.text}')
+    .map(
+      (l) =>
+          '${l.op == DiffOp.same ? ' ' : (l.op == DiffOp.added ? '+' : '-')}${l.text}',
+    )
     .join('|');
 
 void main() {
@@ -11,7 +14,10 @@ void main() {
   });
 
   test('additions, removals and replacements', () {
-    expect(render(lineDiff(<String>['a', 'b', 'c'], <String>['a', 'x', 'c'])!), ' a|-b|+x| c');
+    expect(
+      render(lineDiff(<String>['a', 'b', 'c'], <String>['a', 'x', 'c'])!),
+      ' a|-b|+x| c',
+    );
     expect(render(lineDiff(<String>['a'], <String>['a', 'b'])!), ' a|+b');
     expect(render(lineDiff(<String>['a', 'b'], <String>['b'])!), '-a| b');
     expect(render(lineDiff(<String>[], <String>['x'])!), '+x');

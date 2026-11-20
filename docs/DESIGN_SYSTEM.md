@@ -33,4 +33,10 @@ Required before a screen is called done: narrow and wide, light and dark, Englis
 
 ## Logo and icon
 
-`assets/branding/logo.svg` is a simple original mark on the orange identity, structured as one file so it can be replaced. The Android adaptive icon and platform icons are **not generated** yet; use any SVG-to-PNG export and `flutter_launcher_icons` (or the platform tools) from that file.
+The logo is `assets/branding/logo.png` (1024 px, transparent corners). In the app it is always drawn by `BrandLogo` (`lib/ui/widgets/brand.dart`): splash screen, header, menu, About and onboarding. Derived files in `assets/branding`: `logo_256.png` (in-app), `logo_512.png` (Linux icon, native splash), `app_icon.ico` (Windows installer), `logo_foreground.png` and `logo_background.png` (Android adaptive icon). Launcher icons are generated with `dart run flutter_launcher_icons` and the Android native splash with `dart run flutter_native_splash:create` (both configured in `pubspec.yaml`).
+
+**Digits:** Persian digits are on by default in every language. They are drawn by `PostBoxDigits`, a 10-glyph font derived from Vazirmatn that is placed first in the font list, so every number in normal UI text shows Persian shapes while code, URLs and JSON keep Latin digits. Turn it off in Settings > Language and accessibility.
+
+**Header:** desktop header = logo and name, workspace chip, command-palette search field with its shortcut, environment picker, then import/export, theme toggle and settings buttons. Phones use a compact app bar with the logo, the request name and method, the environment chip and search.
+
+**Settings** are split into eight groups (Appearance, Language and accessibility, Requests, Editor, Data and privacy, Keyboard, Developer, About): a two-pane layout on wide windows, one page per group on phones.

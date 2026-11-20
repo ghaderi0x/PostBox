@@ -10,7 +10,6 @@ enum CodeLanguage { json, text, xml }
 /// Above this size syntax highlighting is skipped to keep typing responsive.
 const int kHighlightLimit = 300000;
 
-const int _kDefault = 0;
 const int _kKey = 1;
 const int _kString = 2;
 const int _kNumber = 3;
@@ -59,11 +58,17 @@ void _scanJson(String t, Uint8List kind) {
       final isKey = k < n && t.codeUnitAt(k) == 58;
       _fill(kind, i, end, isKey ? _kKey : _kString);
       i = end;
-    } else if (isDigit(c) || (c == 45 && i + 1 < n && isDigit(t.codeUnitAt(i + 1)))) {
+    } else if (isDigit(c) ||
+        (c == 45 && i + 1 < n && isDigit(t.codeUnitAt(i + 1)))) {
       var j = i + 1;
       while (j < n) {
         final d = t.codeUnitAt(j);
-        if (isDigit(d) || d == 46 || d == 101 || d == 69 || d == 43 || d == 45) {
+        if (isDigit(d) ||
+            d == 46 ||
+            d == 101 ||
+            d == 69 ||
+            d == 43 ||
+            d == 45) {
           j++;
         } else {
           break;
@@ -77,9 +82,16 @@ void _scanJson(String t, Uint8List kind) {
         j++;
       }
       final w = t.substring(i, j);
-      if (w == 'true' || w == 'false' || w == 'null') _fill(kind, i, j, _kLiteral);
+      if (w == 'true' || w == 'false' || w == 'null') {
+        _fill(kind, i, j, _kLiteral);
+      }
       i = j;
-    } else if (c == 123 || c == 125 || c == 91 || c == 93 || c == 44 || c == 58) {
+    } else if (c == 123 ||
+        c == 125 ||
+        c == 91 ||
+        c == 93 ||
+        c == 44 ||
+        c == 58) {
       kind[i] = _kPunct;
       i++;
     } else {
@@ -91,7 +103,10 @@ void _scanJson(String t, Uint8List kind) {
 final RegExp _xmlComment = RegExp(r'<!--[\s\S]*?-->');
 final RegExp _xmlTag = RegExp(r'<[^<>]*>');
 final RegExp _xmlName = RegExp(r'^</?[A-Za-z_!?][\w:.\-]*');
-final RegExp _xmlString = RegExp(r'"[^"]*"|' "'[^']*'");
+final RegExp _xmlString = RegExp(
+  r'"[^"]*"|'
+  "'[^']*'",
+);
 final RegExp _xmlAttr = RegExp(r'\s([\w:.\-]+)=');
 
 void _scanXml(String t, Uint8List kind) {
@@ -120,9 +135,13 @@ void _scanXml(String t, Uint8List kind) {
   final n = t.length;
   if (n == 0 || n > kHighlightLimit) return null;
   int? idx;
-  if (caret > 0 && caret <= n && (open.contains(t[caret - 1]) || close.contains(t[caret - 1]))) {
+  if (caret > 0 &&
+      caret <= n &&
+      (open.contains(t[caret - 1]) || close.contains(t[caret - 1]))) {
     idx = caret - 1;
-  } else if (caret >= 0 && caret < n && (open.contains(t[caret]) || close.contains(t[caret]))) {
+  } else if (caret >= 0 &&
+      caret < n &&
+      (open.contains(t[caret]) || close.contains(t[caret]))) {
     idx = caret;
   }
   if (idx == null) return null;
@@ -261,7 +280,12 @@ TextSpan buildHighlightedSpan({
   var start = 0;
   for (var i = 1; i <= n; i++) {
     if (i == n || kind[i] != kind[start] || flags[i] != flags[start]) {
-      spans.add(TextSpan(text: text.substring(start, i), style: styleFor(kind[start], flags[start])));
+      spans.add(
+        TextSpan(
+          text: text.substring(start, i),
+          style: styleFor(kind[start], flags[start]),
+        ),
+      );
       start = i;
     }
   }

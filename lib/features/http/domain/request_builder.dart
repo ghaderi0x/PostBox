@@ -9,6 +9,7 @@ import '../../../core/util/redact.dart';
 import '../../environments/domain/variables.dart';
 import '../../requests/domain/request_models.dart';
 import '../../settings/domain/app_settings.dart';
+import 'cookie_jar.dart';
 import 'http_engine.dart';
 
 class RequestBuildException implements Exception {
@@ -19,7 +20,8 @@ class RequestBuildException implements Exception {
   final String detail;
 
   @override
-  String toString() => 'RequestBuildException($code${detail.isEmpty ? '' : ': $detail'})';
+  String toString() =>
+      'RequestBuildException($code${detail.isEmpty ? '' : ': $detail'})';
 }
 
 /// What will be sent, with secrets masked. Safe to show and log.
@@ -52,11 +54,20 @@ class BuiltRequest {
 }
 
 class _Parts {
-  _Parts(this.url, this.headers, this.bodyText, this.multipart);
+  _Parts(
+    this.url,
+    this.headers,
+    this.bodyText,
+    this.multipart,
+    this.binaryPath,
+  );
   String url;
   final Map<String, String> headers;
   String? bodyText;
   List<KeyValue>? multipart;
+
+  /// Path of the file sent as the whole body ([BodyType.binary]).
+  String? binaryPath;
 }
 
 /// Turns a [RequestModel] plus variables and settings into an executable
@@ -69,13 +80,29 @@ class RequestBuilder {
   Future<BuiltRequest> build(
     RequestModel r,
     VariableResolver vars,
-    AppSettings settings,
-  ) async {
+    AppSettings settings, {
+    CookieJar? cookieJar,
+    String? clientKeyPassword,
+  }) async {
     final unresolved = <String>{};
     final warnings = <String>[];
 
-    final real = _materialize(r, vars, settings.defaultHeaders, mask: false, unresolved: unresolved, warnings: warnings);
-    final masked = _materialize(r, vars, settings.defaultHeaders, mask: true, unresolved: <String>{}, warnings: <String>[]);
+    final real = _materialize(
+      r,
+      vars,
+      settings.defaultHeaders,
+      mask: false,
+      unresolved: unresolved,
+      warnings: warnings,
+    );
+    final masked = _materialize(
+      r,
+      vars,
+      settings.defaultHeaders,
+      mask: true,
+      unresolved: <String>{},
+      warnings: <String>[],
+    );
 
     if (real.url.contains('{{')) {
       throw RequestBuildException('unresolved_url', unresolved.join(', '));
@@ -90,12 +117,22 @@ class RequestBuilder {
       hasBody = true;
       headers.removeWhere((k, _) => k.toLowerCase() == 'content-type');
       headers['Content-Type'] = 'multipart/form-data; boundary=${enc.$2}';
+    } else if (real.binaryPath != null) {
+      body = await _readBinary(
+        real.binaryPath!,
+        settings.maxRequestBytes,
+        settings.maxRequestMb,
+      );
+      hasBody = true;
     } else if (real.bodyText != null) {
       body = Uint8List.fromList(utf8.encode(real.bodyText!));
       hasBody = true;
     }
     if (body.length > settings.maxRequestBytes) {
-      throw RequestBuildException('request_too_large', '${settings.maxRequestMb}');
+      throw RequestBuildException(
+        'request_too_large',
+        '${settings.maxRequestMb}',
+      );
     }
 
     final spec = HttpRequestSpec(
@@ -109,16 +146,35 @@ class RequestBuilder {
       maxResponseBytes: settings.maxResponseBytes,
       proxy: settings.proxy.isEmpty ? null : settings.proxy,
       allowInvalidCertificates: settings.allowInvalidCertificates,
+      cookieJar: settings.useCookieJar ? cookieJar : null,
+      preferHttp2: settings.httpVersion == HttpVersionPref.auto,
+      clientCertPath: settings.clientCertPath.isEmpty
+          ? null
+          : settings.clientCertPath,
+      clientKeyPath: settings.clientKeyPath.isEmpty
+          ? null
+          : settings.clientKeyPath,
+      clientKeyPassword: (clientKeyPassword ?? '').isEmpty
+          ? null
+          : clientKeyPassword,
+      caCertPath: settings.caCertPath.isEmpty ? null : settings.caCertPath,
     );
 
     final bodyPreview = real.multipart != null
         ? '[multipart/form-data: ${real.multipart!.length} part(s)]'
-        : (masked.bodyText ?? '');
+        : (real.binaryPath != null
+              ? '[binary file: ${real.binaryPath!.split(RegExp(r'[\\/]')).last}, ${body.length} bytes]'
+              : (masked.bodyText ?? ''));
     final preview = RequestPreview(
       method: spec.method,
       url: masked.url,
       headers: masked.headers.entries
-          .map((e) => MapEntry<String, String>(e.key, Redactor.headerValue(e.key, e.value)))
+          .map(
+            (e) => MapEntry<String, String>(
+              e.key,
+              Redactor.headerValue(e.key, e.value),
+            ),
+          )
           .toList(),
       bodyPreview: bodyPreview.length > _previewBodyLimit
           ? '${bodyPreview.substring(0, _previewBodyLimit)}…'
@@ -153,7 +209,9 @@ class RequestBuilder {
     final query = <String>[];
     for (final p in r.params) {
       if (!p.enabled || p.key.trim().isEmpty) continue;
-      query.add('${Uri.encodeQueryComponent(res(p.key))}=${Uri.encodeQueryComponent(res(p.value))}');
+      query.add(
+        '${Uri.encodeQueryComponent(res(p.key))}=${Uri.encodeQueryComponent(res(p.value))}',
+      );
     }
 
     final headers = <String, String>{
@@ -180,21 +238,31 @@ class RequestBuilder {
     String secret(String raw) => mask ? Redactor.mask : res(raw);
     switch (a.type) {
       case AuthType.none:
+      case AuthType.inherit:
+        // `inherit` is resolved by the executor before building; if nothing
+        // above the request defines auth, nothing is sent.
         break;
       case AuthType.basic:
         final user = res(a.username);
         final pass = secret(a.password);
         final cred = base64.encode(utf8.encode('$user:$pass'));
-        setHeader('Authorization', mask ? 'Basic ${Redactor.mask}' : 'Basic $cred');
+        setHeader(
+          'Authorization',
+          mask ? 'Basic ${Redactor.mask}' : 'Basic $cred',
+        );
       case AuthType.bearer:
-        if (a.token.isNotEmpty) setHeader('Authorization', 'Bearer ${secret(a.token)}');
+        if (a.token.isNotEmpty) {
+          setHeader('Authorization', 'Bearer ${secret(a.token)}');
+        }
       case AuthType.apiKey:
         final name = res(a.apiKeyName.trim());
         if (name.isNotEmpty && a.apiKeyValue.isNotEmpty) {
           if (a.apiKeyInHeader) {
             setHeader(name, secret(a.apiKeyValue));
           } else {
-            query.add('${Uri.encodeQueryComponent(name)}=${Uri.encodeQueryComponent(secret(a.apiKeyValue))}');
+            query.add(
+              '${Uri.encodeQueryComponent(name)}=${Uri.encodeQueryComponent(secret(a.apiKeyValue))}',
+            );
           }
         }
       case AuthType.oauth2:
@@ -209,12 +277,15 @@ class RequestBuilder {
       final hash = url.indexOf('#');
       final frag = hash >= 0 ? url.substring(hash) : '';
       var core = hash >= 0 ? url.substring(0, hash) : url;
-      core += core.contains('?') ? (core.endsWith('?') || core.endsWith('&') ? '' : '&') : '?';
+      core += core.contains('?')
+          ? (core.endsWith('?') || core.endsWith('&') ? '' : '&')
+          : '?';
       url = core + query.join('&') + frag;
     }
 
     String? bodyText;
     List<KeyValue>? multipart;
+    String? binaryPath;
     switch (r.bodyType) {
       case BodyType.none:
         break;
@@ -232,12 +303,17 @@ class RequestBuilder {
         bodyText = res(r.body);
         if (!_hasHeader(headers, 'content-type')) {
           final ct = r.bodyAux.trim();
-          headers['Content-Type'] = ct.isEmpty ? 'text/plain; charset=utf-8' : res(ct);
+          headers['Content-Type'] = ct.isEmpty
+              ? 'text/plain; charset=utf-8'
+              : res(ct);
         }
       case BodyType.formUrlEncoded:
         bodyText = r.formFields
             .where((f) => f.enabled && f.key.trim().isNotEmpty)
-            .map((f) => '${Uri.encodeQueryComponent(res(f.key))}=${Uri.encodeQueryComponent(res(f.value))}')
+            .map(
+              (f) =>
+                  '${Uri.encodeQueryComponent(res(f.key))}=${Uri.encodeQueryComponent(res(f.value))}',
+            )
             .join('&');
         if (!_hasHeader(headers, 'content-type')) {
           headers['Content-Type'] = 'application/x-www-form-urlencoded';
@@ -245,12 +321,22 @@ class RequestBuilder {
       case BodyType.multipart:
         multipart = r.formFields
             .where((f) => f.enabled && f.key.trim().isNotEmpty)
-            .map((f) => f.copyWith(key: res(f.key), value: f.isFile ? f.value : res(f.value)))
+            .map(
+              (f) => f.copyWith(
+                key: res(f.key),
+                value: f.isFile ? f.value : res(f.value),
+              ),
+            )
             .toList();
         if (_hasHeader(headers, 'content-type')) {
           warnings.add('content_type_overridden');
         }
         headers['Content-Type'] = 'multipart/form-data; boundary=preview';
+      case BodyType.binary:
+        binaryPath = res(r.body).trim();
+        if (!_hasHeader(headers, 'content-type')) {
+          headers['Content-Type'] = 'application/octet-stream';
+        }
       case BodyType.graphql:
         Object? variables;
         final rawVars = res(r.bodyAux).trim();
@@ -263,14 +349,14 @@ class RequestBuilder {
         }
         bodyText = jsonEncode(<String, dynamic>{
           'query': res(r.body),
-          if (variables != null) 'variables': variables,
+          'variables': ?variables,
         });
         if (!_hasHeader(headers, 'content-type')) {
           headers['Content-Type'] = 'application/json; charset=utf-8';
         }
     }
 
-    return _Parts(url, headers, bodyText, multipart);
+    return _Parts(url, headers, bodyText, multipart, binaryPath);
   }
 
   bool _hasHeader(Map<String, String> h, String lower) =>
@@ -295,7 +381,8 @@ class RequestBuilder {
   String _ensureScheme(String url) {
     if (RegExp(r'^[A-Za-z][A-Za-z0-9+.\-]*://').hasMatch(url)) return url;
     final host = url.split(RegExp(r'[/:?#]')).first;
-    final local = host == 'localhost' ||
+    final local =
+        host == 'localhost' ||
         host.startsWith('127.') ||
         host.startsWith('10.') ||
         host.startsWith('192.168.') ||
@@ -303,15 +390,27 @@ class RequestBuilder {
     return '${local ? 'http' : 'https'}://$url';
   }
 
+  Future<Uint8List> _readBinary(String path, int maxBytes, int maxMb) async {
+    if (path.isEmpty) throw const RequestBuildException('file_missing', '');
+    final file = File(path);
+    if (!await file.exists()) throw RequestBuildException('file_missing', path);
+    if (await file.length() > maxBytes) {
+      throw RequestBuildException('request_too_large', '$maxMb');
+    }
+    return file.readAsBytes();
+  }
+
   Future<(Uint8List, String)> _encodeMultipart(
     List<KeyValue> parts,
     VariableResolver vars,
   ) async {
     final rng = Random.secure();
-    final boundary = '----PostBoxBoundary${List<int>.generate(12, (_) => rng.nextInt(16)).map((e) => e.toRadixString(16)).join()}';
+    final boundary =
+        '----PostBoxBoundary${List<int>.generate(12, (_) => rng.nextInt(16)).map((e) => e.toRadixString(16)).join()}';
     final out = BytesBuilder(copy: false);
     void w(String s) => out.add(utf8.encode(s));
-    String quote(String s) => s.replaceAll('"', '%22').replaceAll('\r', '').replaceAll('\n', '');
+    String quote(String s) =>
+        s.replaceAll('"', '%22').replaceAll('\r', '').replaceAll('\n', '');
 
     for (final p in parts) {
       w('--$boundary\r\n');
@@ -323,7 +422,9 @@ class RequestBuilder {
         }
         final bytes = await file.readAsBytes();
         final name = path.split(RegExp(r'[\\/]')).last;
-        w('Content-Disposition: form-data; name="${quote(p.key)}"; filename="${quote(name)}"\r\n');
+        w(
+          'Content-Disposition: form-data; name="${quote(p.key)}"; filename="${quote(name)}"\r\n',
+        );
         w('Content-Type: application/octet-stream\r\n\r\n');
         out.add(bytes);
         w('\r\n');

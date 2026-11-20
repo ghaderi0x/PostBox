@@ -9,7 +9,11 @@ import '../sidebar/save_dialog.dart';
 import '../widgets/common.dart';
 
 /// Saves [tab]. Unsaved requests and "save as" ask for a collection first.
-Future<void> saveTab(BuildContext context, RequestTab tab, {bool saveAs = false}) async {
+Future<void> saveTab(
+  BuildContext context,
+  RequestTab tab, {
+  bool saveAs = false,
+}) async {
   final ws = context.read<WorkspaceCubit>();
   final collections = context.read<CollectionsCubit>();
   if (tab.isSaved && !saveAs) {
@@ -36,7 +40,11 @@ Future<void> saveTab(BuildContext context, RequestTab tab, {bool saveAs = false}
     await ws.openNode(node);
   } else {
     ws.update(tab.id, r);
-    await ws.save(tab.id, collectionId: target.collectionId, parentId: target.parentId);
+    await ws.save(
+      tab.id,
+      collectionId: target.collectionId,
+      parentId: target.parentId,
+    );
   }
   if (context.mounted) await showToast(context, context.t('save.saved'));
 }

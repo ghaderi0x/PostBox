@@ -22,7 +22,10 @@ class EditorInputFormatter extends TextInputFormatter {
   bool _isWord(String c) => RegExp(r'[\w]').hasMatch(c);
 
   @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
     if (language == CodeLanguage.text) return newValue;
     final o = oldValue;
     final n = newValue;
@@ -46,17 +49,23 @@ class EditorInputFormatter extends TextInputFormatter {
       final indent = RegExp(r'^[ \t]*').firstMatch(line)!.group(0)!;
       final trimmed = line.trimRight();
       final prev = trimmed.isEmpty ? '' : trimmed[trimmed.length - 1];
-      final extra = (language == CodeLanguage.json && (prev == '{' || prev == '[')) ||
+      final extra =
+          (language == CodeLanguage.json && (prev == '{' || prev == '[')) ||
               (language == CodeLanguage.xml && prev == '>' && nextChar != '<')
           ? ' ' * tabSize
           : '';
-      final between = extra.isNotEmpty &&
+      final between =
+          extra.isNotEmpty &&
           language == CodeLanguage.json &&
-          ((prev == '{' && nextChar == '}') || (prev == '[' && nextChar == ']'));
+          ((prev == '{' && nextChar == '}') ||
+              (prev == '[' && nextChar == ']'));
       if (between) {
         final text = '$before\n$indent$extra\n$indent$after';
         final off = caret + 1 + indent.length + extra.length;
-        return TextEditingValue(text: text, selection: TextSelection.collapsed(offset: off));
+        return TextEditingValue(
+          text: text,
+          selection: TextSelection.collapsed(offset: off),
+        );
       }
       final ins = '\n$indent$extra';
       return TextEditingValue(
@@ -83,7 +92,8 @@ class EditorInputFormatter extends TextInputFormatter {
     }
     if (typed == '"') {
       final prevChar = before.isEmpty ? '' : before[before.length - 1];
-      final wordAround = (prevChar.isNotEmpty && _isWord(prevChar)) ||
+      final wordAround =
+          (prevChar.isNotEmpty && _isWord(prevChar)) ||
           (nextChar.isNotEmpty && _isWord(nextChar)) ||
           prevChar == '\\';
       if (!wordAround) {

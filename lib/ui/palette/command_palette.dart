@@ -7,7 +7,12 @@ import '../../l10n/strings.dart';
 import '../../core/util/json_util.dart';
 
 class PaletteItem {
-  const PaletteItem({required this.label, required this.icon, required this.run, this.hint = ''});
+  const PaletteItem({
+    required this.label,
+    required this.icon,
+    required this.run,
+    this.hint = '',
+  });
   final String label;
   final String hint;
   final IconData icon;
@@ -44,7 +49,9 @@ class _PaletteState extends State<_Palette> {
   List<PaletteItem> get _filtered {
     final q = _q.text.trim().toLowerCase();
     if (q.isEmpty) return widget.items;
-    return widget.items.where((i) => '${i.label} ${i.hint}'.toLowerCase().contains(q)).toList();
+    return widget.items
+        .where((i) => '${i.label} ${i.hint}'.toLowerCase().contains(q))
+        .toList();
   }
 
   void _run(PaletteItem i) {
@@ -65,8 +72,14 @@ class _PaletteState extends State<_Palette> {
     final idx = list.isEmpty ? 0 : clampInt(_index, 0, list.length - 1);
     return CallbackShortcuts(
       bindings: <ShortcutActivator, VoidCallback>{
-        const SingleActivator(LogicalKeyboardKey.arrowDown): () => setState(() => _index = clampInt(idx + 1, 0, list.isEmpty ? 0 : list.length - 1)),
-        const SingleActivator(LogicalKeyboardKey.arrowUp): () => setState(() => _index = clampInt(idx - 1, 0, list.isEmpty ? 0 : list.length - 1)),
+        const SingleActivator(LogicalKeyboardKey.arrowDown): () => setState(
+          () =>
+              _index = clampInt(idx + 1, 0, list.isEmpty ? 0 : list.length - 1),
+        ),
+        const SingleActivator(LogicalKeyboardKey.arrowUp): () => setState(
+          () =>
+              _index = clampInt(idx - 1, 0, list.isEmpty ? 0 : list.length - 1),
+        ),
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -90,7 +103,10 @@ class _PaletteState extends State<_Palette> {
             child: list.isEmpty
                 ? Padding(
                     padding: const EdgeInsets.all(20),
-                    child: Text(context.t('palette.none'), style: context.secondary),
+                    child: Text(
+                      context.t('palette.none'),
+                      style: context.secondary,
+                    ),
                   )
                 : ListView.builder(
                     shrinkWrap: true,
@@ -100,8 +116,13 @@ class _PaletteState extends State<_Palette> {
                       selected: i == idx,
                       selectedTileColor: c.accent.withAlpha(30),
                       leading: Icon(list[i].icon, size: 18),
-                      title: Text(list[i].label, overflow: TextOverflow.ellipsis),
-                      subtitle: list[i].hint.isEmpty ? null : Text(list[i].hint, overflow: TextOverflow.ellipsis),
+                      title: Text(
+                        list[i].label,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: list[i].hint.isEmpty
+                          ? null
+                          : Text(list[i].hint, overflow: TextOverflow.ellipsis),
                       onTap: () => _run(list[i]),
                     ),
                   ),
