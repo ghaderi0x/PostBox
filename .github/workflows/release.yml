@@ -110,7 +110,11 @@ jobs:
         with: { path: dist, merge-multiple: true }
       - name: Checksums and release notes
         run: |
-          cd dist && sha256sum * > SHA256SUMS.txt && cd ..
+          # Artifacts keep their folder paths (deb/, appimage/ ...): flatten them.
+          find dist -mindepth 2 -type f -exec mv -t dist {} +
+          find dist -mindepth 1 -type d -empty -delete
+          (cd dist && sha256sum * > SHA256SUMS.txt)
+          ls -la dist
           V=${{ needs.check.outputs.version }}
           awk -v v="## $V" '$0==v{f=1;next} /^## /{f=0} f' CHANGELOG.md > notes.md
           [ -s notes.md ] || echo "PostBox $V" > notes.md
