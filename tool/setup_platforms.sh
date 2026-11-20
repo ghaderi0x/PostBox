@@ -36,6 +36,32 @@ if has android; then
     mv "$MANIFEST.tmp" "$MANIFEST"
   fi
 
+  # Some plugins (desktop_drop, file_picker ...) still compile against an old
+  # Android SDK while their AndroidX dependencies need 34+. Compile every
+  # Android library with the same SDK as the app.
+  ROOT_GRADLE=android/build.gradle.kts
+  if [ -f "$ROOT_GRADLE" ] && ! grep -q "PostBox: compileSdk" "$ROOT_GRADLE"; then
+    {
+      cat <<'KTS'
+// PostBox: compileSdk for plugin libraries (see tool/setup_platforms.sh).
+// Must stay above the block that calls evaluationDependsOn(":app").
+subprojects {
+    afterEvaluate {
+        val androidExt = extensions.findByName("android")
+        if (androidExt is com.android.build.gradle.BaseExtension) {
+            androidExt.compileSdkVersion(36)
+        }
+    }
+}
+
+KTS
+      cat "$ROOT_GRADLE"
+    } > "$ROOT_GRADLE.tmp"
+    mv "$ROOT_GRADLE.tmp" "$ROOT_GRADLE"
+  elif [ ! -f "$ROOT_GRADLE" ]; then
+    echo "NOTE: android/build.gradle.kts not found; add the compileSdk block from docs/RELEASE.md by hand."
+  fi
+
   # Share/open-with bridge (replaces the generated MainActivity).
   KOTLIN_DIR=android/app/src/main/kotlin/com/uniqueone/postbox
   mkdir -p "$KOTLIN_DIR"
