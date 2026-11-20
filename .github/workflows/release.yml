@@ -1,5 +1,6 @@
 name: Release
 
+
 on:
   push:
     tags: ['v*']
@@ -25,7 +26,7 @@ jobs:
           if [[ "${GITHUB_REF_TYPE}" == "tag" && "${GITHUB_REF_NAME}" != "v$V" ]]; then
             echo "Tag ${GITHUB_REF_NAME} does not match pubspec version $V"; exit 1
           fi
-      - run: if [ ! -d linux ]; then PLATFORMS=linux ./tool/setup_platforms.sh; fi
+      - run: if [ ! -d linux ]; then PLATFORMS=linux bash tool/setup_platforms.sh; fi
       - run: flutter pub get
       - run: flutter test
 
@@ -39,7 +40,7 @@ jobs:
       - run: flutter config --enable-windows-desktop
       - name: Generate the Windows runner if it is not committed
         shell: bash
-        run: if [ ! -d windows ]; then PLATFORMS=windows ./tool/setup_platforms.sh; fi
+        run: if [ ! -d windows ]; then PLATFORMS=windows bash tool/setup_platforms.sh; fi
       - run: flutter pub get
       - run: flutter build windows --release
       - run: choco install innosetup -y
@@ -60,10 +61,10 @@ jobs:
         with: { channel: stable, cache: true }
       - run: flutter config --enable-macos-desktop
       - name: Generate the macOS runner if it is not committed
-        run: if [ ! -d macos ]; then PLATFORMS=macos ./tool/setup_platforms.sh; fi
+        run: if [ ! -d macos ]; then PLATFORMS=macos bash tool/setup_platforms.sh; fi
       - run: flutter pub get
       - run: flutter build macos --release
-      - run: ./packaging/build_dmg.sh ${{ needs.check.outputs.version }}
+      - run: bash packaging/build_dmg.sh ${{ needs.check.outputs.version }}
       - uses: actions/upload-artifact@v4
         with:
           name: macos
@@ -78,15 +79,15 @@ jobs:
         with: { channel: stable, cache: true }
       - run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libsecret-1-dev libfuse2
       - run: flutter config --enable-linux-desktop
-      - run: if [ ! -d linux ]; then PLATFORMS=linux ./tool/setup_platforms.sh; fi
+      - run: if [ ! -d linux ]; then PLATFORMS=linux bash tool/setup_platforms.sh; fi
       - run: flutter pub get
       - run: flutter build linux --release
-      - run: ./packaging/build_deb.sh ${{ needs.check.outputs.version }}
+      - run: bash packaging/build_deb.sh ${{ needs.check.outputs.version }}
       - name: AppImage
         run: |
           sudo wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage -O /usr/local/bin/appimagetool
           sudo chmod +x /usr/local/bin/appimagetool
-          APPIMAGE_EXTRACT_AND_RUN=1 ./packaging/build_appimage.sh ${{ needs.check.outputs.version }}
+          APPIMAGE_EXTRACT_AND_RUN=1 bash packaging/build_appimage.sh ${{ needs.check.outputs.version }}
       - uses: actions/upload-artifact@v4
         with:
           name: linux
@@ -95,7 +96,6 @@ jobs:
             build/appimage/PostBox-*.AppImage
 
   publish:
-    # Only for tags. A manual run stops after the build jobs.
     if: startsWith(github.ref, 'refs/tags/v')
     needs: [check, windows, macos, linux]
     runs-on: ubuntu-latest
