@@ -1,15 +1,5 @@
 name: Release
 
-# Push a tag such as v1.0.0 (after tool/bump_version.sh) and this builds
-#   - Windows installer      PostBox-<version>-windows-setup.exe
-#   - macOS disk image       PostBox-<version>-macos.dmg
-#   - Linux packages         postbox_<version>_amd64.deb, PostBox-<version>-x86_64.AppImage
-# then writes SHA256SUMS.txt and publishes a GitHub Release. The in-app
-# updater reads that release, so keep these file names.
-#
-# Android: build the APK/AAB yourself and upload it to the release, Myket and
-# Bazaar. Run this workflow by hand (Actions > Release > Run workflow) to get
-# the installers as downloadable artifacts without publishing a release.
 on:
   push:
     tags: ['v*']
