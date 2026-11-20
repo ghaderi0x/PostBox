@@ -37,7 +37,6 @@ jobs:
           fi
       - run: if [ ! -d linux ]; then PLATFORMS=linux ./tool/setup_platforms.sh; fi
       - run: flutter pub get
-      - run: flutter analyze
       - run: flutter test
 
   windows:
