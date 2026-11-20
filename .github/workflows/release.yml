@@ -1,10 +1,14 @@
 name: Release
 
-
 on:
   push:
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish a GitHub Release (tag v<pubspec version> is created if missing)'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -96,7 +100,8 @@ jobs:
             build/appimage/PostBox-*.AppImage
 
   publish:
-    if: startsWith(github.ref, 'refs/tags/v')
+    # Runs for version tags, or for a manual run with "publish" ticked.
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.publish == true
     needs: [check, windows, macos, linux]
     runs-on: ubuntu-latest
     steps:
@@ -111,6 +116,7 @@ jobs:
           [ -s notes.md ] || echo "PostBox $V" > notes.md
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ needs.check.outputs.version }}
           name: PostBox ${{ needs.check.outputs.version }}
           body_path: notes.md
           files: dist/*
