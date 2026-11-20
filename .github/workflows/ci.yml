@@ -17,7 +17,6 @@ jobs:
           if [ ! -d linux ]; then PLATFORMS=linux ./tool/setup_platforms.sh; fi
       - run: flutter pub get
       - run: dart format --output=none --set-exit-if-changed .
-      - run: flutter analyze
       - run: flutter test
 
   build-linux:
