@@ -111,6 +111,25 @@ Runtime needs `libsecret-1-0` and a keyring service (GNOME Keyring, KWallet) for
 
 The app calls `https://api.github.com/repos/ghaderi0x/PostBox/releases/latest` once per start (switch: Settings > About). Pre-releases and drafts are never offered. The updater picks the asset by file name (`*setup*.exe`, `*.deb`, `*.AppImage`) and verifies it against `SHA256SUMS.txt`, so keep those names. Installers are not code-signed yet, so Windows SmartScreen will warn; add signing before wide distribution.
 
+### App icon is still the Flutter logo
+
+`flutter create` (run by `tool/setup_platforms.sh`) generates Flutter's default icon. Run `bash tool/apply_icons.sh` once after setup (Android launcher icons and splash, Windows `.ico`, macOS icon set), then commit the changed files. If the `windows/` or `macos/` folders are committed, the release workflow does not regenerate them, so this step must be committed too. On a phone, uninstall the old app so Android refreshes its icon cache.
+
+### Android build error: "compiled against android-33"
+
+If `flutter build apk --release` fails with `:desktop_drop:checkReleaseAarMetadata ... requires libraries and applications that depend on it to compile against version 34 or later`, a plugin is compiling against an old SDK. `tool/setup_platforms.sh` adds the fix to `android/build.gradle.kts`; to add it by hand, put this at the very top of that file (above the `evaluationDependsOn(":app")` block):
+
+```kotlin
+subprojects {
+    afterEvaluate {
+        val androidExt = extensions.findByName("android")
+        if (androidExt is com.android.build.gradle.BaseExtension) {
+            androidExt.compileSdkVersion(36)
+        }
+    }
+}
+```
+
 ### macOS
 
 `tool/setup_platforms.sh` creates the `macos/` runner, adds the sandbox entitlements PostBox needs (network client, network server for the OAuth redirect, user-selected files) and generates the app icon. `packaging/build_dmg.sh` wraps `build/macos/Build/Products/Release/*.app` in a drag-to-Applications `.dmg`.
