@@ -119,5 +119,5 @@ if has android; then
 fi
 echo "  - flutter pub get && dart format . && flutter analyze && flutter test"
 if has android; then
-  echo "  - Android icons: dart run flutter_launcher_icons && dart run flutter_native_splash:create"
+  echo "  - Android icons: bash tool/apply_icons.sh"
 fi
