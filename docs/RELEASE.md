@@ -113,7 +113,7 @@ The app calls `https://api.github.com/repos/ghaderi0x/PostBox/releases/latest` o
 
 ### App icon is still the Flutter logo
 
-`flutter create` (run by `tool/setup_platforms.sh`) generates Flutter's default icon. Run `bash tool/apply_icons.sh` once after setup (Android launcher icons and splash, Windows `.ico`, macOS icon set), then commit the changed files. If the `windows/` or `macos/` folders are committed, the release workflow does not regenerate them, so this step must be committed too. On a phone, uninstall the old app so Android refreshes its icon cache.
+`flutter create` (run by `tool/setup_platforms.sh`) generates Flutter's default icon. Run `bash tool/apply_icons.sh` once after setup (Android launcher icons, Windows `.ico`, macOS icon set), then commit the changed files. If the `windows/` or `macos/` folders are committed, the release workflow does not regenerate them, so this step must be committed too. On a phone, uninstall the old app so Android refreshes its icon cache.
 
 ### Android build error: "compiled against android-33"
 
