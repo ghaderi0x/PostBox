@@ -9,11 +9,6 @@ set -euo pipefail
 if [ -d android ] || [ -d windows ]; then
   dart run flutter_launcher_icons
 fi
-# Android splash shown before Flutter starts.
-if [ -d android ]; then
-  dart run flutter_native_splash:create
-fi
-
 # Windows: make sure the exe icon is ours even if the generator skipped it.
 if [ -d windows/runner/resources ]; then
   cp assets/branding/app_icon.ico windows/runner/resources/app_icon.ico
