@@ -110,3 +110,11 @@ extension PostBoxContext on BuildContext {
   PostBoxTheme get pb => Theme.of(this).extension<PostBoxTheme>()!;
   PostBoxColors get colors => pb.colors;
 }
+
+/// The app header is the surface colour with a clear touch of the accent, so
+/// the top bar (and the Windows title bar, which copies it) reads as "the app
+/// colour" in every theme.
+extension PostBoxHeaderColors on PostBoxColors {
+  Color get header => Color.alphaBlend(accent.withAlpha(46), surfaceBase);
+  Color get headerBorder => accent.withAlpha(110);
+}
