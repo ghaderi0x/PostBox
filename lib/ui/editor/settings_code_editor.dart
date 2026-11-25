@@ -16,6 +16,7 @@ class SettingsCodeEditor extends StatelessWidget {
     this.readOnly = false,
     this.hintText,
     this.minHeight = 120,
+    this.scrollController,
   });
 
   final CodeEditorController controller;
@@ -23,6 +24,7 @@ class SettingsCodeEditor extends StatelessWidget {
   final bool readOnly;
   final String? hintText;
   final double minHeight;
+  final ScrollController? scrollController;
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +35,7 @@ class SettingsCodeEditor extends StatelessWidget {
       readOnly: readOnly,
       hintText: hintText,
       minHeight: minHeight,
+      scrollController: scrollController,
       options: EditorOptions(
         wordWrap: s.editorWordWrap,
         lineNumbers: s.editorLineNumbers,
