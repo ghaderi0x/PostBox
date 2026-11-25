@@ -25,6 +25,7 @@ class AppHeader extends StatelessWidget {
     required this.onImportExport,
     required this.onSettings,
     required this.onWorkspaces,
+    required this.onMenu,
   });
 
   static const double height = 56;
@@ -33,6 +34,7 @@ class AppHeader extends StatelessWidget {
   final VoidCallback onImportExport;
   final VoidCallback onSettings;
   final VoidCallback onWorkspaces;
+  final VoidCallback onMenu;
 
   @override
   Widget build(BuildContext context) {
@@ -44,8 +46,8 @@ class AppHeader extends StatelessWidget {
       height: height,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: c.surfaceBase,
-        border: Border(bottom: BorderSide(color: c.border)),
+        color: c.header,
+        border: Border(bottom: BorderSide(color: c.headerBorder)),
       ),
       child: Row(
         children: <Widget>[
@@ -74,6 +76,11 @@ class AppHeader extends StatelessWidget {
             tooltip: context.t('settings.title'),
             icon: Icons.settings_outlined,
             onPressed: onSettings,
+          ),
+          HeaderIconButton(
+            tooltip: context.t('nav.menu'),
+            icon: Icons.apps_rounded,
+            onPressed: onMenu,
           ),
         ],
       ),
@@ -279,6 +286,7 @@ class _ThemeButton extends StatelessWidget {
       icon: dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
       onPressed: () => context.read<SettingsCubit>().update(
         (s) => s.copyWith(
+          themeSchedule: false,
           themeMode: dark ? AppThemeMode.light : AppThemeMode.dark,
         ),
       ),
