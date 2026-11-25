@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -23,10 +25,17 @@ import '../widgets/soft.dart';
 
 /// Phone "Menu" tab: grouped rows in the style of the reference designs.
 class MenuPage extends StatelessWidget {
-  const MenuPage({super.key});
+  const MenuPage({super.key, this.inDialog = false});
 
-  void _push(BuildContext context, Widget page) =>
-      Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
+  /// True when shown as a dialog from the desktop header. Opening a page then
+  /// closes the dialog first.
+  final bool inDialog;
+
+  void _push(BuildContext context, Widget page) {
+    final nav = Navigator.of(context);
+    if (inDialog) nav.pop();
+    unawaited(nav.push(MaterialPageRoute<void>(builder: (_) => page)));
+  }
 
   Future<void> _pickCollection(BuildContext context) async {
     final cols = context.read<CollectionsCubit>().state.collections;
