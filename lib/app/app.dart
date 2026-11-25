@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
@@ -5,6 +6,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import '../core/design/presets.dart';
+import '../core/design/tokens.dart';
+import '../core/platform/window_chrome.dart';
 import '../core/design/theme.dart';
 import '../core/platform/file_service.dart';
 import '../core/platform/share_intent_service.dart';
@@ -49,6 +52,8 @@ class _PostBoxAppState extends State<PostBoxApp> {
   late final WorkspaceCubit _workspace;
   late final RunnerCubit _runner;
   bool _ready = false;
+  Timer? _clock;
+  bool? _lastScheduleDark;
 
   @override
   void initState() {
@@ -74,6 +79,19 @@ class _PostBoxAppState extends State<PostBoxApp> {
       executor: s.executor,
     );
     _load();
+    // Re-evaluate the light/dark schedule twice a minute.
+    _clock = Timer.periodic(const Duration(seconds: 30), (_) {
+      final st = _settings.state;
+      if (!st.themeSchedule) {
+        _lastScheduleDark = null;
+        return;
+      }
+      final dark = isDarkBySchedule(st, DateTime.now());
+      if (dark != _lastScheduleDark) {
+        _lastScheduleDark = dark;
+        if (mounted) setState(() {});
+      }
+    });
   }
 
   Future<void> _load() async {
@@ -90,6 +108,7 @@ class _PostBoxAppState extends State<PostBoxApp> {
 
   @override
   void dispose() {
+    _clock?.cancel();
     _workspace.close();
     _runner.close();
     _history.close();
@@ -144,11 +163,15 @@ class _PostBoxAppState extends State<PostBoxApp> {
             final persianUi = code == 'fa';
             ThemeData theme(Brightness b) =>
                 buildTheme(brightness: b, settings: s, persianUi: persianUi);
-            final mode = switch (s.themeMode) {
-              AppThemeMode.system => ThemeMode.system,
-              AppThemeMode.light => ThemeMode.light,
-              AppThemeMode.dark => ThemeMode.dark,
-            };
+            final mode = s.themeSchedule
+                ? (isDarkBySchedule(s, DateTime.now())
+                      ? ThemeMode.dark
+                      : ThemeMode.light)
+                : switch (s.themeMode) {
+                    AppThemeMode.system => ThemeMode.system,
+                    AppThemeMode.light => ThemeMode.light,
+                    AppThemeMode.dark => ThemeMode.dark,
+                  };
             return MaterialApp(
               title: 'PostBox',
               debugShowCheckedModeBanner: false,
@@ -175,21 +198,28 @@ class _PostBoxAppState extends State<PostBoxApp> {
                 );
                 if (!Platform.isWindows) return scaled;
                 // Window border in the accent colour (Windows only).
-                final accent = buildColors(
+                final brightness = Theme.of(context).brightness;
+                final colors = buildColors(
                   s.themePreset,
-                  Theme.of(context).brightness,
+                  brightness,
                   accentOverride: s.accentOverride,
                   surface: s.surfaceStyle,
-                ).accent;
-                return DecoratedBox(
-                  position: DecorationPosition.foreground,
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: accent.withAlpha(200),
-                      width: 1.5,
+                );
+                return _TitleBarSync(
+                  background: colors.header,
+                  text: colors.textPrimary,
+                  border: colors.accent,
+                  dark: brightness == Brightness.dark,
+                  child: DecoratedBox(
+                    position: DecorationPosition.foreground,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: colors.accent.withAlpha(200),
+                        width: 1.5,
+                      ),
                     ),
+                    child: scaled,
                   ),
-                  child: scaled,
                 );
               },
               home: !_ready
@@ -235,4 +265,58 @@ class StartupErrorApp extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Pushes the header colour to the native Windows title bar whenever the
+/// theme changes.
+class _TitleBarSync extends StatefulWidget {
+  const _TitleBarSync({
+    required this.background,
+    required this.text,
+    required this.border,
+    required this.dark,
+    required this.child,
+  });
+
+  final Color background;
+  final Color text;
+  final Color border;
+  final bool dark;
+  final Widget child;
+
+  @override
+  State<_TitleBarSync> createState() => _TitleBarSyncState();
+}
+
+class _TitleBarSyncState extends State<_TitleBarSync> {
+  @override
+  void initState() {
+    super.initState();
+    _push();
+  }
+
+  @override
+  void didUpdateWidget(_TitleBarSync old) {
+    super.didUpdateWidget(old);
+    if (old.background != widget.background ||
+        old.text != widget.text ||
+        old.border != widget.border ||
+        old.dark != widget.dark) {
+      _push();
+    }
+  }
+
+  void _push() {
+    unawaited(
+      WindowChrome.setTitleBar(
+        background: widget.background,
+        text: widget.text,
+        border: widget.border,
+        dark: widget.dark,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
