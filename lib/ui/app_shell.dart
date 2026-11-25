@@ -94,6 +94,24 @@ class _AppShellState extends State<AppShell> {
     super.dispose();
   }
 
+  /// Desktop: the same list as the phone Menu tab (Insights, Environments,
+  /// Cookies, Templates, Runner, Language, Appearance, Tour ...), in a dialog.
+  void _showMenu() {
+    unawaited(
+      showDialog<void>(
+        context: context,
+        builder: (ctx) => Dialog(
+          insetPadding: const EdgeInsets.all(24),
+          clipBehavior: Clip.antiAlias,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520, maxHeight: 780),
+            child: const Material(child: MenuPage(inDialog: true)),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _onShared(SharedContent c) =>
       _push(ImportExportPage(initialImportText: c.text));
 
@@ -232,6 +250,7 @@ class _AppShellState extends State<AppShell> {
         icon: Icons.brightness_6_outlined,
         run: () => settings.update(
           (s) => s.copyWith(
+            themeSchedule: false,
             themeMode: Theme.of(context).brightness == Brightness.dark
                 ? AppThemeMode.light
                 : AppThemeMode.dark,
@@ -364,6 +383,7 @@ class _AppShellState extends State<AppShell> {
             onImportExport: () => _push(const ImportExportPage()),
             onSettings: () => _push(const SettingsPage()),
             onWorkspaces: () => _push(const WorkspacesPage()),
+            onMenu: _showMenu,
           ),
           Expanded(
             child: Row(
