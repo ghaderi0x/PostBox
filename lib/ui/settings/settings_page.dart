@@ -453,12 +453,7 @@ class _Section extends StatelessWidget {
                 boxShadow: softShadow(context, strength: 0.6),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              // ListTiles paint on the nearest Material; without this one they
-              // would paint under the decorated container above.
-              child: Material(
-                type: MaterialType.transparency,
-                child: Column(children: children),
-              ),
+              child: Column(children: children),
             ),
           ],
         ),
@@ -620,6 +615,38 @@ class _Appearance extends StatelessWidget {
             AppThemeMode.dark: context.t('settings.dark'),
           }, (v) => cubit.update((x) => x.copyWith(themeMode: v))),
         ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(context.t('settings.schedule')),
+          subtitle: Text(context.t('settings.scheduleHelp')),
+          value: s.themeSchedule,
+          onChanged: (v) => cubit.update((x) => x.copyWith(themeSchedule: v)),
+        ),
+        if (s.themeSchedule)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child: _TimeField(
+                    label: context.t('settings.darkFrom'),
+                    minutes: s.darkFromMinutes,
+                    onPicked: (m) =>
+                        cubit.update((x) => x.copyWith(darkFromMinutes: m)),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _TimeField(
+                    label: context.t('settings.darkTo'),
+                    minutes: s.darkToMinutes,
+                    onPicked: (m) =>
+                        cubit.update((x) => x.copyWith(darkToMinutes: m)),
+                  ),
+                ),
+              ],
+            ),
+          ),
         _Field(
           label: context.t('settings.preset'),
           child: Wrap(
@@ -684,11 +711,14 @@ class _Appearance extends StatelessWidget {
         ),
         _Field(
           label: context.t('settings.surface'),
-          child:
-              _segmented<SurfaceStyle>(s.surfaceStyle, <SurfaceStyle, String>{
-                SurfaceStyle.raised: context.t('settings.raised'),
-                SurfaceStyle.flat: context.t('settings.flat'),
-              }, (v) => cubit.update((x) => x.copyWith(surfaceStyle: v))),
+          child: _segmented<SurfaceStyle>(
+            s.surfaceStyle,
+            <SurfaceStyle, String>{
+              SurfaceStyle.raised: context.t('settings.raised'),
+              SurfaceStyle.flat: context.t('settings.flat'),
+            },
+            (v) => cubit.update((x) => x.copyWith(surfaceStyle: v)),
+          ),
         ),
         _Field(
           label: context.t('settings.density'),
@@ -1645,6 +1675,45 @@ class _CertFieldsState extends State<_CertFields> {
             },
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// A read-only field that shows a clock time and opens the time picker.
+class _TimeField extends StatelessWidget {
+  const _TimeField({
+    required this.label,
+    required this.minutes,
+    required this.onPicked,
+  });
+
+  final String label;
+  final int minutes;
+  final ValueChanged<int> onPicked;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final time = TimeOfDay(hour: minutes ~/ 60, minute: minutes % 60);
+    return Pressable(
+      borderRadius: BorderRadius.circular(Radii.sm),
+      onTap: () async {
+        final picked = await showTimePicker(
+          context: context,
+          initialTime: time,
+        );
+        if (picked != null) onPicked(picked.hour * 60 + picked.minute);
+      },
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          suffixIcon: Icon(Icons.schedule, size: 18, color: c.textSecondary),
+        ),
+        child: Text(
+          '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}',
+          style: context.mono,
+        ),
       ),
     );
   }
