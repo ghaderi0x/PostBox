@@ -78,6 +78,9 @@ class AppSettings {
     this.caCertPath = '',
     this.restoreWorkspace = true,
     this.checkUpdates = true,
+    this.themeSchedule = false,
+    this.darkFromMinutes = 19 * 60,
+    this.darkToMinutes = 7 * 60,
     this.skippedVersion = '',
     this.shortcuts = const <String, String>{},
   });
@@ -136,6 +139,15 @@ class AppSettings {
   /// Reopen the tabs and panel layout of the last session on start.
   final bool restoreWorkspace;
 
+  /// Switch between light and dark by the clock instead of [themeMode].
+  final bool themeSchedule;
+
+  /// Dark theme starts at this time, in minutes after midnight (0..1439).
+  final int darkFromMinutes;
+
+  /// Dark theme ends at this time, in minutes after midnight (0..1439).
+  final int darkToMinutes;
+
   /// Ask GitHub for the newest release each time the app opens.
   final bool checkUpdates;
 
@@ -189,6 +201,9 @@ class AppSettings {
     String? caCertPath,
     bool? restoreWorkspace,
     bool? checkUpdates,
+    bool? themeSchedule,
+    int? darkFromMinutes,
+    int? darkToMinutes,
     String? skippedVersion,
     Map<String, String>? shortcuts,
   }) {
@@ -236,6 +251,9 @@ class AppSettings {
       caCertPath: caCertPath ?? this.caCertPath,
       restoreWorkspace: restoreWorkspace ?? this.restoreWorkspace,
       checkUpdates: checkUpdates ?? this.checkUpdates,
+      themeSchedule: themeSchedule ?? this.themeSchedule,
+      darkFromMinutes: darkFromMinutes ?? this.darkFromMinutes,
+      darkToMinutes: darkToMinutes ?? this.darkToMinutes,
       skippedVersion: skippedVersion ?? this.skippedVersion,
       shortcuts: shortcuts ?? this.shortcuts,
     );
@@ -291,15 +309,17 @@ class AppSettings {
       'caCertPath': caCertPath,
       'restoreWorkspace': restoreWorkspace,
       'checkUpdates': checkUpdates,
+      'themeSchedule': themeSchedule,
+      'darkFromMinutes': darkFromMinutes,
+      'darkToMinutes': darkToMinutes,
       'skippedVersion': skippedVersion,
       'shortcuts': shortcuts,
     };
   }
 
   String toJsonString({bool redactSensitive = false}) =>
-      const JsonEncoder.withIndent(
-        '  ',
-      ).convert(toJson(redactSensitive: redactSensitive));
+      const JsonEncoder.withIndent('  ')
+          .convert(toJson(redactSensitive: redactSensitive));
 
   /// Migrates older schema versions to the current one; steps are chained.
   ///
@@ -335,9 +355,9 @@ class AppSettings {
     final proxy = asString(j['proxy']).trim();
     final tab = asInt(j['editorTabSize'], d.editorTabSize);
     final accent = j['accentOverride'];
-    final headers = KeyValue.listFromJson(
-      j['defaultHeaders'],
-    ).where((h) => h.key.trim().isNotEmpty).toList();
+    final headers = KeyValue.listFromJson(j['defaultHeaders'])
+        .where((h) => h.key.trim().isNotEmpty)
+        .toList();
     return AppSettings(
       themeMode: enumByName(AppThemeMode.values, j['themeMode'], d.themeMode),
       themePreset: enumByName(
@@ -422,6 +442,9 @@ class AppSettings {
       caCertPath: asString(j['caCertPath']).trim(),
       restoreWorkspace: asBool(j['restoreWorkspace'], d.restoreWorkspace),
       checkUpdates: asBool(j['checkUpdates'], d.checkUpdates),
+      themeSchedule: asBool(j['themeSchedule'], d.themeSchedule),
+      darkFromMinutes: asInt(j['darkFromMinutes'], d.darkFromMinutes).clamp(0, 1439),
+      darkToMinutes: asInt(j['darkToMinutes'], d.darkToMinutes).clamp(0, 1439),
       skippedVersion: asString(j['skippedVersion']).trim(),
       shortcuts: _parseShortcuts(j['shortcuts']),
     );
@@ -454,4 +477,15 @@ Map<String, String> _parseShortcuts(Object? raw) {
     if (v is String && v.length <= 40 && k.length <= 40) out[k] = v;
   });
   return out;
+}
+
+/// True when the dark theme should be on at [now] under the schedule in [s].
+/// The window may cross midnight (for example 19:00 to 07:00). When both
+/// times are equal the schedule never turns dark.
+bool isDarkBySchedule(AppSettings s, DateTime now) {
+  final m = now.hour * 60 + now.minute;
+  final from = s.darkFromMinutes;
+  final to = s.darkToMinutes;
+  if (from == to) return false;
+  return from < to ? (m >= from && m < to) : (m >= from || m < to);
 }
