@@ -80,7 +80,12 @@ class CodeEditor extends StatefulWidget {
     this.onWrapChanged,
     this.hintText,
     this.minHeight = 120,
+    this.scrollController,
   });
+
+  /// Optional vertical controller. Pass the page's primary controller so the
+  /// editor scrolls together with the page it sits in.
+  final ScrollController? scrollController;
 
   final CodeEditorController controller;
   final CodeLanguage language;
@@ -97,7 +102,8 @@ class CodeEditor extends StatefulWidget {
 class _CodeEditorState extends State<CodeEditor> {
   final FocusNode _focus = FocusNode();
   final UndoHistoryController _undo = UndoHistoryController();
-  final ScrollController _vScroll = ScrollController();
+  final ScrollController _ownScroll = ScrollController();
+  ScrollController get _vScroll => widget.scrollController ?? _ownScroll;
   final ScrollController _hScroll = ScrollController();
   final TextEditingController _findCtl = TextEditingController();
   final TextEditingController _replaceCtl = TextEditingController();
@@ -148,7 +154,7 @@ class _CodeEditorState extends State<CodeEditor> {
     widget.controller.removeListener(_onController);
     _focus.dispose();
     _undo.dispose();
-    _vScroll.dispose();
+    _ownScroll.dispose();
     _hScroll.dispose();
     _findCtl.dispose();
     _replaceCtl.dispose();
@@ -650,7 +656,9 @@ class _CodeEditorState extends State<CodeEditor> {
           );
 
     return Scrollbar(
-      controller: _vScroll,
+      // A shared page controller may have several positions while tabs
+      // change, so the scrollbar then follows its child instead.
+      controller: widget.scrollController == null ? _ownScroll : null,
       child: SingleChildScrollView(
         controller: _vScroll,
         child: GestureDetector(
