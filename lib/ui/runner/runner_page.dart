@@ -80,8 +80,14 @@ class _RunnerPageState extends State<RunnerPage> {
         builder: (context, s) {
           final cubit = context.read<RunnerCubit>();
           final sameRun = s.collectionName == col?.name;
-          return Column(
-            children: <Widget>[
+          // The settings block scrolls away with the results and returns as
+          // soon as you scroll up.
+          return NestedScrollView(
+            floatHeaderSlivers: true,
+            headerSliverBuilder: (context, innerBoxIsScrolled) => <Widget>[
+              SliverToBoxAdapter(
+                child: Column(
+                  children: <Widget>[
               Padding(
                 padding: const EdgeInsets.all(12),
                 child: Column(
@@ -168,9 +174,9 @@ class _RunnerPageState extends State<RunnerPage> {
                           FilledButton.icon(
                             style: FilledButton.styleFrom(
                               backgroundColor: c.danger,
-                              foregroundColor: Theme.of(
-                                context,
-                              ).colorScheme.onError,
+                              foregroundColor: Theme.of(context)
+                                  .colorScheme
+                                  .onError,
                             ),
                             onPressed: cubit.stop,
                             icon: const Icon(Icons.stop, size: 18),
@@ -216,6 +222,12 @@ class _RunnerPageState extends State<RunnerPage> {
                 ),
               ),
               Divider(color: c.border, height: 1),
+                  ],
+                ),
+              ),
+            ],
+            body: Column(
+              children: <Widget>[
               Expanded(
                 child: !sameRun || s.results.isEmpty
                     ? EmptyState(
@@ -363,6 +375,7 @@ class _RunnerPageState extends State<RunnerPage> {
                   ),
                 ),
             ],
+            ),
           );
         },
       ),
@@ -397,16 +410,8 @@ class _RunCharts extends StatelessWidget {
           const SizedBox(height: 10),
           StackedBar(
             parts: <ChartSlice>[
-              ChartSlice(
-                context.t('chart.passed'),
-                state.passed.toDouble(),
-                c.success,
-              ),
-              ChartSlice(
-                context.t('chart.failed'),
-                state.failed.toDouble(),
-                c.danger,
-              ),
+              ChartSlice(context.t('chart.passed'), state.passed.toDouble(), c.success),
+              ChartSlice(context.t('chart.failed'), state.failed.toDouble(), c.danger),
             ],
           ),
           const SizedBox(height: 6),
