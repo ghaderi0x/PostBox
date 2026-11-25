@@ -220,10 +220,7 @@ class _ResultViewState extends State<_ResultView>
         title: context.t('resp.save'),
       );
       if (path != null && mounted) {
-        await showToast(
-          context,
-          context.t('resp.savedTo', <String>[fileNameOf(path)]),
-        );
+        await showToast(context, context.t('resp.savedTo', <String>[fileNameOf(path)]));
       }
     } on FileSystemException catch (e) {
       if (mounted) {
@@ -247,8 +244,14 @@ class _ResultViewState extends State<_ResultView>
         o.scriptTests.where((t) => t.passed).length;
     final totalChecks = o.assertions.length + o.scriptTests.length;
 
-    return Column(
-      children: <Widget>[
+    // The status row and tab bar scroll away with the content and come back
+    // as soon as you scroll up (one page scroll, not just the body).
+    return NestedScrollView(
+      floatHeaderSlivers: true,
+      headerSliverBuilder: (context, innerBoxIsScrolled) => <Widget>[
+        SliverToBoxAdapter(
+          child: Column(
+            children: <Widget>[
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
           child: Wrap(
@@ -297,8 +300,11 @@ class _ResultViewState extends State<_ResultView>
             context.t('resp.timeline'),
           ],
         ),
-        Expanded(
-          child: TabBarView(
+            ],
+          ),
+        ),
+      ],
+      body: TabBarView(
             controller: _tabs,
             physics: const NeverScrollableScrollPhysics(),
             children: <Widget>[
@@ -313,8 +319,6 @@ class _ResultViewState extends State<_ResultView>
               TimelineView(result: r),
             ],
           ),
-        ),
-      ],
     );
   }
 
@@ -553,6 +557,9 @@ class _BodyViewState extends State<_BodyView> {
                           controller: _ctl,
                           language: _lang,
                           readOnly: true,
+                          scrollController: PrimaryScrollController.maybeOf(
+                            context,
+                          ),
                         )),
           ),
         ),
