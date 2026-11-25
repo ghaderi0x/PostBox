@@ -16,6 +16,9 @@
 - Every `InkWell` replaced by a `GestureDetector`-based `Pressable` (cursor, hover and pressed tint)
 - Fixed line numbers overflowing in Persian layout (raw and pretty response)
 - Windows: window border follows the accent colour
+- Light/dark schedule: Settings > Appearance can switch to the dark theme between two times (for example 19:00 to 07:00); using the header theme button turns it off
+- Desktop header: tinted with the accent colour, and on Windows the native title bar follows it (Windows 11 colours it, Windows 10 switches light/dark; needs `tool/apply_windows_titlebar.sh`). New Menu button in the header opens the same list as the phone Menu tab (Insights, Environments, Cookies, Templates, Runner, Language, Tour ...)
+- Response, Request and Runner pages scroll as one page: the status row, URL bar, tab bar or settings block scroll away with the content and return when you scroll up
 - Credit line and GitHub link in Settings > About and on the desktop tour
 - Release tooling: tag-driven GitHub Actions release for Windows, Linux and macOS (installer, `.dmg`, `.deb`, AppImage), `tool/bump_version.sh`, checksum file
 - macOS support: runner setup with sandbox entitlements, `.dmg` packaging, in-app update for macOS
