@@ -294,8 +294,14 @@ class _RequestEditorState extends State<RequestEditor>
     String label(String key, int n) =>
         n > 0 ? '${context.t(key)} ($n)' : context.t(key);
 
-    return Column(
-      children: <Widget>[
+    // URL bar, warnings and tab bar scroll away with the content and return
+    // as soon as you scroll up.
+    return NestedScrollView(
+      floatHeaderSlivers: true,
+      headerSliverBuilder: (context, innerBoxIsScrolled) => <Widget>[
+        SliverToBoxAdapter(
+          child: Column(
+            children: <Widget>[
         Padding(
           padding: const EdgeInsets.fromLTRB(10, 10, 10, 6),
           child: widget.compact
@@ -356,8 +362,11 @@ class _RequestEditorState extends State<RequestEditor>
             context.t('req.info'),
           ],
         ),
-        Expanded(
-          child: TabBarView(
+            ],
+          ),
+        ),
+      ],
+      body: TabBarView(
             controller: _tabs,
             physics: const NeverScrollableScrollPhysics(),
             children: <Widget>[
@@ -417,8 +426,6 @@ class _RequestEditorState extends State<RequestEditor>
               ),
             ],
           ),
-        ),
-      ],
     );
   }
 }
