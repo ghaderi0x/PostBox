@@ -64,8 +64,7 @@ const Map<String, String> enStrings = <String, String>{
   'body.contentType': 'Content-Type',
   'body.gqlQuery': 'Query',
   'body.gqlVariables': 'Variables (JSON)',
-  'body.multipartHint':
-      'The boundary and Content-Type are generated automatically. Use the clip button to send a file by path.',
+  'body.multipartHint': 'The boundary and Content-Type are generated automatically. Use the clip button to send a file by path.',
   'auth.type': 'Type',
   'auth.none': 'No auth',
   'auth.basic': 'Basic',
@@ -83,8 +82,7 @@ const Map<String, String> enStrings = <String, String>{
   'auth.reveal': 'Show / hide',
   'auth.secretNote':
       'Secrets are stored in the system keystore, not in the database.',
-  'oauth.info':
-      'Authorization Code with PKCE. A browser opens for sign-in; PostBox receives the redirect locally.',
+  'oauth.info': 'Authorization Code with PKCE. A browser opens for sign-in; PostBox receives the redirect locally.',
   'oauth.authUrl': 'Authorization URL',
   'oauth.tokenUrl': 'Token URL',
   'oauth.clientId': 'Client ID',
@@ -153,8 +151,7 @@ const Map<String, String> enStrings = <String, String>{
   'resp.largeMode': 'Large response ({0}). Shown as plain lines for speed.',
   'resp.noHeaders': 'No headers',
   'resp.noCookies': 'The response sets no cookies',
-  'resp.cookiesNote':
-      'PostBox does not store or resend cookies. Values are hidden until you reveal them.',
+  'resp.cookiesNote': 'PostBox does not store or resend cookies. Values are hidden until you reveal them.',
   'resp.reveal': 'Reveal',
   'resp.hide': 'Hide',
   'resp.noTests': 'No tests',
@@ -162,18 +159,15 @@ const Map<String, String> enStrings = <String, String>{
       'Add assertions or extractions in the Tests tab of the request.',
   'resp.extracted': 'Saved variables',
   'resp.previewNote': 'What was sent, with secrets masked.',
-  'warn.oauth_no_token':
-      'OAuth 2.0 is selected but no token was fetched. Use "Get token" in the Auth tab.',
-  'warn.content_type_overridden':
-      'The Content-Type header was replaced because multipart bodies need a generated boundary.',
+  'warn.oauth_no_token': 'OAuth 2.0 is selected but no token was fetched. Use "Get token" in the Auth tab.',
+  'warn.content_type_overridden': 'The Content-Type header was replaced because multipart bodies need a generated boundary.',
   'err.http.timeout': 'The request timed out',
   'err.http.cancelled': 'The request was cancelled',
   'err.http.tls': 'TLS / certificate error',
   'err.http.connection': 'Could not connect',
   'err.http.protocol': 'The server sent an invalid HTTP response',
   'err.http.tooManyRedirects': 'Too many redirects',
-  'err.tlsHint':
-      'The certificate could not be verified. PostBox never disables TLS checks silently; you can change this in Settings > Requests if you understand the risk.',
+  'err.tlsHint': 'The certificate could not be verified. PostBox never disables TLS checks silently; you can change this in Settings > Requests if you understand the risk.',
   'err.build.empty_url': 'The URL is empty',
   'err.build.invalid_url': 'The URL is not valid',
   'err.build.unsupported_scheme': 'Only http and https URLs are supported',
@@ -247,10 +241,8 @@ const Map<String, String> enStrings = <String, String>{
   'env.noVars': 'No variables yet',
   'env.globalsHint':
       'Global variables apply everywhere and have the lowest priority.',
-  'env.precedence':
-      'Priority: values from chained requests, then this environment, then the collection, then globals.',
-  'env.secretsMemoryOnly':
-      'The system keystore is unavailable, so secret values are kept in memory only and will be lost when the app closes. On Linux install libsecret and a keyring service.',
+  'env.precedence': 'Priority: values from chained requests, then this environment, then the collection, then globals.',
+  'env.secretsMemoryOnly': 'The system keystore is unavailable, so secret values are kept in memory only and will be lost when the app closes. On Linux install libsecret and a keyring service.',
   'env.unsavedTitle': 'Discard changes?',
   'env.unsavedMsg': 'You have unsaved variable changes.',
   'env.discard': 'Discard',
@@ -262,8 +254,7 @@ const Map<String, String> enStrings = <String, String>{
   'ie.format': 'Format',
   'ie.auto': 'Detect automatically',
   'ie.openapiJson': 'OpenAPI 3 (JSON)',
-  'ie.importInfo':
-      'Nothing is executed. Scripts in imported files are skipped and reported. Review the preview before importing.',
+  'ie.importInfo': 'Nothing is executed. Scripts in imported files are skipped and reported. Review the preview before importing.',
   'ie.filePath': 'File path (optional)',
   'ie.load': 'Load',
   'ie.paste': 'Paste cURL, Postman, PostBox or OpenAPI content',
@@ -283,16 +274,12 @@ const Map<String, String> enStrings = <String, String>{
   'ie.curlCurrent': 'cURL (current request)',
   'ie.includeEnvs': 'Include environments',
   'ie.includeSecrets': 'Include secrets',
-  'ie.includeSecretsHelp':
-      'Tokens, passwords and secret variables will appear in plain text in the export.',
-  'ie.secretsWarning':
-      'Anyone who can read this export can use your credentials. Share it carefully.',
-  'ie.postmanLossy':
-      'Postman export is lossy: assertions, chaining and OAuth 2.0 settings are not included.',
+  'ie.includeSecretsHelp': 'Tokens, passwords and secret variables will appear in plain text in the export.',
+  'ie.secretsWarning': 'Anyone who can read this export can use your credentials. Share it carefully.',
+  'ie.postmanLossy': 'Postman export is lossy: assertions, chaining and OAuth 2.0 settings are not included.',
   'ie.generate': 'Generate',
   'runner.title': 'Run: {0}',
-  'runner.info':
-      'Runs {0} request(s) in order. Values saved by chaining are passed to later requests for this run only.',
+  'runner.info': 'Runs {0} request(s) in order. Values saved by chaining are passed to later requests for this run only.',
   'runner.stopOnFailure': 'Stop on first failure',
   'runner.run': 'Run',
   'runner.stop': 'Stop',
@@ -341,8 +328,7 @@ const Map<String, String> enStrings = <String, String>{
   'settings.dark': 'Dark',
   'settings.preset': 'Theme',
   'settings.accent': 'Accent color',
-  'settings.accentHelp':
-      'A custom accent may reduce contrast; the preset accent is always checked.',
+  'settings.accentHelp': 'A custom accent may reduce contrast; the preset accent is always checked.',
   'settings.presetAccent': 'Theme default',
   'settings.custom': 'Custom…',
   'settings.customAccent': 'Custom accent color',
@@ -384,11 +370,9 @@ const Map<String, String> enStrings = <String, String>{
   'settings.proxyHelp': 'host:port. Leave empty for a direct connection.',
   'settings.proxyInvalid': 'Use the form host:port',
   'settings.allowInvalidTls': 'Allow invalid TLS certificates',
-  'settings.allowInvalidTlsHelp':
-      'Off by default. Turning it on disables certificate checks for every request.',
+  'settings.allowInvalidTlsHelp': 'Off by default. Turning it on disables certificate checks for every request.',
   'settings.tlsOffTitle': 'Disable certificate checks?',
-  'settings.tlsOffMsg':
-      'Without certificate checks anyone on the network can read and change your traffic. Only do this for test servers you control.',
+  'settings.tlsOffMsg': 'Without certificate checks anyone on the network can read and change your traffic. Only do this for test servers you control.',
   'settings.tlsOffConfirm': 'I understand, allow',
   'settings.tlsWarning':
       'TLS certificate checks are DISABLED for all requests.',
@@ -407,15 +391,13 @@ const Map<String, String> enStrings = <String, String>{
   'settings.privacy': 'Data and privacy',
   'settings.persistHistory': 'Save request history',
   'settings.omitSensitive': 'Omit sensitive details from history',
-  'settings.omitSensitiveHelp':
-      'Stores only method, URL without query values, status and timing. Entries cannot be replayed in full.',
+  'settings.omitSensitiveHelp': 'Stores only method, URL without query values, status and timing. Entries cannot be replayed in full.',
   'settings.retention': 'Keep history for',
   'settings.days': '{0} days',
   'settings.forever': 'Forever',
   'settings.maxHistory': 'Maximum history entries',
   'settings.confirmDestructive': 'Confirm before deleting',
-  'settings.noTelemetry':
-      'PostBox has no telemetry, no crash reporting and no cloud sync. Apart from the optional update check (Settings > About), nothing leaves your device unless you send a request.',
+  'settings.noTelemetry': 'PostBox has no telemetry, no crash reporting and no cloud sync. Apart from the optional update check (Settings > About), nothing leaves your device unless you send a request.',
   'settings.historyCleared': 'History cleared',
   'settings.exportSettings': 'Export settings',
   'settings.importSettings': 'Import settings',
@@ -432,8 +414,7 @@ const Map<String, String> enStrings = <String, String>{
       'All settings return to their defaults. Your requests are not affected.',
   'settings.clearAll': 'Clear local data',
   'settings.clearAllTitle': 'Clear all local data?',
-  'settings.clearAllMsg':
-      'Collections, requests, environments, history and all stored secrets will be permanently deleted from this device.',
+  'settings.clearAllMsg': 'Collections, requests, environments, history and all stored secrets will be permanently deleted from this device.',
   'settings.clearAllConfirm': 'Delete everything',
   'settings.clearedAll': 'Local data cleared',
   'settings.keyboard': 'Keyboard and productivity',
@@ -465,10 +446,8 @@ const Map<String, String> enStrings = <String, String>{
   'about.privacy': 'Privacy policy',
   'about.changelog': 'Changelog',
   'about.acknowledgments': 'Acknowledgments',
-  'about.changelogBody':
-      '0.2.0\n- HTTP engine, request workspace and response inspector\n- Custom code editor\n- Collections, history, environments and secrets\n- Basic, Bearer, API key and OAuth 2.0 (PKCE)\n- Import/export: cURL, Postman v2.1, PostBox, OpenAPI JSON\n- Assertions, chaining, collection runner, SSE, WebSocket, GraphQL\n- English and Persian (RTL)\n\n0.1.0\n- Initial scaffold',
-  'privacy.body':
-      'PostBox runs entirely on your device.\n\n- No account, no backend, no analytics, no crash reporting, no cloud sync.\n- Requests go only to the servers you enter. The one other connection is the optional update check: when the app opens it asks GitHub for the latest release (switch it off in Settings > About).\n- Collections, history and settings are stored locally. Secrets (passwords, tokens, secret variables) are stored in the system keystore.\n- Exports leave secrets out unless you opt in.\n- You can delete all local data in Settings > Data and privacy.',
+  'about.changelogBody': '0.2.0\n- HTTP engine, request workspace and response inspector\n- Custom code editor\n- Collections, history, environments and secrets\n- Basic, Bearer, API key and OAuth 2.0 (PKCE)\n- Import/export: cURL, Postman v2.1, PostBox, OpenAPI JSON\n- Assertions, chaining, collection runner, SSE, WebSocket, GraphQL\n- English and Persian (RTL)\n\n0.1.0\n- Initial scaffold',
+  'privacy.body': 'PostBox runs entirely on your device.\n\n- No account, no backend, no analytics, no crash reporting, no cloud sync.\n- Requests go only to the servers you enter. The one other connection is the optional update check: when the app opens it asks GitHub for the latest release (switch it off in Settings > About).\n- Collections, history and settings are stored locally. Secrets (passwords, tokens, secret variables) are stored in the system keystore.\n- Exports leave secrets out unless you opt in.\n- You can delete all local data in Settings > Data and privacy.',
   'resp.diff': 'Diff',
   'resp.diffNone': 'No differences from the previous response',
   'resp.diffTooLarge':
@@ -487,25 +466,21 @@ const Map<String, String> enStrings = <String, String>{
   'onb.next': 'Next',
   'onb.getStarted': 'Get started',
   'onb.welcome.title': 'Test any API, right on your device',
-  'onb.welcome.subtitle':
-      'Send requests, inspect responses and organise your work. No account, no cloud.',
+  'onb.welcome.subtitle': 'Send requests, inspect responses and organise your work. No account, no cloud.',
   'onb.features.title': 'Built to stay out of your way',
   'onb.features.subtitle':
       'Everything you need for daily API work, kept local.',
   'onb.f1.title': 'Collections and environments',
-  'onb.f1.body':
-      'Group requests in folders, switch between dev and production with variables.',
+  'onb.f1.body': 'Group requests in folders, switch between dev and production with variables.',
   'onb.f2.title': 'Secrets stay on your device',
-  'onb.f2.body':
-      'Passwords and tokens go to the system keystore and are left out of exports by default.',
+  'onb.f2.body': 'Passwords and tokens go to the system keystore and are left out of exports by default.',
   'onb.f3.title': 'Bring your work with you',
   'onb.f3.body': 'Import cURL commands, Postman collections and OpenAPI files.',
   'onb.start.title': 'Start with examples?',
   'onb.start.subtitle':
       'A few ready-to-send requests make the first steps easier.',
   'onb.start.switch': 'Add a sample collection',
-  'onb.start.help':
-      'Six requests including GET, POST with assertions, bearer auth and a chaining demo.',
+  'onb.start.help': 'Six requests including GET, POST with assertions, bearer auth and a chaining demo.',
   'onb.start.note':
       'The samples call httpbin.org, and only when you press Send.',
   'sample.collection': 'PostBox samples',
@@ -517,8 +492,7 @@ const Map<String, String> enStrings = <String, String>{
   'sample.uuid': 'Step 1: get a UUID',
   'sample.echo': 'Step 2: send it back',
   'shortcuts.title': 'Keyboard shortcuts',
-  'shortcuts.hint':
-      'Click Change, then press the new key combination. A shortcut needs Ctrl, Alt or Meta (function keys work alone).',
+  'shortcuts.hint': 'Click Change, then press the new key combination. A shortcut needs Ctrl, Alt or Meta (function keys work alone).',
   'shortcuts.change': 'Change',
   'shortcuts.reset': 'Reset to default',
   'shortcuts.resetAll': 'Reset all shortcuts',
@@ -533,8 +507,7 @@ const Map<String, String> enStrings = <String, String>{
   'shortcuts.action.nextTab': 'Next tab',
   'shortcuts.action.previousTab': 'Previous tab',
   'settings.restore': 'Restore tabs and layout on start',
-  'settings.restoreHint':
-      'Reopens your tabs, unsaved edits (without secrets) and panel sizes. Secrets typed into unsaved tabs are not kept.',
+  'settings.restoreHint': 'Reopens your tabs, unsaved edits (without secrets) and panel sizes. Secrets typed into unsaved tabs are not kept.',
   'ie.browse': 'Browse…',
   'ie.selectedOnly': 'Export only the {0} selected item(s)',
   'ie.dropHere': 'Drop a file to import it',
@@ -544,22 +517,19 @@ const Map<String, String> enStrings = <String, String>{
   'palette.shortcuts': 'Keyboard shortcuts',
   'cookies.title': 'Cookies',
   'cookies.useJar': 'Use the cookie jar',
-  'cookies.useJarHint':
-      'Stores cookies from responses and sends them back to the same host. A Cookie header you set yourself always wins. Cookies stay on this device and are never exported.',
+  'cookies.useJarHint': 'Stores cookies from responses and sends them back to the same host. A Cookie header you set yourself always wins. Cookies stay on this device and are never exported.',
   'cookies.empty': 'No cookies yet',
   'cookies.emptyHint':
       'Cookies set by responses appear here after you send a request.',
   'cookies.clearAll': 'Delete all cookies',
-  'cookies.clearConfirm':
-      'Delete every stored cookie? You may be signed out of the APIs you tested.',
+  'cookies.clearConfirm': 'Delete every stored cookie? You may be signed out of the APIs you tested.',
   'cookies.session': 'Session',
   'cookies.count': '{0} cookie(s)',
   'cookies.hostOnly': 'Host only',
   'cookies.show': 'Show value',
   'cookies.hide': 'Hide value',
   'ws.title': 'Workspaces',
-  'ws.info':
-      'Each workspace has its own collections, environments, history, cookies and templates. Settings and secrets are shared.',
+  'ws.info': 'Each workspace has its own collections, environments, history, cookies and templates. Settings and secrets are shared.',
   'ws.new': 'New workspace',
   'ws.created': 'Workspace "{0}" created',
   'ws.limit': 'Max {0} workspaces',
@@ -573,8 +543,7 @@ const Map<String, String> enStrings = <String, String>{
   'tpl.saveAs': 'Save as template',
   'tpl.saved': 'Template saved',
   'body.binary': 'Binary file',
-  'body.binaryHint':
-      'The chosen file is sent as the whole request body. Content-Type defaults to application/octet-stream unless you set a header.',
+  'body.binaryHint': 'The chosen file is sent as the whole request body. Content-Type defaults to application/octet-stream unless you set a header.',
   'body.filePath': 'File path',
   'body.chooseFile': 'Choose file…',
   'body.loadFile': 'Load body from file',
@@ -593,12 +562,10 @@ const Map<String, String> enStrings = <String, String>{
   'auth.inheritFrom': 'Using {1} from "{0}".',
   'req.vars': 'Variables',
   'req.scripts': 'Scripts',
-  'var.requestHint':
-      'Variables that only exist for this request. They override folder and collection variables but not the active environment.',
+  'var.requestHint': 'Variables that only exist for this request. They override folder and collection variables but not the active environment.',
   'var.name': 'Name',
   'var.inspector': 'Variable resolution',
-  'var.inspectorHint':
-      'Every {{variable}} this request uses, its current value and where it comes from. Secret values are masked.',
+  'var.inspectorHint': 'Every {{variable}} this request uses, its current value and where it comes from. Secret values are masked.',
   'var.noneUsed': 'This request uses no variables.',
   'var.undefined': 'not defined',
   'var.empty': '(empty)',
@@ -610,10 +577,8 @@ const Map<String, String> enStrings = <String, String>{
   'var.source.runtime': 'Runtime',
   'script.pre': 'Pre-request',
   'script.post': 'Post-response',
-  'script.preHint':
-      'Runs before the request is built. Can change request.url, request.method, request.body, request.headers and set variables with vars.set(). No file, network or secret access.',
-  'script.postHint':
-      'Runs after the response arrives. Read response.status, response.json(), response.headers; use test("name", condition) and vars.set().',
+  'script.preHint': 'Runs before the request is built. Can change request.url, request.method, request.body, request.headers and set variables with vars.set(). No file, network or secret access.',
+  'script.postHint': 'Runs after the response arrives. Read response.status, response.json(), response.headers; use test("name", condition) and vars.set().',
   'resp.tree': 'Tree',
   'resp.treeInvalid': 'This response is not valid JSON.',
   'resp.copyValue': 'Copy value',
@@ -625,8 +590,7 @@ const Map<String, String> enStrings = <String, String>{
   'resp.t.wait': 'Wait (send + first byte)',
   'resp.t.download': 'Download',
   'resp.t.total': 'Total',
-  'resp.timingNote':
-      'dart:io reports DNS, TCP and TLS as one connect time, so they cannot be split. Times are measured on this device.',
+  'resp.timingNote': 'dart:io reports DNS, TCP and TLS as one connect time, so they cannot be split. Times are measured on this device.',
   'resp.protocol': 'Protocol',
   'resp.certificate': 'Server certificate',
   'resp.noTls': 'This response was not received over TLS.',
@@ -635,36 +599,28 @@ const Map<String, String> enStrings = <String, String>{
   'resp.certIssuer': 'Issuer',
   'resp.certValid': 'Valid',
   'resp.copyCert': 'Copy certificate (PEM)',
-  'resp.media':
-      'Audio and video ({0}, {1}) cannot be played inside PostBox yet. Use Save to open the file in a player.',
+  'resp.media': 'Audio and video ({0}, {1}) cannot be played inside PostBox yet. Use Save to open the file in a player.',
   'resp.scriptLog': 'Script log',
   'err.script.pre': 'The pre-request script failed. The request was not sent.',
   'err.script.post': 'The post-response script failed.',
   'nset.titleCollection': 'Settings of collection "{0}"',
   'nset.titleFolder': 'Settings of folder "{0}"',
-  'nset.authUnsetCollection':
-      'Not set. Requests that inherit use no authentication unless a folder above them defines one.',
-  'nset.authUnsetFolder':
-      'Not set here. Requests below use the auth of the next folder or the collection above.',
-  'nset.headersHint':
-      'Added to every request below. A request that sets the same header keeps its own value.',
-  'nset.varsHint':
-      'Folder variables override collection variables for requests in this folder, but not the active environment.',
+  'nset.authUnsetCollection': 'Not set. Requests that inherit use no authentication unless a folder above them defines one.',
+  'nset.authUnsetFolder': 'Not set here. Requests below use the auth of the next folder or the collection above.',
+  'nset.headersHint': 'Added to every request below. A request that sets the same header keeps its own value.',
+  'nset.varsHint': 'Folder variables override collection variables for requests in this folder, but not the active environment.',
   'collections.settings': 'Auth, headers and scripts…',
   'bulk.select': 'Select several',
   'bulk.selected': '{0} selected',
   'bulk.deleteTitle': 'Delete selected items',
-  'bulk.deleteMsg':
-      'Delete {0} selected item(s) and everything inside folders? This cannot be undone.',
+  'bulk.deleteMsg': 'Delete {0} selected item(s) and everything inside folders? This cannot be undone.',
   'bulk.moveTitle': 'Move selected items',
   'settings.httpVersion': 'HTTP version',
-  'settings.httpVersionHelp':
-      'Auto offers HTTP/2 on https and falls back to HTTP/1.1. HTTP/2 is not used with a proxy. HTTP/3 is not supported.',
+  'settings.httpVersionHelp': 'Auto offers HTTP/2 on https and falls back to HTTP/1.1. HTTP/2 is not used with a proxy. HTTP/3 is not supported.',
   'settings.httpAuto': 'Auto (HTTP/2)',
   'settings.manageCookies': 'Manage cookies…',
   'settings.certs': 'Certificates (mutual TLS)',
-  'settings.certsHelp':
-      'PEM files. The extra CA is trusted in addition to the system roots. The files are referenced by path, not copied. SSE and WebSocket do not use encrypted client keys.',
+  'settings.certsHelp': 'PEM files. The extra CA is trusted in addition to the system roots. The files are referenced by path, not copied. SSE and WebSocket do not use encrypted client keys.',
   'settings.caCert': 'Extra CA certificate (PEM)',
   'settings.clientCert': 'Client certificate chain (PEM)',
   'settings.clientKey':
@@ -674,8 +630,7 @@ const Map<String, String> enStrings = <String, String>{
       'You can change the main shortcuts. Editor shortcuts are fixed.',
   'runner.iterations': 'Iterations',
   'runner.parallel': '{0} at a time',
-  'runner.parallelHint':
-      'Iterations run side by side. Requests inside one iteration still run in order, so chaining works. Use only against servers you are allowed to load.',
+  'runner.parallelHint': 'Iterations run side by side. Requests inside one iteration still run in order, so chaining works. Use only against servers you are allowed to load.',
   'runner.loadData': 'Load data file (CSV/JSON)…',
   'runner.dataLoaded': '{0} rows: {1}',
   'runner.scriptTest': 'Script test',
@@ -689,8 +644,7 @@ const Map<String, String> enStrings = <String, String>{
   'header.search': 'Search or run a command…',
   'header.toggleTheme': 'Switch between dark and light theme',
   'header.workspace': 'Workspace: {0}. Click to manage workspaces.',
-  'onb.themeHint':
-      'Dark is the default. You can change it any time in Settings > Appearance.',
+  'onb.themeHint': 'Dark is the default. You can change it any time in Settings > Appearance.',
   'settings.cat.appearance': 'Theme, colours, density, text size and motion',
   'settings.cat.language': 'Language, digits and accessibility',
   'settings.cat.requests':
@@ -709,10 +663,8 @@ const Map<String, String> enStrings = <String, String>{
   'html.imagesBlocked':
       'Images from the internet are blocked so the page cannot track you.',
   'html.loadImages': 'Load images',
-  'html.staticNote':
-      'Static preview: scripts do not run and some styles may differ from a real browser.',
-  'html.truncated':
-      'Large page: only the first {0} KB is shown. Use Source or Raw for the rest.',
+  'html.staticNote': 'Static preview: scripts do not run and some styles may differ from a real browser.',
+  'html.truncated': 'Large page: only the first {0} KB is shown. Use Source or Raw for the rest.',
   'update.title': 'Update available',
   'update.whatsNew': 'What\'s new',
   'update.noNotes': 'Fixes and improvements.',
@@ -732,8 +684,7 @@ const Map<String, String> enStrings = <String, String>{
   'update.checkFailed': 'Can\'t check for updates',
   'update.checkNow': 'Check for updates',
   'update.auto': 'Check on startup',
-  'update.autoHelp':
-      'Asks GitHub for the newest release when PostBox opens. Nothing else is sent.',
+  'update.autoHelp': 'Asks GitHub for the newest release when PostBox opens. Nothing else is sent.',
   'about.madeBy': 'Made by {0}',
   'settings.navHint': '↑ ↓',
   'onb.step1': 'Welcome',
@@ -756,4 +707,8 @@ const Map<String, String> enStrings = <String, String>{
   'insights.methods': 'Methods',
   'insights.slowest': 'Slowest endpoints',
   'insights.failedKind': 'Failed',
+  'settings.schedule': 'Schedule light and dark',
+  'settings.scheduleHelp': 'Switch to the dark theme automatically at the times below.',
+  'settings.darkFrom': 'Dark from',
+  'settings.darkTo': 'Dark until',
 };
