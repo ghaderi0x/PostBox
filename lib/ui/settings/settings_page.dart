@@ -453,7 +453,12 @@ class _Section extends StatelessWidget {
                 boxShadow: softShadow(context, strength: 0.6),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              child: Column(children: children),
+              // ListTiles and switches paint on the nearest Material, so give
+              // them one inside this coloured card.
+              child: Material(
+                type: MaterialType.transparency,
+                child: Column(children: children),
+              ),
             ),
           ],
         ),
