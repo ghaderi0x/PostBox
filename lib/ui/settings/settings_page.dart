@@ -716,14 +716,11 @@ class _Appearance extends StatelessWidget {
         ),
         _Field(
           label: context.t('settings.surface'),
-          child: _segmented<SurfaceStyle>(
-            s.surfaceStyle,
-            <SurfaceStyle, String>{
-              SurfaceStyle.raised: context.t('settings.raised'),
-              SurfaceStyle.flat: context.t('settings.flat'),
-            },
-            (v) => cubit.update((x) => x.copyWith(surfaceStyle: v)),
-          ),
+          child:
+              _segmented<SurfaceStyle>(s.surfaceStyle, <SurfaceStyle, String>{
+                SurfaceStyle.raised: context.t('settings.raised'),
+                SurfaceStyle.flat: context.t('settings.flat'),
+              }, (v) => cubit.update((x) => x.copyWith(surfaceStyle: v))),
         ),
         _Field(
           label: context.t('settings.density'),

@@ -96,8 +96,6 @@ fi
 if has windows; then
   # Window and exe icon.
   cp assets/branding/app_icon.ico windows/runner/resources/app_icon.ico
-  # Title bar that follows the app header colour.
-  bash tool/apply_windows_titlebar.sh
 fi
 
 if has macos; then

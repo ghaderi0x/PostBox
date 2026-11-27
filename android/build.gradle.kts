@@ -1,3 +1,16 @@
+// Some plugins (desktop_drop, file_picker ...) still compile against an old
+// Android SDK while their AndroidX dependencies need 34+. Compile every
+// Android library with the same SDK as the app. Must stay above the block
+// that calls evaluationDependsOn(":app").
+subprojects {
+    afterEvaluate {
+        val androidExt = extensions.findByName("android")
+        if (androidExt is com.android.build.gradle.BaseExtension) {
+            androidExt.compileSdkVersion(36)
+        }
+    }
+}
+
 allprojects {
     repositories {
         google()

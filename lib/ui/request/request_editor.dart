@@ -302,130 +302,134 @@ class _RequestEditorState extends State<RequestEditor>
         SliverToBoxAdapter(
           child: Column(
             children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.fromLTRB(10, 10, 10, 6),
-          child: widget.compact
-              ? Column(
-                  children: <Widget>[
-                    Row(
-                      children: <Widget>[
-                        methodBtn,
-                        const SizedBox(width: 6),
-                        Expanded(child: urlField),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: <Widget>[
-                        Expanded(child: sendBtn),
-                        saveBtn,
-                        menu,
-                      ],
-                    ),
-                  ],
-                )
-              : Row(
-                  children: <Widget>[
-                    methodBtn,
-                    const SizedBox(width: 6),
-                    Expanded(child: urlField),
-                    const SizedBox(width: 8),
-                    sendBtn,
-                    const SizedBox(width: 4),
-                    saveBtn,
-                    menu,
-                  ],
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10, 10, 10, 6),
+                child: widget.compact
+                    ? Column(
+                        children: <Widget>[
+                          Row(
+                            children: <Widget>[
+                              methodBtn,
+                              const SizedBox(width: 6),
+                              Expanded(child: urlField),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: <Widget>[
+                              Expanded(child: sendBtn),
+                              saveBtn,
+                              menu,
+                            ],
+                          ),
+                        ],
+                      )
+                    : Row(
+                        children: <Widget>[
+                          methodBtn,
+                          const SizedBox(width: 6),
+                          Expanded(child: urlField),
+                          const SizedBox(width: 8),
+                          sendBtn,
+                          const SizedBox(width: 4),
+                          saveBtn,
+                          menu,
+                        ],
+                      ),
+              ),
+              if (unresolved.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 6),
+                  child: InfoBanner(
+                    context.t('req.unresolved', <String>[
+                      unresolved.map((e) => '{{$e}}').join(', '),
+                    ]),
+                    warning: true,
+                  ),
                 ),
-        ),
-        if (unresolved.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10, 0, 10, 6),
-            child: InfoBanner(
-              context.t('req.unresolved', <String>[
-                unresolved.map((e) => '{{$e}}').join(', '),
-              ]),
-              warning: true,
-            ),
-          ),
-        PillTabBar(
-          controller: _tabs,
-          labels: <String>[
-            label('req.params', enabledParams),
-            label('req.headers', enabledHeaders),
-            context.t(isHttp ? 'req.body' : 'req.bodyNA'),
-            context.t('req.auth'),
-            label('req.vars', r.variables.length),
-            (r.preScript.trim().isNotEmpty || r.postScript.trim().isNotEmpty)
-                ? '${context.t('req.scripts')} •'
-                : context.t('req.scripts'),
-            label('req.tests', r.assertions.length + r.extractions.length),
-            context.t('req.info'),
-          ],
-        ),
+              PillTabBar(
+                controller: _tabs,
+                labels: <String>[
+                  label('req.params', enabledParams),
+                  label('req.headers', enabledHeaders),
+                  context.t(isHttp ? 'req.body' : 'req.bodyNA'),
+                  context.t('req.auth'),
+                  label('req.vars', r.variables.length),
+                  (r.preScript.trim().isNotEmpty ||
+                          r.postScript.trim().isNotEmpty)
+                      ? '${context.t('req.scripts')} •'
+                      : context.t('req.scripts'),
+                  label(
+                    'req.tests',
+                    r.assertions.length + r.extractions.length,
+                  ),
+                  context.t('req.info'),
+                ],
+              ),
             ],
           ),
         ),
       ],
       body: TabBarView(
-            controller: _tabs,
-            physics: const NeverScrollableScrollPhysics(),
+        controller: _tabs,
+        physics: const NeverScrollableScrollPhysics(),
+        children: <Widget>[
+          KeyValueEditor(
+            items: r.params,
+            bulkSeparator: '=',
+            onChanged: (v) => _update(r.copyWith(params: v)),
+          ),
+          KeyValueEditor(
+            items: r.headers,
+            keyHint: 'Header',
+            bulkSeparator: ':',
+            onChanged: (v) => _update(r.copyWith(headers: v)),
+          ),
+          BodyEditor(request: r, onChanged: _update),
+          _InheritedAuthEditor(
+            tab: tab,
+            onChanged: (a) => _update(r.copyWith(auth: a)),
+          ),
+          VariablesEditor(
+            request: r,
+            resolver: resolver,
+            onChanged: (v) => _update(r.copyWith(variables: v)),
+          ),
+          ScriptsEditor(
+            pre: r.preScript,
+            post: r.postScript,
+            onChanged: (pre, post) =>
+                _update(r.copyWith(preScript: pre, postScript: post)),
+          ),
+          TestsEditor(
+            assertions: r.assertions,
+            extractions: r.extractions,
+            onAssertions: (v) => _update(r.copyWith(assertions: v)),
+            onExtractions: (v) => _update(r.copyWith(extractions: v)),
+          ),
+          ListView(
+            padding: const EdgeInsets.all(12),
             children: <Widget>[
-              KeyValueEditor(
-                items: r.params,
-                bulkSeparator: '=',
-                onChanged: (v) => _update(r.copyWith(params: v)),
+              TextField(
+                controller: _name,
+                decoration: InputDecoration(
+                  labelText: context.t('common.name'),
+                ),
+                onChanged: (v) => _update(r.copyWith(name: v)),
               ),
-              KeyValueEditor(
-                items: r.headers,
-                keyHint: 'Header',
-                bulkSeparator: ':',
-                onChanged: (v) => _update(r.copyWith(headers: v)),
-              ),
-              BodyEditor(request: r, onChanged: _update),
-              _InheritedAuthEditor(
-                tab: tab,
-                onChanged: (a) => _update(r.copyWith(auth: a)),
-              ),
-              VariablesEditor(
-                request: r,
-                resolver: resolver,
-                onChanged: (v) => _update(r.copyWith(variables: v)),
-              ),
-              ScriptsEditor(
-                pre: r.preScript,
-                post: r.postScript,
-                onChanged: (pre, post) =>
-                    _update(r.copyWith(preScript: pre, postScript: post)),
-              ),
-              TestsEditor(
-                assertions: r.assertions,
-                extractions: r.extractions,
-                onAssertions: (v) => _update(r.copyWith(assertions: v)),
-                onExtractions: (v) => _update(r.copyWith(extractions: v)),
-              ),
-              ListView(
-                padding: const EdgeInsets.all(12),
-                children: <Widget>[
-                  TextField(
-                    controller: _name,
-                    decoration: InputDecoration(
-                      labelText: context.t('common.name'),
-                    ),
-                    onChanged: (v) => _update(r.copyWith(name: v)),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _desc,
-                    maxLines: 6,
-                    decoration: InputDecoration(
-                      labelText: context.t('common.description'),
-                    ),
-                    onChanged: (v) => _update(r.copyWith(description: v)),
-                  ),
-                ],
+              const SizedBox(height: 12),
+              TextField(
+                controller: _desc,
+                maxLines: 6,
+                decoration: InputDecoration(
+                  labelText: context.t('common.description'),
+                ),
+                onChanged: (v) => _update(r.copyWith(description: v)),
               ),
             ],
           ),
+        ],
+      ),
     );
   }
 }

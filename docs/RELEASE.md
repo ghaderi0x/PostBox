@@ -130,6 +130,10 @@ subprojects {
 }
 ```
 
+### Windows title bar colour
+
+The native Windows title bar follows the app header colour through a small channel in `windows/runner/` (`title_bar.cpp`, `title_bar.h`, plus two lines in `flutter_window.cpp` and one entry in `CMakeLists.txt`). These files are committed with the `windows/` folder. If you ever delete and regenerate `windows/` with `flutter create`, re-add them from the repository history; without them Windows simply keeps its default title bar. Windows 11 colours the bar; Windows 10 only switches between its light and dark title bar.
+
 ### macOS
 
 `tool/setup_platforms.sh` creates the `macos/` runner, adds the sandbox entitlements PostBox needs (network client, network server for the OAuth redirect, user-selected files) and generates the app icon. `packaging/build_dmg.sh` wraps `build/macos/Build/Products/Release/*.app` in a drag-to-Applications `.dmg`.

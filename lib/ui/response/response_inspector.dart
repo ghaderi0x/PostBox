@@ -220,7 +220,10 @@ class _ResultViewState extends State<_ResultView>
         title: context.t('resp.save'),
       );
       if (path != null && mounted) {
-        await showToast(context, context.t('resp.savedTo', <String>[fileNameOf(path)]));
+        await showToast(
+          context,
+          context.t('resp.savedTo', <String>[fileNameOf(path)]),
+        );
       }
     } on FileSystemException catch (e) {
       if (mounted) {
@@ -252,73 +255,73 @@ class _ResultViewState extends State<_ResultView>
         SliverToBoxAdapter(
           child: Column(
             children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
-          child: Wrap(
-            spacing: 14,
-            runSpacing: 4,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: <Widget>[
-              Text(
-                fmt.digits('${r.statusCode} ${r.reasonPhrase}'),
-                style: context.statusStyle(r.statusCode),
-              ),
-              Text(fmt.duration(r.duration), style: context.timingStyle),
-              Text(fmt.bytes(r.body.length), style: context.timingStyle),
-              if (r.protocol == 'h2')
-                Text('HTTP/2', style: context.timingStyle),
-              if (r.redirects.isNotEmpty)
-                Text(
-                  context.t('resp.redirects', <String>[
-                    fmt.integer(r.redirects.length),
-                  ]),
-                  style: context.timingStyle,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+                child: Wrap(
+                  spacing: 14,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: <Widget>[
+                    Text(
+                      fmt.digits('${r.statusCode} ${r.reasonPhrase}'),
+                      style: context.statusStyle(r.statusCode),
+                    ),
+                    Text(fmt.duration(r.duration), style: context.timingStyle),
+                    Text(fmt.bytes(r.body.length), style: context.timingStyle),
+                    if (r.protocol == 'h2')
+                      Text('HTTP/2', style: context.timingStyle),
+                    if (r.redirects.isNotEmpty)
+                      Text(
+                        context.t('resp.redirects', <String>[
+                          fmt.integer(r.redirects.length),
+                        ]),
+                        style: context.timingStyle,
+                      ),
+                    if (r.truncated)
+                      Text(
+                        context.t('resp.truncated'),
+                        style: context.timingStyle.copyWith(color: c.warning),
+                      ),
+                    TextButton.icon(
+                      onPressed: () => _save(r, kind),
+                      icon: const Icon(Icons.download, size: 16),
+                      label: Text(context.t('resp.save')),
+                    ),
+                  ],
                 ),
-              if (r.truncated)
-                Text(
-                  context.t('resp.truncated'),
-                  style: context.timingStyle.copyWith(color: c.warning),
-                ),
-              TextButton.icon(
-                onPressed: () => _save(r, kind),
-                icon: const Icon(Icons.download, size: 16),
-                label: Text(context.t('resp.save')),
               ),
-            ],
-          ),
-        ),
-        PillTabBar(
-          controller: _tabs,
-          labels: <String>[
-            context.t('resp.body'),
-            '${context.t('resp.headers')} (${fmt.integer(r.headers.length)})',
-            context.t('resp.cookies'),
-            totalChecks == 0
-                ? context.t('resp.tests')
-                : '${context.t('resp.tests')} (${fmt.integer(passed)}/${fmt.integer(totalChecks)})',
-            context.t('resp.request'),
-            context.t('resp.timeline'),
-          ],
-        ),
+              PillTabBar(
+                controller: _tabs,
+                labels: <String>[
+                  context.t('resp.body'),
+                  '${context.t('resp.headers')} (${fmt.integer(r.headers.length)})',
+                  context.t('resp.cookies'),
+                  totalChecks == 0
+                      ? context.t('resp.tests')
+                      : '${context.t('resp.tests')} (${fmt.integer(passed)}/${fmt.integer(totalChecks)})',
+                  context.t('resp.request'),
+                  context.t('resp.timeline'),
+                ],
+              ),
             ],
           ),
         ),
       ],
       body: TabBarView(
-            controller: _tabs,
-            physics: const NeverScrollableScrollPhysics(),
-            children: <Widget>[
-              _BodyView(result: r, kind: kind, previous: widget.previous),
-              _HeadersView(headers: r.headers),
-              _CookiesView(headers: r.headers),
-              _TestsView(outcome: o),
-              ListView(
-                padding: const EdgeInsets.all(12),
-                children: <Widget>[_RequestPreview(built: o)],
-              ),
-              TimelineView(result: r),
-            ],
+        controller: _tabs,
+        physics: const NeverScrollableScrollPhysics(),
+        children: <Widget>[
+          _BodyView(result: r, kind: kind, previous: widget.previous),
+          _HeadersView(headers: r.headers),
+          _CookiesView(headers: r.headers),
+          _TestsView(outcome: o),
+          ListView(
+            padding: const EdgeInsets.all(12),
+            children: <Widget>[_RequestPreview(built: o)],
           ),
+          TimelineView(result: r),
+        ],
+      ),
     );
   }
 

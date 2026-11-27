@@ -318,8 +318,9 @@ class AppSettings {
   }
 
   String toJsonString({bool redactSensitive = false}) =>
-      const JsonEncoder.withIndent('  ')
-          .convert(toJson(redactSensitive: redactSensitive));
+      const JsonEncoder.withIndent(
+        '  ',
+      ).convert(toJson(redactSensitive: redactSensitive));
 
   /// Migrates older schema versions to the current one; steps are chained.
   ///
@@ -355,9 +356,9 @@ class AppSettings {
     final proxy = asString(j['proxy']).trim();
     final tab = asInt(j['editorTabSize'], d.editorTabSize);
     final accent = j['accentOverride'];
-    final headers = KeyValue.listFromJson(j['defaultHeaders'])
-        .where((h) => h.key.trim().isNotEmpty)
-        .toList();
+    final headers = KeyValue.listFromJson(
+      j['defaultHeaders'],
+    ).where((h) => h.key.trim().isNotEmpty).toList();
     return AppSettings(
       themeMode: enumByName(AppThemeMode.values, j['themeMode'], d.themeMode),
       themePreset: enumByName(
@@ -443,7 +444,10 @@ class AppSettings {
       restoreWorkspace: asBool(j['restoreWorkspace'], d.restoreWorkspace),
       checkUpdates: asBool(j['checkUpdates'], d.checkUpdates),
       themeSchedule: asBool(j['themeSchedule'], d.themeSchedule),
-      darkFromMinutes: asInt(j['darkFromMinutes'], d.darkFromMinutes).clamp(0, 1439),
+      darkFromMinutes: asInt(
+        j['darkFromMinutes'],
+        d.darkFromMinutes,
+      ).clamp(0, 1439),
       darkToMinutes: asInt(j['darkToMinutes'], d.darkToMinutes).clamp(0, 1439),
       skippedVersion: asString(j['skippedVersion']).trim(),
       shortcuts: _parseShortcuts(j['shortcuts']),
